@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Пользователь платформы (роль: owner | manager | cashier)
+model User {
+  id             String     @id @default(cuid())
+  firstName      String
+  lastName       String
+  email          String     @unique
+  phone          String     @unique
+  passwordHash   String
+  phoneVerified  Boolean    @default(false)
+  role           String     @default("owner")
+  offerAccepted  Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  businesses     Business[]
+}
+
+model SmsCode {
+  id        String   @id @default(cuid())
+  phone     String
+  codeHash  String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Business {
+  id              String           @id @default(cuid())
+  ownerId         String
+  owner           User             @relation(fields: [ownerId], references: [id])
+  name            String
+  type            String
+  typeNote        String           @default("")
+  city            String
+  region          String           @default("")
+  yearsOpen       Int              @default(0)
+  employees       Int              @default(1)
+  channel         String           @default("offline")
+  competitors     String           @default("")
+  audience        String           @default("")
+  onboardingDone  Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  products        Product[]
+  customers       Customer[]
+  deals           Deal[]
+  financeEntries  FinanceEntry[]
+  tasks           Task[]
+  aiReports       AiReport[]
+}
+
+model Product {
+  id            String           @id @default(cuid())
+  businessId    String
+  business      Business         @relation(fields: [businessId], references: [id])
+  category      String
+  brand         String
+  model         String
+  buyPriceMin   Float
+  buyPriceMax   Float
+  sellPriceMin  Float
+  sellPriceMax  Float
+  quantity      Int
+  condition     String           @default("new")
+  archived      Boolean          @default(false)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  movements     InventoryMove[]
+}
+
+model InventoryMove {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  type      String
+  quantity  Int
+  note      String   @default("")
+  createdAt DateTime @default(now())
+}
+
+model Customer {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  name       String
+  phone      String   @default("")
+  email      String   @default("")
+  tags       String   @default("")
+  notes      String   @default("")
+  archived   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deals      Deal[]
+}
+
+model Deal {
+  id          String    @id @default(cuid())
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id])
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id])
+  title       String
+  stage       String    @default("lead")
+  amount      Float     @default(0)
+  lostReason  String    @default("")
+  archived    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model FinanceEntry {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  type       String
+  amount     Float
+  category   String
+  note       String   @default("")
+  entryDate  DateTime @default(now())
+  createdAt  DateTime @default(now())
+}
+
+model Task {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  title      String
+  dueAt      DateTime?
+  done       Boolean  @default(false)
+  archived   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model AiReport {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  payload    String
+  createdAt  DateTime @default(now())
+}

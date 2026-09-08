@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BusinessPilot AI
 
-## Getting Started
+Операционка барои соҳибкорони Тоҷикистон: CRM, анбор, нархгузорӣ, симулятор ва қарорҳои AI. Забонҳо: тоҷикӣ, русӣ, англисӣ.
 
-First, run the development server:
+Прогноз аст, на кафолати фоида. Маълумоти зинда = вуруди шумо + CSV + webhook-и POS. Бозори Somon/OLX зинда скрейп намешавад.
+
+## Оғоз
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+copy .env.example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Дар `.env` гузоред:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `JWT_SECRET` — сатри дароз ва тасодуфӣ
+- `ANTHROPIC_API_KEY` — калиди Claude (`sk-ant-...`), агар AI-ро хоҳед
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npx next start -p 3000
+```
 
-## Learn More
+Ё барои кор: `npm run dev`.
 
-To learn more about Next.js, take a look at the following resources:
+Кушоед: [http://localhost:3000/tg](http://localhost:3000/tg)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Чӣ кор мекунад ҳозир
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Бақайдгирӣ / ворид → онбординг (бизнес ҳаст / мехоҳам оғоз кунам)
+- Панел, нарх, анбор, симулятор, амалҳо, агентҳо
+- CSV ва `POST /api/ingest/sale` бо калиди API
+- Маълумот дар `data/app.json` (MVP). PostgreSQL/Prisma барои марҳилаи баъдӣ аст
 
-## Deploy on Vercel
+## Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js 16 · TypeScript · next-intl · Tailwind 4 · Claude API

@@ -1,0 +1,33 @@
+# BusinessPilot AI — Cursor Rules
+## Stack: Next.js + TypeScript + PostgreSQL-ready Prisma + Redis-ready + Claude API
+
+## Коидаҳои кор:
+- Забони код: TypeScript (strict mode)
+- Забони комментариҳо: Тоҷикӣ ё Русӣ
+- Ҳар компонент дар файли алоҳида
+- Ҳар API route swagger-шархи кӯтоҳ дар комментарии файл дорад
+- Бе `any` дар TypeScript
+- Ҳамаи AI зангҳо тавассути /src/services/ai
+- Хатоҳо бо try/catch ва логирование
+- Бе hardcoded strings — ҳама дар messages/*.json ё src/constants
+- Тестҳо: Jest + Testing Library (марҳилаи баъдӣ)
+
+## Сохтори Папкаҳо:
+/src
+  /app          — Next.js App Router
+  /components   — UI компонентҳо
+  /services     — Логикаи бизнес
+    /ai         — Claude API зангҳо
+    /crm        — CRM амалиётҳо
+    /inventory  — Анбор
+    /finance    — Молия
+  /lib          — Ёрдамчиҳо
+  /types        — TypeScript типҳо
+  /constants    — Доимиҳо
+
+## Тавсияҳо барои Claude API:
+- model: claude-sonnet-4-6
+- system prompt бо контексти бизнесмен
+- Ҷавоб фақат ба тоҷикӣ ё русӣ
+- Ҳар посух бо action items
+- Бе гапи зиёд, мушаххас

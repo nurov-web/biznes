@@ -1,26 +1,510 @@
 @import "tailwindcss";
 
 :root {
+  /* Сатҳҳо */
   --background: #ffffff;
-  --foreground: #171717;
+  --surface: #f6f7f9;
+  --card: #ffffff;
+  --ink: #0b1220;
+  --foreground: #0f172a;
+  --muted: #f1f4f8;
+  --muted-foreground: #5b6779;
+  --border: #e6e9ee;
+  --border-strong: #d3d9e2;
+
+  /* Бренд */
+  --primary: #1565c0;
+  --primary-hover: #0f4f9c;
+  --primary-soft: #e8f1fc;
+  --on-primary: #ffffff;
+  --secondary: #42a5f5;
+  --accent: #1565c0;
+  --on-accent: #ffffff;
+  --ring: #1565c0;
+
+  /* Ҳолат */
+  --destructive: #d92d20;
+  --success: #067647;
+  --warning: #b54708;
+
+  /* Сатҳи торик */
+  --dark-bg: #080d17;
+  --dark-surface: #0f1626;
+  --dark-border: #1e2942;
+  --dark-text: #e8edf6;
+  --dark-muted: #93a1b8;
+  --dark-accent: #5aa2f7;
+
+  /* Сояҳо */
+  --shadow-xs: 0 1px 2px rgb(11 18 32 / 0.05);
+  --shadow-sm: 0 1px 3px rgb(11 18 32 / 0.06), 0 1px 2px rgb(11 18 32 / 0.04);
+  --shadow-md: 0 4px 12px rgb(11 18 32 / 0.07), 0 2px 4px rgb(11 18 32 / 0.04);
+  --shadow-lg: 0 12px 32px rgb(11 18 32 / 0.10), 0 4px 8px rgb(11 18 32 / 0.04);
+  --shadow-xl: 0 32px 64px rgb(11 18 32 / 0.16), 0 8px 16px rgb(11 18 32 / 0.06);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-on-primary: var(--on-primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-ring: var(--ring);
+  --color-dark-bg: var(--dark-bg);
+  --color-dark-surface: var(--dark-surface);
+  --color-dark-border: var(--dark-border);
+  --color-dark-text: var(--dark-text);
+  --color-dark-muted: var(--dark-muted);
+  --color-dark-accent: var(--dark-accent);
+  --font-sans: Inter, "Segoe UI", Roboto, Tahoma, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-feature-settings: "cv02", "cv03", "cv04", "ss01";
+}
+
+/* ── Типографияи сайёл ───────────────────────────────── */
+
+.display-1 {
+  font-size: clamp(2.5rem, 1.6rem + 3.6vw, 4.5rem);
+  line-height: 1.03;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+}
+
+.display-2 {
+  font-size: clamp(1.85rem, 1.35rem + 1.9vw, 2.75rem);
+  line-height: 1.1;
+  letter-spacing: -0.028em;
+  font-weight: 600;
+}
+
+.display-3 {
+  font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  line-height: 1.25;
+  letter-spacing: -0.018em;
+  font-weight: 600;
+}
+
+.lead {
+  font-size: clamp(1rem, 0.95rem + 0.35vw, 1.185rem);
+  line-height: 1.62;
+  color: var(--muted-foreground);
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ── Заминаҳо ────────────────────────────────────────── */
+
+.blueprint {
+  background-image:
+    linear-gradient(to right, rgb(148 163 184 / 0.14) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(148 163 184 / 0.14) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.blueprint-dark {
+  background-image:
+    linear-gradient(to right, rgb(148 178 232 / 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(148 178 232 / 0.07) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.fade-edges {
+  -webkit-mask-image: radial-gradient(ellipse 78% 62% at 50% 38%, #000 42%, transparent 100%);
+  mask-image: radial-gradient(ellipse 78% 62% at 50% 38%, #000 42%, transparent 100%);
+}
+
+.glow-primary {
+  background: radial-gradient(
+    ellipse 62% 52% at 62% 12%,
+    rgb(37 122 214 / 0.32),
+    transparent 66%
+  );
+}
+
+.section-dark {
+  background: var(--dark-bg);
+  color: var(--dark-text);
+}
+
+/* ── Тугмаҳо ─────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 0.7rem;
+  font-weight: 550;
+  font-size: 0.9375rem;
+  letter-spacing: -0.006em;
+  padding: 0.65rem 1.15rem;
+  min-height: 44px;
+  white-space: nowrap;
+  transition:
+    background-color 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 160ms ease;
+}
+
+@media (max-width: 768px) {
+  .btn {
+    min-height: 48px;
+  }
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.btn:not(:disabled):active {
+  transform: translateY(0) scale(0.985);
+}
+
+.btn-sm {
+  min-height: 36px;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.875rem;
+  border-radius: 0.6rem;
+}
+
+@media (max-width: 768px) {
+  .btn-sm {
+    min-height: 40px;
+  }
+}
+
+/* Интихобкунандаи забон */
+.seg {
+  display: inline-flex;
+  overflow: hidden;
+  border-radius: 0.6rem;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+}
+
+.seg-item {
+  display: grid;
+  place-items: center;
+  min-height: 34px;
+  min-width: 38px;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.seg-item:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.seg-item[data-active="true"] {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+/* Варианти бо нишондиҳандаи лағжанда */
+.seg-item[data-selected="true"] {
+  color: var(--on-primary);
+}
+
+.seg[data-pending] {
+  opacity: 0.75;
+}
+
+/* Гузариши мулоими мундариҷа ҳангоми иваз шудани забон */
+@keyframes locale-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.locale-swap {
+  animation: locale-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .locale-swap {
+    animation: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .seg-item {
+    min-height: 40px;
+    min-width: 44px;
+  }
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    var(--shadow-sm);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: var(--primary-hover);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    0 8px 20px rgb(21 101 192 / 0.26);
+}
+
+.btn-ghost {
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  color: var(--foreground);
+}
+
+.btn-ghost:not(:disabled):hover {
+  background: var(--muted);
+  border-color: #b9c2ce;
+}
+
+.btn-dark {
+  background: rgb(255 255 255 / 0.06);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  color: var(--dark-text);
+  backdrop-filter: blur(6px);
+}
+
+.btn-dark:not(:disabled):hover {
+  background: rgb(255 255 255 / 0.12);
+}
+
+.btn-light {
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.btn-light:not(:disabled):hover {
+  background: #eef2f7;
+}
+
+/* ── Сатҳҳо ──────────────────────────────────────────── */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
+
+.card-raised {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1.15rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.hover-lift {
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 220ms ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-strong);
+}
+
+.panel-dark {
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-border);
+  border-radius: 1rem;
+}
+
+/* Чорчӯбаи тирезаи барнома барои намоиши маҳсулот */
+.app-frame {
+  border-radius: 1.15rem;
+  border: 1px solid var(--dark-border);
+  background: linear-gradient(180deg, #101a2c 0%, #0b1220 100%);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.04),
+    var(--shadow-xl);
+  overflow: hidden;
+}
+
+/* ── Майдонҳои воридот ───────────────────────────────── */
+
+.input-field {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  border-radius: 0.7rem;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.9375rem;
+  color: var(--foreground);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.input-field::placeholder {
+  color: #9aa5b4;
+}
+
+.input-field:hover {
+  border-color: #b9c2ce;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(21 101 192 / 0.15);
+}
+
+.input-error {
+  border-color: var(--destructive);
+}
+
+.input-error:focus {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 3px rgb(217 45 32 / 0.15);
+}
+
+/* ── Ҷадвалҳо ────────────────────────────────────────── */
+
+.table-intel {
+  width: 100%;
+  font-size: 0.875rem;
+  border-collapse: collapse;
+}
+
+.table-intel th {
+  text-align: left;
+  color: var(--muted-foreground);
+  font-weight: 500;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table-intel td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.table-intel tbody tr {
+  transition: background-color 160ms ease;
+}
+
+.table-intel tbody tr:hover {
+  background: var(--muted);
+}
+
+/* ── Нишонаҳо ────────────────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+
+.chip-dark {
+  border-color: rgb(255 255 255 / 0.14);
+  background: rgb(255 255 255 / 0.05);
+  color: var(--dark-muted);
+}
+
+/* ── Дастрасӣ ────────────────────────────────────────── */
+
+button,
+[role="button"],
+a,
+input[type="submit"],
+select,
+label[for],
+summary {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 0.35rem;
+}
+
+.section-dark :focus-visible {
+  outline-color: var(--dark-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal-init {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Ҳолати ибтидоӣ барои элементҳое, ки GSAP мекушояд */
+.reveal-init {
+  opacity: 0;
 }

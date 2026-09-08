@@ -1,0 +1,13 @@
+---
+description: BusinessPilot AI project conventions
+alwaysApply: true
+---
+
+# BusinessPilot AI
+
+- TypeScript strict, без `any`
+- Комментарии: тоҷикӣ ё русский
+- AI только через `src/services/ai`
+- UI: минимализм, primary `#1565c0`, Inter, кнопки ≥48px на мобилке
+- Тексты только из `messages/` или `src/constants`
+- CRM: мягкое удаление (архив), не hard delete
