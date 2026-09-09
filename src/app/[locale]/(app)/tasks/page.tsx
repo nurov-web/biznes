@@ -55,8 +55,8 @@ export default function TasksPage() {
 
   return (
     <PageShell title={t("title")}>
-      <form onSubmit={onSubmit} className="card-raised flex flex-wrap items-end gap-3 p-5">
-        <label className="grid min-w-56 flex-1 gap-1.5 text-sm font-medium">
+      <form onSubmit={onSubmit} className="card-raised flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-end sm:p-5">
+        <label className="grid min-w-0 w-full flex-1 gap-1.5 text-sm font-medium sm:min-w-56">
           {t("add")}
           <input
             className="input-field"
@@ -65,7 +65,7 @@ export default function TasksPage() {
             required
           />
         </label>
-        <label className="grid w-44 gap-1.5 text-sm font-medium">
+        <label className="grid w-full gap-1.5 text-sm font-medium sm:w-44">
           {t("due")}
           <input
             className="input-field"
@@ -74,7 +74,7 @@ export default function TasksPage() {
             onChange={(e) => setDueAt(e.target.value)}
           />
         </label>
-        <button className="btn btn-primary" type="submit" disabled={busy}>
+        <button className="btn btn-primary w-full sm:w-auto" type="submit" disabled={busy}>
           <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
           {t("add")}
         </button>

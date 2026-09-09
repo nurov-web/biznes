@@ -15,13 +15,13 @@ export function Metrics() {
   const t = useTranslations("landing");
   return (
     <section className="border-b border-border bg-surface">
-      <Reveal stagger className="mx-auto grid max-w-6xl grid-cols-2 gap-px overflow-hidden px-4 py-10 sm:grid-cols-4">
+      <Reveal stagger className="gutter-x mx-auto grid max-w-6xl min-w-0 grid-cols-2 gap-px overflow-hidden py-10 sm:grid-cols-4">
         {ITEMS.map((item) => (
           <div key={item.key} className="px-2 py-3 text-center sm:px-4">
             <p className="num text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
               <Counter to={item.to} suffix={item.suffix} />
             </p>
-            <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{t(item.key)}</p>
+            <p className="mt-1.5 text-xs leading-snug text-muted-foreground sm:text-sm">{t(item.key)}</p>
           </div>
         ))}
       </Reveal>

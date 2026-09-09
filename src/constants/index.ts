@@ -5,6 +5,9 @@ export const APP_NAME = "BusinessPilot AI";
 
 export const SESSION_COOKIE = "bp_session";
 
+/** Як маротиба дар ҷаласа: интро пас аз вуруд. */
+export const SPLASH_SESSION_KEY = "bp_entry_splash";
+
 export const ROLES = ["owner", "manager", "cashier"] as const;
 export type Role = (typeof ROLES)[number];
 

@@ -16,9 +16,9 @@ export default async function LandingPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen w-full min-w-0 flex-col overflow-x-clip">
       <MarketingHeader />
-      <main className="flex-1">
+      <main className="min-w-0 flex-1 overflow-x-clip">
         <Hero />
         <Metrics />
         <TrustBand />

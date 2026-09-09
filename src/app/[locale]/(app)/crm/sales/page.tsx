@@ -74,8 +74,8 @@ export default function SalesPage() {
       lead={t("salesLead")}
       action={<span className="chip num">{money(total)}</span>}
     >
-      <form onSubmit={onSubmit} className="card-raised flex flex-wrap items-end gap-3 p-5">
-        <label className="grid min-w-56 flex-1 gap-1.5 text-sm font-medium">
+      <form onSubmit={onSubmit} className="card-raised flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-end sm:p-5">
+        <label className="grid min-w-0 w-full flex-1 gap-1.5 text-sm font-medium sm:min-w-56">
           {t("dealTitle")}
           <input
             className="input-field"
@@ -84,7 +84,7 @@ export default function SalesPage() {
             required
           />
         </label>
-        <label className="grid w-36 gap-1.5 text-sm font-medium">
+        <label className="grid w-full gap-1.5 text-sm font-medium sm:w-36">
           {t("amount")}
           <input
             className="input-field"
@@ -94,18 +94,18 @@ export default function SalesPage() {
             onChange={(e) => setAmount(e.target.value)}
           />
         </label>
-        <button className="btn btn-primary" type="submit" disabled={busy}>
+        <button className="btn btn-primary w-full sm:w-auto" type="submit" disabled={busy}>
           <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
           {t("addDeal")}
         </button>
       </form>
 
-      <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
+      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 xl:grid-cols-5">
         {DEAL_STAGES.map((stage) => {
           const rows = deals.filter((d) => d.stage === stage);
           const sum = rows.reduce((s, d) => s + d.amount, 0);
           return (
-            <section key={stage} className="card-raised flex min-h-44 flex-col p-4">
+            <section key={stage} className="card-raised flex min-h-44 w-[min(18rem,calc(100%-0.5rem))] shrink-0 snap-start flex-col p-4 md:w-auto md:min-w-0">
               <header className="flex items-baseline justify-between gap-2">
                 <h2 className="text-sm font-semibold">{t(`stages.${stage}`)}</h2>
                 <span className="num text-xs text-muted-foreground">{rows.length}</span>

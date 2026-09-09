@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { PageShell } from "@/components/PageShell";
+import { MarketScanCard } from "@/components/market/MarketScanCard";
 import { useIntelligence } from "@/hooks/useIntelligence";
 
 export default function MarketPage() {
@@ -20,7 +21,8 @@ export default function MarketPage() {
   ];
   return (
     <PageShell title={t("marketTitle")} lead={t("marketLead")}>
-      <section className="grid gap-3 md:grid-cols-2">
+      <MarketScanCard city={data.city} type={data.businessType || "trade"} />
+      <section className="mt-4 grid gap-3 md:grid-cols-2">
         {cards.map((c) => (
           <article key={c.k} className="card p-5">
             <p className="text-xs font-medium uppercase tracking-wide text-primary">{c.k}</p>

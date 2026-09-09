@@ -56,19 +56,19 @@ export function AuthShell({ title, lead, children, footer, points }: Props) {
   }, []);
 
   return (
-    <div ref={root} className="grid min-h-screen lg:grid-cols-[1fr_1fr]">
-      <div className="flex flex-col px-4 py-6 sm:px-8">
-        <div className="flex items-center justify-between gap-3">
-          <Link href="/" className="flex items-center gap-2 text-[0.9375rem] font-semibold tracking-tight">
-            <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary text-on-primary">
+    <div ref={root} className="grid min-h-screen min-w-0 overflow-x-clip lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="gutter-x flex min-w-0 flex-col py-6">
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <Link href="/" className="flex min-w-0 items-center gap-2 text-[0.9375rem] font-semibold tracking-tight">
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary text-on-primary">
               <Compass className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
             </span>
-            {APP_NAME}
+            <span className="truncate">{APP_NAME}</span>
           </Link>
           <LanguageSwitch />
         </div>
 
-        <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-10">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-8 sm:max-w-sm sm:py-10">
           <div data-auth-head>
             <h1 className="display-2">{title}</h1>
             <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">{lead}</p>

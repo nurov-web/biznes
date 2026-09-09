@@ -13,7 +13,7 @@ const LOCALES: { code: AppLocale; label: string }[] = [
   { code: "en", label: "EN" },
 ];
 
-export function LanguageSwitch() {
+export function LanguageSwitch({ className }: { className?: string }) {
   const t = useTranslations("nav");
   const locale = useLocale();
   const pathname = usePathname();
@@ -45,7 +45,7 @@ export function LanguageSwitch() {
 
   return (
     <div
-      className="seg relative"
+      className={`seg relative max-w-full shrink-0 ${className ?? ""}`}
       role="group"
       aria-label={t("language")}
       data-pending={pending || undefined}

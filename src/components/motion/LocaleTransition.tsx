@@ -36,7 +36,7 @@ export function LocaleTransition({ children }: { children: ReactNode }) {
   }, [locale]);
 
   return (
-    <div key={key} className={animate ? "locale-swap" : undefined}>
+    <div key={key} className={`w-full min-w-0 overflow-x-clip ${animate ? "locale-swap" : ""}`}>
       {children}
     </div>
   );

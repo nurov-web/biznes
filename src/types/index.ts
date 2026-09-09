@@ -69,6 +69,32 @@ export type ApiErrorBody = {
   fields?: Record<string, string>;
 };
 
+export type MarketVerdict = "good" | "watch" | "avoid";
+
+export type MarketSkuHint = {
+  name: string;
+  category: string;
+  typicalBuy: number;
+  typicalSell: number;
+  verdict: MarketVerdict;
+  why: string;
+};
+
+export type MarketBrief = {
+  city: string;
+  type: string;
+  climate: "good" | "mixed" | "hard";
+  summary: string;
+  demand: string;
+  prices: MarketSkuHint[];
+  products: string[];
+  risks: string[];
+  opportunities: string[];
+  usedAi: boolean;
+  usedWeb: boolean;
+  disclaimer: string;
+};
+
 export type DealDto = {
   id: string;
   title: string;

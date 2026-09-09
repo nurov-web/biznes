@@ -1,27 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
-import { LogOut } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { AppSidebar, MobileNav } from "@/components/AppSidebar";
+import { ProfileMenu } from "@/components/shell/ProfileMenu";
+import { EntryVeil } from "@/components/motion/EntryVeil";
+import { WelcomeSplash } from "@/components/motion/WelcomeSplash";
 import { useRouter } from "@/i18n/navigation";
+import {
+  clearEntrySplash,
+  hasPlayedEntrySplash,
+  markEntrySplashPlayed,
+} from "@/lib/splash";
 
 type Me = {
   user: { firstName: string; lastName: string; phoneVerified: boolean };
   business: { onboardingDone: boolean; name: string; city: string } | null;
 };
 
-function initials(first: string, last: string): string {
-  return `${first.slice(0, 1)}${last.slice(0, 1)}`.toUpperCase();
-}
+type Gate = "boot" | "splash" | "app";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const t = useTranslations("nav");
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
+  const [gate, setGate] = useState<Gate>("boot");
 
   useEffect(() => {
+    let cancelled = false;
     fetch("/api/auth/me")
       .then((r) => {
         if (r.status === 401) {
@@ -31,63 +36,66 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         return r.json() as Promise<Me>;
       })
       .then((data) => {
-        if (!data) return;
+        if (cancelled || !data) return;
         if (!data.business?.onboardingDone) {
           router.replace("/onboarding");
           return;
         }
         setMe(data);
+        setGate(hasPlayedEntrySplash() ? "app" : "splash");
       })
       .catch(() => router.replace("/login"));
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
+  const onSplashDone = useCallback(() => {
+    markEntrySplashPlayed();
+    setGate("app");
+  }, []);
+
   async function logout() {
+    clearEntrySplash();
     await fetch("/api/auth/logout", { method: "POST" });
     router.replace("/login");
   }
 
   if (!me) {
-    return (
-      <div className="grid min-h-screen place-items-center">
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-          {t("dashboard")}…
-        </div>
-      </div>
-    );
+    return <EntryVeil />;
   }
 
   return (
-    <div className="flex min-h-screen bg-surface">
-      <AppSidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-background/85 px-4 py-2.5 backdrop-blur-xl">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{me.business?.name}</p>
-            <p className="truncate text-xs text-muted-foreground">{me.business?.city}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <LanguageSwitch />
-            <span
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-xs font-semibold text-primary"
-              title={`${me.user.firstName} ${me.user.lastName}`}
-            >
-              {initials(me.user.firstName, me.user.lastName)}
-            </span>
-            <button
-              type="button"
-              className="grid h-11 w-11 place-items-center rounded-lg text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
-              onClick={logout}
-              aria-label={t("logout")}
-              title={t("logout")}
-            >
-              <LogOut className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-            </button>
-          </div>
-        </header>
-        <div className="flex-1 pb-20 md:pb-0">{children}</div>
+    <>
+      <div
+        className={`flex min-h-screen w-full min-w-0 overflow-x-clip bg-surface ${
+          gate === "splash" ? "pointer-events-none" : ""
+        }`}
+        aria-hidden={gate === "splash"}
+        inert={gate === "splash" ? true : undefined}
+      >
+        <AppSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-20 flex w-full min-w-0 items-center justify-between gap-2 overflow-x-clip border-b border-border bg-background/85 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] backdrop-blur-xl gutter-x">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{me.business?.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{me.business?.city}</p>
+            </div>
+            <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
+              <LanguageSwitch />
+              <ProfileMenu
+                firstName={me.user.firstName}
+                lastName={me.user.lastName}
+                businessName={me.business?.name ?? ""}
+                onLogout={() => void logout()}
+              />
+            </div>
+          </header>
+          <div className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">{children}</div>
+        </div>
+        <MobileNav />
       </div>
-      <MobileNav />
-    </div>
+      {gate === "splash" ? <WelcomeSplash onDone={onSplashDone} /> : null}
+    </>
   );
 }

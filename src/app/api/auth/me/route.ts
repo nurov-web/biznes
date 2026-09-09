@@ -18,6 +18,7 @@ export async function GET() {
           name: business.name,
           onboardingDone: business.onboardingDone,
           city: business.city,
+          type: business.type,
         }
       : null,
   });

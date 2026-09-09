@@ -67,7 +67,7 @@ export default function FinancePage() {
         ))}
       </section>
 
-      <form onSubmit={onSubmit} className="card-raised grid gap-3 p-5 md:grid-cols-4">
+      <form onSubmit={onSubmit} className="card-raised grid gap-3 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-4">
         <label className="grid gap-1.5 text-sm font-medium">
           {t("category")}
           <select
@@ -106,7 +106,7 @@ export default function FinancePage() {
         </div>
       </form>
 
-      <div className="card-raised overflow-x-auto">
+      <div className="card-raised table-scroll">
         <table className="table-intel">
           <thead>
             <tr>

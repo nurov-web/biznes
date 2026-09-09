@@ -76,7 +76,7 @@ export function Slider({
         if (Math.abs(delta) > 42) go(index + (delta < 0 ? 1 : -1));
       }}
     >
-      <div ref={stage} aria-live="polite">
+      <div className="overflow-hidden" ref={stage} aria-live="polite">
         {items[index]}
       </div>
       {count > 1 ? (

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { FormErrorSummary } from "@/components/FormErrorSummary";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { EntryVeil } from "@/components/motion/EntryVeil";
 
 export default function LoginPage() {
   const t = useTranslations("auth");
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [fieldErrors, setFieldErrors] = useState<{ login?: string; password?: string }>({});
   const [summary, setSummary] = useState("");
   const [busy, setBusy] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   function validate(): boolean {
     const next: { login?: string; password?: string } = {};
@@ -38,81 +40,85 @@ export default function LoginPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ login, password }),
     });
-    setBusy(false);
     if (!response.ok) {
+      setBusy(false);
       const message = t("badCreds");
       setSummary(message);
       setFieldErrors({ login: message, password: message });
       requestAnimationFrame(() => document.getElementById("form-errors")?.focus());
       return;
     }
+    setLeaving(true);
     router.push("/dashboard");
   }
 
   return (
-    <AuthShell
-      title={t("loginTitle")}
-      lead={t("loginLead")}
-      points={[tl("p1d"), tl("p3d"), tl("p4d")]}
-      footer={
-        <p className="mt-6 text-sm text-muted-foreground">
-          {t("noAccount")}{" "}
-          <Link href="/register" className="font-medium text-primary hover:underline">
-            {tn("register")}
-          </Link>
-        </p>
-      }
-    >
-      <form onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
-        <FormErrorSummary
-          title={t("errorSummary")}
-          items={summary ? [{ id: "login", message: summary }] : []}
-        />
-        <label className="grid gap-1.5 text-sm font-medium" htmlFor="login">
-          {t("loginHint")}
-          <input
-            id="login"
-            className={`input-field ${fieldErrors.login ? "input-error" : ""}`}
-            autoComplete="username"
-            value={login}
-            aria-invalid={Boolean(fieldErrors.login)}
-            aria-describedby={fieldErrors.login ? "login-error" : undefined}
-            onChange={(e) => {
-              setLogin(e.target.value);
-              setFieldErrors((f) => ({ ...f, login: undefined }));
-            }}
+    <>
+      {leaving ? <EntryVeil /> : null}
+      <AuthShell
+        title={t("loginTitle")}
+        lead={t("loginLead")}
+        points={[tl("p1d"), tl("p3d"), tl("p4d")]}
+        footer={
+          <p className="mt-6 text-sm text-muted-foreground">
+            {t("noAccount")}{" "}
+            <Link href="/register" className="font-medium text-primary hover:underline">
+              {tn("register")}
+            </Link>
+          </p>
+        }
+      >
+        <form onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
+          <FormErrorSummary
+            title={t("errorSummary")}
+            items={summary ? [{ id: "login", message: summary }] : []}
           />
-          {fieldErrors.login ? (
-            <span id="login-error" className="font-normal text-destructive">
-              {fieldErrors.login}
-            </span>
-          ) : null}
-        </label>
-        <label className="grid gap-1.5 text-sm font-medium" htmlFor="password">
-          {t("password")}
-          <input
-            id="password"
-            className={`input-field ${fieldErrors.password ? "input-error" : ""}`}
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            aria-invalid={Boolean(fieldErrors.password)}
-            aria-describedby={fieldErrors.password ? "password-error" : undefined}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setFieldErrors((f) => ({ ...f, password: undefined }));
-            }}
-          />
-          {fieldErrors.password ? (
-            <span id="password-error" className="font-normal text-destructive">
-              {fieldErrors.password}
-            </span>
-          ) : null}
-        </label>
-        <button className="btn btn-primary w-full" type="submit" disabled={busy}>
-          {busy ? t("pleaseWait") : t("loginSubmit")}
-        </button>
-      </form>
-    </AuthShell>
+          <label className="grid gap-1.5 text-sm font-medium" htmlFor="login">
+            {t("loginHint")}
+            <input
+              id="login"
+              className={`input-field ${fieldErrors.login ? "input-error" : ""}`}
+              autoComplete="username"
+              value={login}
+              aria-invalid={Boolean(fieldErrors.login)}
+              aria-describedby={fieldErrors.login ? "login-error" : undefined}
+              onChange={(e) => {
+                setLogin(e.target.value);
+                setFieldErrors((f) => ({ ...f, login: undefined }));
+              }}
+            />
+            {fieldErrors.login ? (
+              <span id="login-error" className="font-normal text-destructive">
+                {fieldErrors.login}
+              </span>
+            ) : null}
+          </label>
+          <label className="grid gap-1.5 text-sm font-medium" htmlFor="password">
+            {t("password")}
+            <input
+              id="password"
+              className={`input-field ${fieldErrors.password ? "input-error" : ""}`}
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              aria-invalid={Boolean(fieldErrors.password)}
+              aria-describedby={fieldErrors.password ? "password-error" : undefined}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setFieldErrors((f) => ({ ...f, password: undefined }));
+              }}
+            />
+            {fieldErrors.password ? (
+              <span id="password-error" className="font-normal text-destructive">
+                {fieldErrors.password}
+              </span>
+            ) : null}
+          </label>
+          <button className="btn btn-primary w-full" type="submit" disabled={busy}>
+            {busy ? t("pleaseWait") : t("loginSubmit")}
+          </button>
+        </form>
+      </AuthShell>
+    </>
   );
 }

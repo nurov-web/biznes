@@ -75,7 +75,7 @@ export default function CompetitorsPage() {
         </button>
       </form>
 
-      <div className="overflow-x-auto">
+      <div className="table-scroll">
         <table className="table-intel">
           <thead>
             <tr>

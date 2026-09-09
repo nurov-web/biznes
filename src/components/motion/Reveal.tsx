@@ -21,8 +21,9 @@ export function Reveal({ children, className, stagger = false, delay = 0, as }: 
     const node = ref.current;
     if (!node) return;
     const targets = stagger ? Array.from(node.children) : [node];
-    if (reducedMotion()) {
-      gsap.set(targets, { clearProps: "all", opacity: 1 });
+    const mobile = window.matchMedia("(max-width: 767.98px)").matches;
+    if (reducedMotion() || mobile) {
+      gsap.set(targets, { clearProps: "all", opacity: 1, y: 0 });
       node.classList.remove("reveal-init");
       return;
     }

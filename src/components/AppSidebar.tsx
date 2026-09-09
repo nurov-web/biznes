@@ -17,6 +17,7 @@ import {
   Rocket,
   Settings,
   Swords,
+  UserRound,
   Users,
   Wallet,
   Workflow,
@@ -112,7 +113,7 @@ export function AppSidebar() {
         </span>
         {APP_NAME}
       </Link>
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pb-6">
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pb-3">
         {groups.map((group, i) => (
           <div key={group.label} className={i > 0 ? "mt-5" : ""}>
             <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
@@ -124,6 +125,17 @@ export function AppSidebar() {
           </div>
         ))}
       </nav>
+      <Link
+        href="/profile"
+        className={`mx-3 mb-4 mt-auto flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 ${
+          isActive(pathname, "/profile")
+            ? "bg-primary text-on-primary shadow-[var(--shadow-xs)]"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        }`}
+      >
+        <UserRound className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+        {t("profile")}
+      </Link>
     </aside>
   );
 }
@@ -135,7 +147,7 @@ export function MobileNav() {
   const width = 100 / MOBILE.length;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur-xl md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
       <div className="relative">
         <span
           className="pointer-events-none absolute top-0 h-0.5 rounded-full bg-primary transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
@@ -154,7 +166,7 @@ export function MobileNav() {
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-14 flex-col items-center justify-center gap-1 px-1 py-2 text-[10px] leading-tight transition-colors duration-200 ${
+                  className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-2 text-[10px] leading-tight transition-colors duration-200 ${
                     active ? "text-primary" : "text-muted-foreground"
                   }`}
                 >
@@ -165,7 +177,7 @@ export function MobileNav() {
                     strokeWidth={1.75}
                     aria-hidden
                   />
-                  <span className="max-w-full truncate">{t(item.key as "dashboard")}</span>
+                  <span className="max-w-full truncate px-0.5 text-center">{t(item.key as "dashboard")}</span>
                 </Link>
               </li>
             );

@@ -60,7 +60,7 @@ export default function PlanPage() {
                 <span className="text-xs font-normal text-muted-foreground">/mo</span>
               </p>
             </header>
-            <dl className="mt-4 grid gap-3 sm:grid-cols-4">
+            <dl className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
               {[
                 { k: t("startupCost"), v: money(option.startupCost) },
                 { k: t("monthlyRevenue"), v: money(option.monthlyRevenue) },

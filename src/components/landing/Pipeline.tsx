@@ -45,8 +45,8 @@ export function Pipeline() {
   }, [active]);
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16 md:py-24">
-      <div ref={root} className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
+    <section className="gutter-x mx-auto w-full min-w-0 max-w-6xl py-16 md:py-24">
+      <div ref={root} className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
         <div className="lg:sticky lg:top-28 lg:self-start">
           <Reveal>
             <p className="eyebrow text-primary">{t("pipeEyebrow")}</p>

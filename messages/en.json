@@ -28,7 +28,17 @@
     "integrations": "Integrations",
     "settings": "Settings",
     "logout": "Log out",
-    "language": "Language"
+    "language": "Language",
+    "menu": "Menu",
+    "closeMenu": "Close",
+    "profile": "Profile"
+  },
+  "splash": {
+    "aria": "BusinessPilot AI",
+    "skip": "Skip",
+    "beat1": "Numbers. Price. Decision.",
+    "beat2": "Forecast — not a profit guarantee.",
+    "beat3": "The system is ready."
   },
   "landing": {
     "kicker": "A decision system for entrepreneurs in Tajikistan",
@@ -565,5 +575,36 @@
     "cancel": "Cancel",
     "loading": "Loading…",
     "tjs": "TJS"
+  },
+  "scan": {
+    "title": "City market scan",
+    "lead": "AI searches public web data for your city and suggests what is worth selling now. Forecast, not a guarantee. Live Somon/OLX prices are not scraped.",
+    "loading": "Scanning the city…",
+    "refresh": "Refresh",
+    "climateGood": "Favorable climate",
+    "climateMixed": "Mixed climate",
+    "climateHard": "Tough climate",
+    "demand": "Demand",
+    "products": "Goods and price guide",
+    "good": "Worth it",
+    "watch": "Caution",
+    "avoid": "Skip",
+    "cost": "Cost",
+    "sell": "Shelf",
+    "risks": "Risks",
+    "opportunities": "Opportunities",
+    "apply": "Add to catalog",
+    "applied": "Added",
+    "webOn": "Web search + AI",
+    "aiOn": "AI without live search",
+    "local": "City model (no AI)"
+  },
+  "profilePage": {
+    "title": "Profile",
+    "lead": "Account, business and shortcuts to work.",
+    "account": "Account",
+    "business": "Business",
+    "shortcuts": "Navigation",
+    "openMenu": "Open profile menu"
   }
 }

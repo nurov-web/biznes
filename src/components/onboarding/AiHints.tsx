@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Lightbulb } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
+import { Reveal } from "@/components/motion/Reveal";
 import type { ProductDraft } from "@/types";
 
 type Props = {
@@ -64,7 +65,8 @@ export function AiHints({ type, city, name, products, step }: Props) {
   if (!hints.length && !loading) return null;
 
   return (
-    <aside className="mt-6 rounded-2xl border border-border bg-muted/50 p-4">
+    <Reveal>
+    <aside className="mt-6 rounded-2xl border border-primary/20 bg-primary-soft/40 p-4">
       <p className="flex items-center gap-2 text-sm font-medium">
         <Icon icon={Lightbulb} className="h-4 w-4 text-primary" />
         {t("hintsTitle")}
@@ -78,5 +80,6 @@ export function AiHints({ type, city, name, products, step }: Props) {
         ))}
       </ul>
     </aside>
+    </Reveal>
   );
 }

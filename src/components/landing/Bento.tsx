@@ -45,14 +45,14 @@ export function Bento() {
 
   return (
     <section className="border-y border-border bg-surface">
-      <div className="mx-auto max-w-6xl px-4 py-16 md:py-20">
+      <div className="gutter-x mx-auto w-full min-w-0 max-w-6xl py-16 md:py-20">
         <Reveal>
           <p className="eyebrow text-primary">{t("bentoEyebrow")}</p>
           <h2 className="display-2 mt-3 max-w-2xl text-balance">{t("bentoTitle")}</h2>
         </Reveal>
 
         <Reveal stagger className="mt-9 grid gap-4 lg:grid-cols-3">
-          <article className="card-raised hover-lift p-6 lg:col-span-2">
+          <article className="card-raised hover-lift p-4 sm:p-6 lg:col-span-2">
             <IconWell icon={CircuitBoard} />
             <h3 className="display-3 mt-4">{t("f5")}</h3>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground">{t("f5d")}</p>
@@ -65,21 +65,21 @@ export function Bento() {
             </ol>
           </article>
 
-          <article className="card-raised hover-lift p-6">
+          <article className="card-raised hover-lift p-4 sm:p-6">
             <IconWell icon={BadgePercent} />
             <h3 className="display-3 mt-4">{t("f3")}</h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t("f3d")}</p>
             <MiniPriceRow />
           </article>
 
-          <article className="card-raised hover-lift p-6">
+          <article className="card-raised hover-lift p-4 sm:p-6">
             <IconWell icon={ChartLine} />
             <h3 className="display-3 mt-4">{t("f1")}</h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t("f1d")}</p>
             <MiniBars />
           </article>
 
-          <article className="card-raised hover-lift p-6">
+          <article className="card-raised hover-lift p-4 sm:p-6">
             <IconWell icon={FlaskConical} />
             <h3 className="display-3 mt-4">{t("f4")}</h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t("f4d")}</p>
@@ -92,7 +92,7 @@ export function Bento() {
             </div>
           </article>
 
-          <article className="card-raised hover-lift p-6">
+          <article className="card-raised hover-lift p-4 sm:p-6">
             <IconWell icon={Users} />
             <h3 className="display-3 mt-4">{t("agentsTitle")}</h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t("agentsBody")}</p>
@@ -105,20 +105,20 @@ export function Bento() {
             </div>
           </article>
 
-          <article className="card-raised hover-lift p-6 lg:col-span-3">
+          <article className="card-raised hover-lift p-4 sm:p-6 lg:col-span-3">
             <div className="flex flex-wrap items-start justify-between gap-6">
               <div className="max-w-lg">
                 <IconWell icon={Boxes} />
                 <h3 className="display-3 mt-4">{t("f2")}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t("f2d")}</p>
               </div>
-              <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-3" aria-hidden>
+              <div className="grid min-w-0 flex-1 grid-cols-2 gap-2 sm:grid-cols-3" aria-hidden>
                 {["CSV / Excel", "Shopify", "WooCommerce", "Stripe", "PayPal", "POS"].map((name, i) => (
                   <div
                     key={name}
-                    className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2 text-xs"
+                    className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs"
                   >
-                    <span>{name}</span>
+                    <span className="truncate">{name}</span>
                     <span className={i === 0 ? "text-success" : "text-muted-foreground"}>
                       {i === 0 ? t("bLive") : t("bQueued")}
                     </span>

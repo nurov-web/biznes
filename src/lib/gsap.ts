@@ -15,4 +15,7 @@ export function reducedMotion(): boolean {
 
 export const EASE = "power2.out";
 
+/** Overlay ва splash: ором, бе bounce. */
+export const EASE_PREMIUM = "power3.out";
+
 export { gsap, ScrollTrigger };

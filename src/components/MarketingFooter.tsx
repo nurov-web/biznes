@@ -40,9 +40,9 @@ export function MarketingFooter() {
 
   return (
     <footer className="border-t border-border bg-background">
-      <div className="mx-auto max-w-6xl px-4 py-14">
-        <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
-          <div>
+      <div className="gutter-x mx-auto w-full min-w-0 max-w-6xl py-14">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
+          <div className="sm:col-span-2 lg:col-span-1">
             <p className="flex items-center gap-2.5 font-semibold tracking-tight">
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-on-primary">
                 <Compass className="h-4 w-4" strokeWidth={2} aria-hidden />

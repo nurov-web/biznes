@@ -146,7 +146,7 @@ export default function ClientsPage() {
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        <label className="relative min-w-56 flex-1">
+        <label className="relative min-w-0 w-full flex-1 sm:min-w-56">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
             strokeWidth={1.75}
@@ -160,7 +160,7 @@ export default function ClientsPage() {
             aria-label={t("search")}
           />
         </label>
-        <div className="seg">
+        <div className="seg seg-wrap max-w-full">
           {segments.map((s) => (
             <button
               key={s}
@@ -175,7 +175,7 @@ export default function ClientsPage() {
         </div>
       </div>
 
-      <div className="card-raised overflow-x-auto">
+      <div className="card-raised table-scroll">
         <table className="table-intel">
           <thead>
             <tr>

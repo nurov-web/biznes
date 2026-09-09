@@ -57,7 +57,7 @@ export default function DashboardPage() {
   ];
 
   const cards = questions.map((q) => (
-    <article key={q.k} className="card-raised min-h-[9.5rem] p-6">
+    <article key={q.k} className="card-raised min-h-[9.5rem] min-w-0 p-4 sm:p-6">
       <p className="eyebrow text-primary">{q.k}</p>
       <p className="mt-2.5 text-sm leading-relaxed">{q.v}</p>
     </article>
@@ -98,7 +98,7 @@ export default function DashboardPage() {
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
         <article className="card-raised col-span-2 p-5 lg:col-span-1">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Health</p>
-          <p className={`num mt-2 text-4xl font-semibold ${healthTone(data.healthScore)}`}>
+          <p className={`num mt-2 text-3xl font-semibold sm:text-4xl ${healthTone(data.healthScore)}`}>
             {data.healthScore}
             <span className="text-base text-muted-foreground">/100</span>
           </p>
@@ -113,7 +113,7 @@ export default function DashboardPage() {
           .filter((k) => k.key !== "health")
           .slice(0, 4)
           .map((k) => (
-            <article key={k.key} className="card-raised p-5">
+            <article key={k.key} className="card-raised min-w-0 p-4 sm:p-5">
               <p className="truncate text-xs uppercase tracking-wide text-muted-foreground">{k.label}</p>
               <p className="num mt-2 text-xl font-semibold sm:text-2xl">
                 {k.value.toLocaleString("ru-RU")}
@@ -137,7 +137,7 @@ export default function DashboardPage() {
       </Reveal>
 
       {decision ? (
-        <article className="card-raised border-primary/30 p-6">
+        <article className="card-raised border-primary/30 p-4 sm:p-6">
           <p className="eyebrow text-primary">{t("pipeline")}</p>
           <p className="mt-2.5 whitespace-pre-wrap text-sm leading-relaxed">{decision}</p>
         </article>
@@ -146,7 +146,7 @@ export default function DashboardPage() {
       {week.length ? <SalesChart points={week} label={t("week")} /> : null}
 
       <section className="grid gap-3 lg:grid-cols-2">
-        <article className="card-raised p-6">
+        <article className="card-raised p-4 sm:p-6">
           <h2 className="display-3 flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-warning" strokeWidth={1.75} aria-hidden />
             {t("alerts")}
@@ -175,7 +175,7 @@ export default function DashboardPage() {
             )}
           </ul>
         </article>
-        <article className="card-raised p-6">
+        <article className="card-raised p-4 sm:p-6">
           <h2 className="display-3 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
             {t("memory")}

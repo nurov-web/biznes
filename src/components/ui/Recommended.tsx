@@ -34,7 +34,7 @@ export function RecommendedNote({ suggestion }: { suggestion: Suggestion | null 
         </p>
       ) : null}
       {suggestion.href ? (
-        <Link href={suggestion.href} className="btn btn-sm btn-primary mt-3">
+        <Link href={suggestion.href} className="btn btn-sm btn-primary mt-3 max-w-full">
           {t("startWith")}
           <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
         </Link>

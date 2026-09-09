@@ -42,6 +42,7 @@ export type PriceRow = {
 export type IntelligenceSnapshot = {
   businessName: string;
   city: string;
+  businessType: string;
   currency: string;
   dataQuality: number;
   healthScore: number;
@@ -228,6 +229,7 @@ export function buildIntelligence(
   return {
     businessName: business.name,
     city: business.city,
+    businessType: business.type,
     currency: "TJS",
     dataQuality: Math.round(dataQuality * 100),
     healthScore,

@@ -22,7 +22,7 @@ export default function PricingPage() {
   return (
     <PageShell title={t("priceTitle")} lead={t("priceLead")}>
       <RecommendedNote suggestion={tip} />
-      <div className="card-raised overflow-x-auto">
+      <div className="card-raised table-scroll">
         <table className="table-intel">
           <thead>
             <tr>

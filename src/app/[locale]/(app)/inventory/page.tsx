@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useIntelligence } from "@/hooks/useIntelligence";
+import { PageShell } from "@/components/PageShell";
 import { RecommendedBadge, RecommendedNote } from "@/components/ui/Recommended";
 import { parseLocale } from "@/lib/locale-query";
 import { suggestReorder } from "@/services/intelligence/advice";
@@ -80,13 +81,14 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="space-y-4 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{t("title")}</h1>
+    <PageShell
+      title={t("title")}
+      action={
         <button type="button" className="btn btn-primary" onClick={() => setOpen(true)}>
           {t("add")}
         </button>
-      </div>
+      }
+    >
       <RecommendedNote suggestion={reorderTip} />
       {open ? (
         <form onSubmit={onCreate} className="card grid gap-3 p-4 md:grid-cols-2">
@@ -125,7 +127,7 @@ export default function InventoryPage() {
           <button className="btn btn-primary md:col-span-2" type="submit">{to("add")}</button>
         </form>
       ) : null}
-      <div className="overflow-x-auto card">
+      <div className="table-scroll card">
         <table className="min-w-full text-left text-sm">
           <thead className="bg-muted">
             <tr>
@@ -150,9 +152,9 @@ export default function InventoryPage() {
                 <td className="px-3 py-2 font-mono">{p.quantity}</td>
                 <td className="px-3 py-2">
                   <div className="flex flex-wrap gap-2">
-                    <button type="button" className="btn btn-ghost text-xs" onClick={() => move(p.id, "in")}>{t("in")}</button>
-                    <button type="button" className="btn btn-ghost text-xs" onClick={() => move(p.id, "out")}>{t("out")}</button>
-                    <button type="button" className="btn btn-ghost text-xs text-destructive" onClick={() => archive(p.id)}>{t("archive")}</button>
+                    <button type="button" className="btn btn-sm btn-ghost" onClick={() => move(p.id, "in")}>{t("in")}</button>
+                    <button type="button" className="btn btn-sm btn-ghost" onClick={() => move(p.id, "out")}>{t("out")}</button>
+                    <button type="button" className="btn btn-sm btn-ghost text-destructive" onClick={() => archive(p.id)}>{t("archive")}</button>
                   </div>
                 </td>
               </tr>
@@ -182,6 +184,6 @@ export default function InventoryPage() {
           </ul>
         </article>
       ) : null}
-    </div>
+    </PageShell>
   );
 }

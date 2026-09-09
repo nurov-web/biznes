@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { parseLocale, llmLanguage } from "@/lib/locale-query";
 import { completeClaude, extractJsonObject } from "@/services/ai/claude";
+import { localMarketBrief } from "@/constants/city-market";
 
 const schema = z.object({
   locale: z.enum(["tg", "ru", "en"]).optional(),
@@ -57,7 +58,15 @@ export async function POST(request: Request) {
     if (!parsed.success) return jsonError("validation", 400);
     const data = parsed.data;
     const locale = parseLocale(data.locale);
-    const fallback = localHints(locale, data.city);
+    const market = localMarketBrief(data.city || "Душанбе", data.type, locale);
+    const sku = market.prices.find((p) => p.verdict === "good") ?? market.prices[0];
+    const fallback = sku
+      ? [
+          market.summary,
+          `${sku.name}: ${sku.why}`,
+          ...localHints(locale, data.city).slice(0, 1),
+        ]
+      : localHints(locale, data.city);
 
     try {
       const text = await completeClaude(
@@ -67,6 +76,8 @@ export async function POST(request: Request) {
           city: data.city,
           name: data.name,
           products: data.products,
+          cityClimate: market.climate,
+          citySummary: market.summary,
         }).slice(0, 4000),
       );
       const raw = extractJsonObject(text) as { hints?: unknown };

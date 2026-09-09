@@ -16,7 +16,7 @@ export function Pricing() {
 
   return (
     <section id="pricing" className="border-y border-border bg-surface">
-      <div className="mx-auto max-w-6xl px-4 py-16 md:py-20">
+      <div className="gutter-x mx-auto w-full min-w-0 max-w-6xl py-16 md:py-20">
         <Reveal>
           <p className="eyebrow text-primary">{t("prices")}</p>
           <h2 className="display-2 mt-3 text-balance">{t("priceHead")}</h2>
@@ -28,7 +28,7 @@ export function Pricing() {
             return (
               <article
                 key={row.id}
-                className={`relative flex flex-col rounded-2xl border p-6 transition-shadow duration-200 ${
+                className={`relative flex flex-col rounded-2xl border p-5 transition-shadow duration-200 sm:p-6 ${
                   featured
                     ? "border-primary bg-card shadow-[var(--shadow-lg)]"
                     : "border-border bg-card shadow-[var(--shadow-xs)]"
@@ -42,7 +42,7 @@ export function Pricing() {
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                   {row.id}
                 </h3>
-                <p className="num mt-3 text-4xl font-semibold tracking-tight">
+                <p className="num mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
                   {row.price}
                   <span className="ml-1.5 font-sans text-sm font-normal text-muted-foreground">
                     {t("perMonth")}

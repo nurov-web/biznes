@@ -73,32 +73,94 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+html {
+  overscroll-behavior-x: none;
+}
+
 html,
 body {
   background: var(--background);
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   font-feature-settings: "cv02", "cv03", "cv04", "ss01";
+  overflow-x: clip;
+}
+
+@supports not (overflow: clip) {
+  body {
+    overflow-x: hidden;
+  }
+}
+
+img,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+svg {
+  max-width: 100%;
+}
+
+/* Канори бехатар + ҷойи нафас дар ҳамаи телефонҳо */
+.gutter-x {
+  padding-left: max(1.25rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1.25rem, env(safe-area-inset-right, 0px));
+}
+
+@media (min-width: 768px) {
+  .gutter-x {
+    padding-left: max(2rem, env(safe-area-inset-left, 0px));
+    padding-right: max(2rem, env(safe-area-inset-right, 0px));
+  }
+}
+
+.card,
+.card-raised,
+.app-frame,
+.panel-dark,
+.table-scroll {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Типографияи сайёл ───────────────────────────────── */
 
 .display-1 {
-  font-size: clamp(2.5rem, 1.6rem + 3.6vw, 4.5rem);
-  line-height: 1.03;
+  font-size: clamp(1.5rem, 0.85rem + 5vw, 4.5rem);
+  line-height: 1.12;
   letter-spacing: -0.035em;
   font-weight: 600;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .display-2 {
-  font-size: clamp(1.85rem, 1.35rem + 1.9vw, 2.75rem);
-  line-height: 1.1;
+  font-size: clamp(1.3rem, 1.05rem + 1.4vw, 2.75rem);
+  line-height: 1.18;
   letter-spacing: -0.028em;
   font-weight: 600;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .display-3 {
@@ -109,9 +171,11 @@ body {
 }
 
 .lead {
-  font-size: clamp(1rem, 0.95rem + 0.35vw, 1.185rem);
+  font-size: clamp(0.95rem, 0.9rem + 0.3vw, 1.185rem);
   line-height: 1.62;
   color: var(--muted-foreground);
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .eyebrow {
@@ -125,6 +189,7 @@ body {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
 }
 
 /* ── Заминаҳо ────────────────────────────────────────── */
@@ -163,6 +228,7 @@ body {
 
 /* ── Тугмаҳо ─────────────────────────────────────────── */
 
+@layer components {
 .btn {
   display: inline-flex;
   align-items: center;
@@ -174,6 +240,7 @@ body {
   letter-spacing: -0.006em;
   padding: 0.65rem 1.15rem;
   min-height: 44px;
+  max-width: 100%;
   white-space: nowrap;
   transition:
     background-color 160ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -186,6 +253,14 @@ body {
 @media (max-width: 768px) {
   .btn {
     min-height: 48px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .btn {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
   }
 }
 
@@ -218,10 +293,18 @@ body {
 /* Интихобкунандаи забон */
 .seg {
   display: inline-flex;
+  max-width: 100%;
   overflow: hidden;
+  flex-wrap: nowrap;
   border-radius: 0.6rem;
   border: 1px solid var(--border-strong);
   background: var(--card);
+}
+
+.seg-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  overflow: visible;
 }
 
 .seg-item {
@@ -281,7 +364,16 @@ body {
 @media (max-width: 768px) {
   .seg-item {
     min-height: 40px;
-    min-width: 44px;
+    min-width: 40px;
+  }
+}
+
+@media (max-width: 380px) {
+  .seg-item {
+    min-height: 36px;
+    min-width: 2rem;
+    padding: 0 0.2rem;
+    font-size: 0.6875rem;
   }
 }
 
@@ -380,13 +472,20 @@ body {
 
 .input-field {
   width: 100%;
+  min-width: 0;
   border: 1px solid var(--border-strong);
   background: var(--card);
   border-radius: 0.7rem;
   padding: 0.7rem 0.9rem;
-  font-size: 0.9375rem;
+  font-size: 16px;
   color: var(--foreground);
   transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+@media (min-width: 640px) {
+  .input-field {
+    font-size: 0.9375rem;
+  }
 }
 
 .input-field::placeholder {
@@ -436,6 +535,7 @@ body {
   padding: 0.75rem;
   border-bottom: 1px solid var(--border);
   vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
 .table-intel tbody tr {
@@ -449,7 +549,9 @@ body {
 /* ── Нишонаҳо ────────────────────────────────────────── */
 
 .chip {
-  display: inline-flex;
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
   align-items: center;
   gap: 0.35rem;
   border-radius: 999px;
@@ -458,12 +560,54 @@ body {
   padding: 0.3rem 0.7rem;
   font-size: 0.8125rem;
   color: var(--muted-foreground);
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  box-sizing: border-box;
 }
 
 .chip-dark {
-  border-color: rgb(255 255 255 / 0.14);
-  background: rgb(255 255 255 / 0.05);
-  color: var(--dark-muted);
+  border-color: rgb(255 255 255 / 0.18);
+  background: rgb(255 255 255 / 0.06);
+  color: var(--dark-text);
+}
+}
+
+/* Header: дар телефон танҳо лого + меню — ҳатто агар Tailwind бор нашавад */
+@media (max-width: 767.98px) {
+  [data-nav="desktop"] {
+    display: none !important;
+  }
+
+  [data-nav="toggle"] {
+    display: grid !important;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (min-width: 768px) {
+  [data-nav="desktop"] {
+    display: flex !important;
+  }
+
+  [data-nav="toggle"],
+  [data-nav="panel"] {
+    display: none !important;
+  }
+}
+
+[data-nav="panel"] .seg {
+  display: flex;
+  width: 100%;
 }
 
 /* ── Дастрасӣ ────────────────────────────────────────── */
@@ -504,7 +648,14 @@ summary {
   }
 }
 
-/* Ҳолати ибтидоӣ барои элементҳое, ки GSAP мекушояд */
+/* Ҳолати ибтидоӣ барои элементҳое, ки GSAP мекушояд — дар телефон пинҳон набошад */
 .reveal-init {
   opacity: 0;
+}
+
+@media (max-width: 767.98px) {
+  .reveal-init {
+    opacity: 1;
+    transform: none;
+  }
 }

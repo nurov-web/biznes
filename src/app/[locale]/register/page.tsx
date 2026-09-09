@@ -95,7 +95,7 @@ export default function RegisterPage() {
     >
       <form onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
         <FormErrorSummary title={t("errorSummary")} items={errors} />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="grid gap-1.5 text-sm font-medium" htmlFor="firstName">
             {t("firstName")}
             <input

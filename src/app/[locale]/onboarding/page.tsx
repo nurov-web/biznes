@@ -20,7 +20,7 @@ export default function OnboardingPage() {
   }, [router]);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
+    <div className="gutter-x mx-auto max-w-3xl py-8 sm:py-10">
       <div className="mb-6 flex justify-end">
         <LanguageSwitch />
       </div>

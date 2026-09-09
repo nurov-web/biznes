@@ -8,6 +8,8 @@ import { useRouter } from "@/i18n/navigation";
 import { GsapStep } from "@/components/motion/GsapStep";
 import { ProductCatalogForm } from "@/components/onboarding/ProductCatalogForm";
 import { AiHints } from "@/components/onboarding/AiHints";
+import { MarketScanCard } from "@/components/market/MarketScanCard";
+import { skuToDraft } from "@/lib/sku-draft";
 import type { ProductDraft } from "@/types";
 
 const STEP_KEYS = ["type", "details", "catalog", "market", "numbers"] as const;
@@ -82,7 +84,7 @@ export function ExistingBusinessFlow({ onBack }: { onBack: () => void }) {
   return (
     <form onSubmit={onSubmit}>
       <p className="text-sm font-medium text-primary">{t("step", { current: step, total: TOTAL })}</p>
-      <h1 className="mt-1 text-3xl font-semibold tracking-tight">{t("title")}</h1>
+      <h1 className="display-2 mt-1">{t("title")}</h1>
       <p className="mt-2 max-w-xl text-sm text-muted-foreground">{t("subtitle")}</p>
       <ol className="mt-6 flex gap-2" aria-label={t("step", { current: step, total: TOTAL })}>
         {STEP_KEYS.map((key, i) => (
@@ -96,7 +98,7 @@ export function ExistingBusinessFlow({ onBack }: { onBack: () => void }) {
           </li>
         ))}
       </ol>
-      <div className="card mt-6 p-6 shadow-sm">
+      <div className="card mt-6 p-4 shadow-sm sm:p-6">
         {error ? (
           <p className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
             {error}
@@ -231,6 +233,23 @@ export function ExistingBusinessFlow({ onBack }: { onBack: () => void }) {
           )}
         </GsapStep>
         <AiHints type={type} city={city} name={name} products={products} step={step} />
+        {step >= 2 ? (
+          <MarketScanCard
+            city={city}
+            type={type}
+            products={products.map((p) => ({ category: p.category, brand: p.brand, model: p.model }))}
+            onApply={(sku) => {
+              setProducts((rows) => {
+                if (rows.some((row) => row.model === sku.name || `${row.brand} ${row.model}`.trim() === sku.name)) {
+                  return rows;
+                }
+                const next = skuToDraft(sku);
+                const blank = rows.length === 1 && !rows[0].model.trim() && !rows[0].category.trim();
+                return blank ? [next] : [...rows, next];
+              });
+            }}
+          />
+        ) : null}
         <div className="mt-8 flex flex-wrap justify-between gap-3">
           <button
             type="button"

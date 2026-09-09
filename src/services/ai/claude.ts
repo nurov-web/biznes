@@ -14,7 +14,9 @@ export type ToolSpec = {
 type ContentBlock =
   | { type: "text"; text: string }
   | { type: "tool_use"; id: string; name: string; input: unknown }
-  | { type: "tool_result"; tool_use_id: string; content: string };
+  | { type: "tool_result"; tool_use_id: string; content: string }
+  | { type: "server_tool_use"; name?: string }
+  | { type: "web_search_tool_result" };
 
 type Message = { role: "user" | "assistant"; content: string | ContentBlock[] };
 
@@ -131,4 +133,57 @@ export function extractJsonObject(text: string): unknown {
 
 export function aiConfigured(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY?.trim());
+}
+
+/**
+ * Claude бо ҷустуҷӯи интернети серверӣ (на парсинги Somon/OLX).
+ * Агар асбоб дастнорас бошад, хато медиҳад — даъваткунанда fallback мекунад.
+ */
+export async function completeClaudeWeb(options: {
+  system: string;
+  user: string;
+  city?: string;
+  maxUses?: number;
+}): Promise<{ text: string; usedWeb: boolean }> {
+  const location = options.city
+    ? {
+        type: "approximate" as const,
+        city: options.city,
+        country: "TJ",
+        timezone: "Asia/Dushanbe",
+      }
+    : {
+        type: "approximate" as const,
+        city: "Dushanbe",
+        country: "TJ",
+        timezone: "Asia/Dushanbe",
+      };
+
+  const data = await callApi({
+    max_tokens: 4000,
+    system: options.system,
+    tools: [
+      {
+        type: "web_search_20250305",
+        name: "web_search",
+        max_uses: options.maxUses ?? 4,
+        user_location: location,
+      },
+    ],
+    messages: [{ role: "user", content: options.user.slice(0, 8000) }],
+  });
+  const blocks = data.content ?? [];
+  const usedWeb = blocks.some(
+    (block) =>
+      block.type === "web_search_tool_result" ||
+      block.type === "server_tool_use" ||
+      (block.type === "tool_use" && block.name === "web_search"),
+  );
+  const text = blocks
+    .filter((block): block is Extract<ContentBlock, { type: "text" }> => block.type === "text")
+    .map((block) => block.text)
+    .join("\n")
+    .trim();
+  if (!text) throw new Error("Empty Claude web response");
+  return { text, usedWeb };
 }

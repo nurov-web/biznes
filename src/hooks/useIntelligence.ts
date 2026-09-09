@@ -26,6 +26,7 @@ export type IntelPrice = {
 export type IntelSnap = {
   businessName: string;
   city: string;
+  businessType: string;
   currency: string;
   dataQuality: number;
   healthScore: number;
