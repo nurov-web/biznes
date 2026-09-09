@@ -5,8 +5,7 @@ import { useTranslations } from "next-intl";
 import { Compass } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
-import { EASE, gsap, reducedMotion } from "@/lib/gsap";
-import { isLocaleSwap } from "@/lib/locale-swap";
+import { EASE, gsap, restoreVisible, shouldSkipIntro } from "@/lib/gsap";
 import { APP_NAME } from "@/constants";
 
 type Props = {
@@ -31,35 +30,28 @@ export function AuthShell({ title, lead, children, footer, points }: Props) {
     const panel = node.querySelectorAll<HTMLElement>("[data-auth-panel] > *");
     const all = [...head, ...fields, ...foot, ...panel];
 
-    if (reducedMotion() || isLocaleSwap()) {
-      gsap.set(all, { opacity: 1, y: 0, clearProps: "all" });
+    if (shouldSkipIntro()) {
+      restoreVisible(all);
       return;
     }
 
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: EASE } });
-      tl.fromTo(head, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.07 })
-        .fromTo(
-          fields,
-          { opacity: 0, y: 12 },
-          { opacity: 1, y: 0, duration: 0.42, stagger: 0.055 },
-          "-=0.24",
-        )
-        .fromTo(foot, { opacity: 0 }, { opacity: 1, duration: 0.35 }, "-=0.12")
-        .fromTo(
-          panel,
-          { opacity: 0, y: 16 },
-          { opacity: 1, y: 0, duration: 0.5, stagger: 0.08 },
-          0.15,
-        );
+      const tl = gsap.timeline({ defaults: { ease: EASE, clearProps: "transform" } });
+      tl.from(head, { y: 14, duration: 0.5, stagger: 0.07 })
+        .from(fields, { y: 12, duration: 0.42, stagger: 0.055 }, "-=0.24")
+        .from(foot, { y: 8, duration: 0.35 }, "-=0.12")
+        .from(panel, { y: 16, duration: 0.5, stagger: 0.08 }, 0.15);
     }, node);
-    return () => ctx.revert();
+    return () => {
+      ctx.revert();
+      restoreVisible(all);
+    };
   }, []);
 
   return (
-    <div ref={root} className="grid min-h-screen min-w-0 overflow-x-clip lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+    <div ref={root} className="grid min-h-screen min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <div className="gutter-x flex min-w-0 flex-col py-6">
-        <div className="flex min-w-0 items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/" className="flex min-w-0 items-center gap-2 text-[0.9375rem] font-semibold tracking-tight">
             <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary text-on-primary">
               <Compass className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />

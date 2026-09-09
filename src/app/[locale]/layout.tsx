@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { NextIntlClientProvider, hasLocale } from "next-intl";
-import { getMessages, setRequestLocale } from "next-intl/server";
+import { hasLocale } from "next-intl";
+import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { LocaleTransition } from "@/components/motion/LocaleTransition";
 import { DocumentLang } from "@/components/motion/DocumentLang";
+import { I18nClientProvider } from "@/components/i18n/I18nClientProvider";
 
 export const metadata: Metadata = {
   title: "BusinessPilot AI",
@@ -24,11 +25,10 @@ export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
-  const messages = await getMessages();
   return (
-    <NextIntlClientProvider messages={messages}>
-      <DocumentLang locale={locale} />
+    <I18nClientProvider locale={locale}>
+      <DocumentLang />
       <LocaleTransition>{children}</LocaleTransition>
-    </NextIntlClientProvider>
+    </I18nClientProvider>
   );
 }

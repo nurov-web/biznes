@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { isLocaleSwap } from "@/lib/locale-swap";
+import { gsap, restoreVisible, shouldSkipIntro } from "@/lib/gsap";
 
 type Props = {
   step: number;
@@ -16,19 +15,22 @@ export function GsapStep({ step, children }: Props) {
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce || isLocaleSwap()) {
-      gsap.set(node, { opacity: 1, y: 0 });
+    if (shouldSkipIntro()) {
+      restoreVisible(node);
       return;
     }
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        node,
-        { opacity: 0, y: 10 },
-        { opacity: 1, y: 0, duration: 0.32, ease: "power1.out" },
-      );
+      gsap.from(node, {
+        y: 10,
+        duration: 0.32,
+        ease: "power1.out",
+        clearProps: "transform",
+      });
     }, node);
-    return () => ctx.revert();
+    return () => {
+      ctx.revert();
+      restoreVisible(node);
+    };
   }, [step]);
 
   return <div ref={ref}>{children}</div>;

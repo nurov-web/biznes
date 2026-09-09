@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { AlertTriangle, BadgePercent, Boxes, FlaskConical, LayoutDashboard } from "lucide-react";
-import { EASE, gsap, reducedMotion } from "@/lib/gsap";
+import { EASE, gsap, reducedMotion, restoreVisible } from "@/lib/gsap";
 import { isLocaleSwap } from "@/lib/locale-swap";
 
 const TABS = ["dash", "price", "sim"] as const;
@@ -44,7 +44,10 @@ function Ring({ score }: { score: number }) {
         { strokeDashoffset: offset, duration: 1.4, ease: EASE },
       );
     });
-    return () => ctx.revert();
+    return () => {
+      ctx.revert();
+      gsap.set(node, { strokeDashoffset: offset });
+    };
   }, [score, circumference]);
 
   return (
@@ -83,17 +86,22 @@ export function ProductPreview() {
   useEffect(() => {
     const node = bodyRef.current;
     if (!node || reducedMotion() || isLocaleSwap()) {
-      if (node) gsap.set(node.children, { opacity: 1, y: 0 });
+      if (node) restoreVisible(node.children);
       return;
     }
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        node.children,
-        { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.42, ease: EASE, stagger: 0.05 },
-      );
+      gsap.from(node.children, {
+        y: 12,
+        duration: 0.42,
+        ease: EASE,
+        stagger: 0.05,
+        clearProps: "transform",
+      });
     }, node);
-    return () => ctx.revert();
+    return () => {
+      ctx.revert();
+      restoreVisible(node.children);
+    };
   }, [tab]);
 
   const tabIcon = { dash: LayoutDashboard, price: BadgePercent, sim: FlaskConical };
@@ -208,7 +216,7 @@ export function ProductPreview() {
                 {[
                   ["Lenovo IdeaPad 3", "4 428", "5 200", "5 490"],
                   ["Powerbank 10000", "103", "129", "142"],
-                  ["Кабел Type-C", "13", "19", "22"],
+                  ["Type-C cable", "13", "19", "22"],
                 ].map((row) => (
                   <li key={row[0]} className="rounded-lg border border-dark-border bg-[#0c1421] p-2.5">
                     <p className="truncate text-[11px] font-medium text-dark-text">{row[0]}</p>

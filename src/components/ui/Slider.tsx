@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { EASE, gsap, reducedMotion } from "@/lib/gsap";
+import { EASE, gsap, reducedMotion, restoreVisible } from "@/lib/gsap";
 
 type Props = {
   items: ReactNode[];
@@ -43,13 +43,17 @@ export function Slider({
     const node = stage.current;
     if (!node || reducedMotion()) return;
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        node,
-        { opacity: 0, x: 22 },
-        { opacity: 1, x: 0, duration: 0.42, ease: EASE },
-      );
+      gsap.from(node, {
+        x: 22,
+        duration: 0.42,
+        ease: EASE,
+        clearProps: "transform",
+      });
     }, node);
-    return () => ctx.revert();
+    return () => {
+      ctx.revert();
+      restoreVisible(node);
+    };
   }, [index]);
 
   if (count === 0) return null;

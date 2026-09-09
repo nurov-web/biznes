@@ -1,8 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, type ElementType, type ReactNode } from "react";
-import { EASE, gsap, reducedMotion } from "@/lib/gsap";
-import { isLocaleSwap } from "@/lib/locale-swap";
+import { EASE, gsap, restoreVisible, shouldSkipIntro } from "@/lib/gsap";
 
 type Props = {
   children: ReactNode;
@@ -13,7 +12,7 @@ type Props = {
   as?: ElementType;
 };
 
-/** Кушода шудани ором ҳангоми скролл: танҳо opacity + transform. */
+/** Кушода шудани ором ҳангоми скролл: танҳо transform, бе пинҳон кардани матн. */
 export function Reveal({ children, className, stagger = false, delay = 0, as }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const Tag = (as ?? "div") as ElementType;
@@ -22,38 +21,31 @@ export function Reveal({ children, className, stagger = false, delay = 0, as }: 
     const node = ref.current;
     if (!node) return;
     const targets = stagger ? Array.from(node.children) : [node];
-    const mobile = window.matchMedia("(max-width: 767.98px)").matches;
-    if (reducedMotion() || mobile || isLocaleSwap()) {
-      gsap.set(targets, { clearProps: "all", opacity: 1, y: 0 });
-      node.classList.remove("reveal-init");
+    if (shouldSkipIntro()) {
+      restoreVisible(targets);
       return;
     }
     const ctx = gsap.context(() => {
-      node.classList.remove("reveal-init");
-      gsap.fromTo(
-        targets,
-        { opacity: 0, y: 18 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          delay,
-          ease: EASE,
-          stagger: stagger ? 0.07 : 0,
-          scrollTrigger: {
-            trigger: node,
-            start: "top 88%",
-            once: true,
-          },
+      gsap.from(targets, {
+        y: 16,
+        duration: 0.6,
+        delay,
+        ease: EASE,
+        stagger: stagger ? 0.07 : 0,
+        immediateRender: false,
+        clearProps: "transform",
+        scrollTrigger: {
+          trigger: node,
+          start: "top 88%",
+          once: true,
         },
-      );
+      });
     }, node);
-    return () => ctx.revert();
+    return () => {
+      ctx.revert();
+      restoreVisible(targets);
+    };
   }, [stagger, delay]);
 
-  return (
-    <Tag ref={ref} className={`reveal-init ${className ?? ""}`}>
-      {children}
-    </Tag>
-  );
+  return <Tag ref={ref} className={className}>{children}</Tag>;
 }

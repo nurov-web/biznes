@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Link, usePathname } from "@/i18n/navigation";
-import { markLocaleSwap } from "@/lib/locale-swap";
+import { useSwitchLocale } from "@/components/i18n/I18nClientProvider";
 import type { AppLocale } from "@/i18n/routing";
 
 /** Коди масир `tg` мемонад, вале дар экран ТҶ нишон дода мешавад. */
@@ -16,7 +15,7 @@ const LOCALES: { code: AppLocale; label: string }[] = [
 export function LanguageSwitch({ className }: { className?: string }) {
   const t = useTranslations("nav");
   const locale = useLocale();
-  const pathname = usePathname();
+  const switchLocale = useSwitchLocale();
   const current = Math.max(
     0,
     LOCALES.findIndex((item) => item.code === locale),
@@ -29,7 +28,7 @@ export function LanguageSwitch({ className }: { className?: string }) {
 
   return (
     <div
-      className={`seg relative max-w-full shrink-0 ${className ?? ""}`}
+      className={`seg relative w-max max-w-full flex-none ${className ?? ""}`}
       role="group"
       aria-label={t("language")}
     >
@@ -42,28 +41,21 @@ export function LanguageSwitch({ className }: { className?: string }) {
         aria-hidden
       />
       {LOCALES.map((item, i) => (
-        <Link
+        <button
           key={item.code}
-          href={pathname || "/"}
-          locale={item.code}
-          replace
-          scroll={false}
-          prefetch
-          onClick={(event) => {
-            if (item.code === locale) {
-              event.preventDefault();
-              return;
-            }
+          type="button"
+          onClick={() => {
+            if (item.code === locale) return;
             setActive(i);
-            markLocaleSwap();
+            switchLocale(item.code);
           }}
-          className="seg-item relative z-10 flex-1 bg-transparent no-underline hover:bg-transparent"
+          className="seg-item relative z-10 flex-1 bg-transparent hover:bg-transparent"
           data-selected={active === i}
-          aria-current={locale === item.code ? "true" : undefined}
+          aria-pressed={locale === item.code}
           aria-label={item.label}
         >
           {item.label}
-        </Link>
+        </button>
       ))}
     </div>
   );

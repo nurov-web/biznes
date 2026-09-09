@@ -76,19 +76,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         <AppSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex w-full min-w-0 items-center justify-between gap-2 overflow-x-clip border-b border-border bg-background/85 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] backdrop-blur-xl gutter-x">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{me.business?.name}</p>
-              <p className="truncate text-xs text-muted-foreground">{me.business?.city}</p>
-            </div>
-            <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
-              <LanguageSwitch />
-              <ProfileMenu
-                firstName={me.user.firstName}
-                lastName={me.user.lastName}
-                businessName={me.business?.name ?? ""}
-                onLogout={() => void logout()}
-              />
+          <header className="sticky top-0 z-20 w-full min-w-0 border-b border-border bg-background/85 pt-[max(0.625rem,env(safe-area-inset-top))] backdrop-blur-xl">
+            <div className="gutter-x flex w-full min-w-0 flex-wrap items-center justify-between gap-2 py-2.5">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{me.business?.name}</p>
+                <p className="truncate text-xs text-muted-foreground">{me.business?.city}</p>
+              </div>
+              <div className="flex w-max max-w-full flex-none items-center justify-end gap-1.5 sm:gap-2">
+                <LanguageSwitch />
+                <ProfileMenu
+                  firstName={me.user.firstName}
+                  lastName={me.user.lastName}
+                  businessName={me.business?.name ?? ""}
+                  onLogout={() => void logout()}
+                />
+              </div>
             </div>
           </header>
           <div className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">{children}</div>
