@@ -30,24 +30,38 @@ function model(): string {
   return process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 }
 
+const CLAUDE_TIMEOUT_MS = 16000;
+
 async function callApi(body: Record<string, unknown>): Promise<{
   content?: ContentBlock[];
   stop_reason?: string;
 }> {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey(),
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({ model: model(), temperature: 0.3, ...body }),
-  });
-  if (!response.ok) {
-    const detail = (await response.text()).slice(0, 300);
-    throw new Error(`CLAUDE_HTTP_${response.status}: ${detail}`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), CLAUDE_TIMEOUT_MS);
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey(),
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ model: model(), temperature: 0.2, ...body }),
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      const detail = (await response.text()).slice(0, 300);
+      throw new Error(`CLAUDE_HTTP_${response.status}: ${detail}`);
+    }
+    return response.json();
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("CLAUDE_TIMEOUT");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
   }
-  return response.json();
 }
 
 export async function completeClaude(system: string, user: string): Promise<string> {
@@ -76,7 +90,7 @@ export async function completeClaudeWithTools(options: {
 }): Promise<{ text: string; toolsUsed: string[] }> {
   const messages: Message[] = [{ role: "user", content: options.user.slice(0, 12000) }];
   const toolsUsed: string[] = [];
-  const maxRounds = options.maxRounds ?? 4;
+  const maxRounds = options.maxRounds ?? 3;
 
   for (let round = 0; round < maxRounds; round += 1) {
     const data = await callApi({
@@ -166,7 +180,7 @@ export async function completeClaudeWeb(options: {
       {
         type: "web_search_20250305",
         name: "web_search",
-        max_uses: options.maxUses ?? 4,
+        max_uses: options.maxUses ?? 2,
         user_location: location,
       },
     ],

@@ -57,7 +57,7 @@ export function MarketingHeader() {
 
   return (
     <header
-      className={`sticky top-0 z-30 w-full min-w-0 border-b bg-background/90 pt-[env(safe-area-inset-top,0px)] backdrop-blur-xl transition-all duration-300 ${
+      className={`sticky top-0 z-30 w-full min-w-0 border-b bg-background/90 pt-[env(safe-area-inset-top,0px)] backdrop-blur-xl transition-[padding,box-shadow,border-color] duration-300 ${
         scrolled ? "border-border shadow-[var(--shadow-xs)]" : "border-transparent"
       }`}
     >

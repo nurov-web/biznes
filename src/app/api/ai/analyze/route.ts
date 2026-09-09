@@ -7,6 +7,7 @@ import { requireBusiness } from "@/lib/business";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { analyzeLocal, buildAnalyzePrompt, mergeAi } from "@/services/ai/analyze";
 import { completeClaude, extractJsonObject } from "@/services/ai/claude";
+import { businessSystemPrompt } from "@/services/ai/business-system";
 import { newId, nowIso, readDb, withDb } from "@/lib/store";
 import { parseLocale } from "@/lib/locale-query";
 import type { AppLocale } from "@/i18n/routing";
@@ -43,7 +44,11 @@ export async function POST(request: Request) {
     let usedAi = false;
     try {
       const text = await completeClaude(
-        "You return only valid JSON. Practical advice with numbers. Never guarantee profit.",
+        businessSystemPrompt({
+          locale,
+          jsonOnly: true,
+          format: "Practical advice with numbers. Never guarantee profit.",
+        }),
         buildAnalyzePrompt(ctx),
       );
       result = mergeAi(local, extractJsonObject(text));

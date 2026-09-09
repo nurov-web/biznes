@@ -7,8 +7,8 @@ import { requireUser } from "@/lib/auth";
 import { requireBusiness } from "@/lib/business";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { completeClaude } from "@/services/ai/claude";
+import { businessSystemPrompt } from "@/services/ai/business-system";
 import { readDb } from "@/lib/store";
-import { llmLanguage } from "@/lib/locale-query";
 import type { AppLocale } from "@/i18n/routing";
 
 const schema = z.object({
@@ -34,7 +34,11 @@ export async function POST(request: Request) {
           : "1) Ҳиссаи лавозимоти маржаашон >25%-ро зиёд кунед. 2) SKU-е, ки 30 рӯз фурӯхта нашуд, нахаред. 3) Ин ҳафта 3 нархи рақибро санҷед. Ин пешгӯӣ аст, на кафолат.";
     try {
       const answer = await completeClaude(
-        `BusinessPilot advisor. Answer in ${llmLanguage(locale)}. Format: short → example with TJS → 3 numbered actions. No fluff.`,
+        businessSystemPrompt({
+          locale,
+          role: "You are the owner’s advisor for this week’s cash, price and stock.",
+          format: "Format: one short fact → example with TJS → 3 numbered actions. No fluff.",
+        }),
         `Q: ${parsed.data.question}\nBusiness: ${business.name}, ${business.city}, ${business.type}\nProducts: ${JSON.stringify(products).slice(0, 4000)}`,
       );
       return NextResponse.json({ answer, usedAi: true });

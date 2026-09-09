@@ -3,13 +3,14 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { requireBusiness } from "@/lib/business";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
-import { parseLocale, llmLanguage } from "@/lib/locale-query";
+import { parseLocale } from "@/lib/locale-query";
 import {
   buildIntelligence,
   recommendedSim,
   simulate,
 } from "@/services/intelligence/engine";
 import { completeClaudeWithTools } from "@/services/ai/claude";
+import { businessSystemPrompt } from "@/services/ai/business-system";
 import { BUSINESS_TOOLS, makeToolRunner } from "@/services/ai/tools";
 import { addAction, addAudit, addMemory } from "@/services/intelligence/persist";
 import { readDb } from "@/lib/store";
@@ -40,7 +41,12 @@ export async function POST(request: Request) {
     let usedAi = false;
     try {
       const result = await completeClaudeWithTools({
-        system: `BusinessPilot Decision Engine. Language: ${llmLanguage(locale)}. Use the tools to read the real numbers and to run at least one simulation before you recommend. Pipeline in 4 short labeled paragraphs: Analyze → Explain → Simulate → Recommend. All money in TJS. Never guarantee profit. No jokes, no filler.`,
+        system: businessSystemPrompt({
+          locale,
+          role: "You are the Decision Engine for this owner.",
+          format:
+            "Use tools. Run at least one simulation before you recommend. Four short labeled paragraphs: Analyze → Explain → Simulate → Recommend.",
+        }),
         user: `Question: ${parsed.data.question || "What should I do this week?"}\nBusiness: ${snap.businessName}, ${snap.city}, stage ${business.stage}, budget ${business.budget} TJS.`,
         tools: BUSINESS_TOOLS,
         runTool: makeToolRunner(business, locale),

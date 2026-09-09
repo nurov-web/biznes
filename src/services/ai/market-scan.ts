@@ -9,6 +9,7 @@ import {
   completeClaudeWeb,
   extractJsonObject,
 } from "@/services/ai/claude";
+import { businessSystemPrompt } from "@/services/ai/business-system";
 import type { MarketBrief, MarketSkuHint, MarketVerdict } from "@/types";
 
 export type MarketScanInput = {
@@ -92,15 +93,18 @@ export async function scanCityMarket(input: MarketScanInput): Promise<MarketBrie
     .filter(Boolean)
     .join("\n");
 
-  const system =
-    "You are BusinessPilot AI for Tajikistan shop owners. Be concrete, numerical, honest. Never guarantee profit. Never pretend live marketplace scrape.";
+  const system = businessSystemPrompt({
+    locale: input.locale,
+    jsonOnly: true,
+    role: "You estimate city climate for a small shop. Label every figure as an orienter, not a listing scrape.",
+  });
 
   try {
     const web = await completeClaudeWeb({
       system,
       user: prompt,
       city: citySearchLocation(city).city,
-      maxUses: 4,
+      maxUses: 2,
     });
     return mergeBrief(base, extractJsonObject(web.text), true, web.usedWeb);
   } catch (error) {

@@ -8,6 +8,7 @@ import type {
 } from "@/lib/store";
 
 import type { Locale } from "@/lib/locale-query";
+import { cityId } from "@/constants/city-market";
 
 export type { Locale };
 
@@ -88,11 +89,12 @@ export type IntelligenceSnapshot = {
   disclaimer: string;
 };
 
-const CITY_MARKET: Record<string, number> = {
-  Душанбе: 1,
-  Хуҷанд: 0.45,
-  Бохтар: 0.28,
-  Кӯлоб: 0.22,
+const CITY_K: Record<ReturnType<typeof cityId>, number> = {
+  dushanbe: 1,
+  khujand: 0.45,
+  bokhtar: 0.28,
+  kulob: 0.22,
+  other: 0.25,
 };
 
 function clamp(n: number, min: number, max: number): number {
@@ -185,7 +187,7 @@ export function buildIntelligence(
   const sales = db.salesLines.filter((s) => s.businessId === business.id);
   const competitors = db.competitors.filter((c) => c.businessId === business.id);
   const season = monthFactor();
-  const cityK = CITY_MARKET[business.city] ?? 0.25;
+  const cityK = CITY_K[cityId(business.city)];
   const marketSize = Math.round(typeBase(business.type) * cityK * season.factor);
 
   const income = sumFinance(finance, "income") + sales.reduce((s, r) => s + r.revenue, 0);
@@ -251,11 +253,13 @@ export function buildIntelligence(
         locale,
         `Оценка ёмкости «${business.type}» в ${business.city}: ~${marketSize.toLocaleString("ru-RU")} TJS/мес. Это модель, не перепись рынка.`,
         `Ҳаҷми тахминии бозори «${business.type}» дар ${business.city}: ~${marketSize.toLocaleString("ru-RU")} TJS/моҳ. Ин модел аст, на барӯйхатгирии бозор.`,
+        `Capacity estimate for «${business.type}» in ${business.city}: ~${marketSize.toLocaleString("ru-RU")} TJS/month. Model, not a census.`,
       ),
       demand: txt(
         locale,
         `Спрос сейчас ${season.factor >= 1 ? "выше" : "ниже"} среднего (коэф. ${season.factor}).`,
         `Талабот ҳоло ${season.factor >= 1 ? "аз миёна баландтар" : "аз миёна пасттар"} (коэф. ${season.factor}).`,
+        `Demand is now ${season.factor >= 1 ? "above" : "below"} average (factor ${season.factor}).`,
       ),
       season: txt(locale, season.nameRu, season.nameTg, season.nameEn),
       productTrend: txt(
@@ -266,17 +270,26 @@ export function buildIntelligence(
         products[0]
           ? `Дар каталог пешсаф ${products[0].brand} ${products[0].model}.`
           : "SKU илова кунед, то тамоюли молро бинед.",
+        products[0]
+          ? `Catalog lead: ${products[0].brand} ${products[0].model}.`
+          : "Add SKUs to see a product trend.",
       ),
       industry: txt(
         locale,
         "Розница в Таджикистане чувствительна к курсу, доставке и сезону школ/праздников.",
         "Чакана дар Тоҷикистон ба қурб, доставка ва мавсими мактаб/идҳо ҳассос аст.",
+        "Tajikistan retail is sensitive to FX, freight, school season and holidays.",
       ),
       customer: business.audience
-        ? txt(locale, `Сегмент: ${business.audience}.`, `Қисм: ${business.audience}.`)
-        : txt(locale, "Сегмент клиентов не указан.", "Қисми мизоҷон навишта нашудааст."),
+        ? txt(locale, `Сегмент: ${business.audience}.`, `Қисм: ${business.audience}.`, `Segment: ${business.audience}.`)
+        : txt(
+            locale,
+            "Сегмент клиентов не указан.",
+            "Қисми мизоҷон навишта нашудааст.",
+            "Customer segment is not set.",
+          ),
     },
-    competitors: mapCompetitors(competitors, products, locale),
+    competitors: mapCompetitors(competitors, locale),
     prices,
     inventory,
     alerts,
@@ -307,6 +320,7 @@ export function simulate(
     locale,
     `Симуляция: выручка ${revenue.toLocaleString("ru-RU")} TJS, прибыль ${profit.toLocaleString("ru-RU")} TJS. Ориентир, не факт.`,
     `Симуляция: даромад ${revenue.toLocaleString("ru-RU")} TJS, фоида ${profit.toLocaleString("ru-RU")} TJS. Самт аст, на факт.`,
+    `Simulation: revenue ${revenue.toLocaleString("ru-RU")} TJS, profit ${profit.toLocaleString("ru-RU")} TJS. Orienting, not a fact.`,
   );
   return { revenue, profit, cashFlow, note };
 }
@@ -384,6 +398,7 @@ function priceFor(
     locale,
     `Себестоимость ${trueCost} TJS = закуп ${round(buy)} + доставка/риск ${round(freight)}. Витрина ${recommended} TJS даёт маржу ${marginPct}% в ${city}. Эластичность модели −0.8: +10% цены ≈ −8% штук.`,
     `Арзиши воқеӣ ${trueCost} TJS = харид ${round(buy)} + доставка/хатар ${round(freight)}. Витрина ${recommended} TJS маржа ${marginPct}% дар ${city}. Эластикӣ −0.8: +10% нарх ≈ −8% адад.`,
+    `True cost ${trueCost} TJS = buy ${round(buy)} + freight/risk ${round(freight)}. Shelf ${recommended} TJS is ${marginPct}% margin in ${city}. Model elasticity −0.8: +10% price ≈ −8% units.`,
   );
   return {
     sku: name || p.category,
@@ -414,24 +429,17 @@ function inventoryFor(p: ProductRow, sales: SalesLineRow[], locale: Locale) {
     locale,
     `~${days} дн. запаса при текущем темпе. Перезаказ: ${reorder || "не срочно"}.`,
     `~${days} рӯз захира бо суръати ҳозира. Хариди нав: ${reorder || "ҳоло зарур нест"}.`,
+    `~${days} days of cover at current pace. Reorder: ${reorder || "not urgent"}.`,
   );
   return { sku, quantity: p.quantity, status, forecast, reorder };
 }
 
 function mapCompetitors(
   rows: CompetitorRow[],
-  products: ProductRow[],
   locale: Locale,
 ) {
   if (rows.length === 0) {
-    const named = products.slice(0, 3).map((p) => ({
-      name: txt(locale, "Конкурент (не указан)", "Рақиб (номи номаълум)"),
-      product: `${p.brand} ${p.model}`,
-      price: round(avg(p.sellPriceMin, p.sellPriceMax) * 0.97),
-      promo: "—",
-      vsUs: txt(locale, "Добавьте цену конкурента вручную или CSV.", "Нархи рақибро дастӣ ё CSV ворид кунед."),
-    }));
-    return named;
+    return [];
   }
   return rows.map((c) => ({
     name: c.name,

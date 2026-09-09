@@ -68,7 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <div
-        className={`flex min-h-screen w-full min-w-0 overflow-x-clip bg-surface ${
+        className={`flex min-h-screen w-full min-w-0 bg-surface ${
           gate === "splash" ? "pointer-events-none" : ""
         }`}
         aria-hidden={gate === "splash"}
@@ -93,7 +93,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </header>
-          <div className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">{children}</div>
+          <div className="min-w-0 flex-1 overflow-x-clip pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
+            {children}
+          </div>
         </div>
         <MobileNav />
       </div>

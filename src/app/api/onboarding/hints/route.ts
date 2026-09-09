@@ -6,8 +6,9 @@ import { z } from "zod";
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
-import { parseLocale, llmLanguage } from "@/lib/locale-query";
+import { parseLocale } from "@/lib/locale-query";
 import { completeClaude, extractJsonObject } from "@/services/ai/claude";
+import { businessSystemPrompt } from "@/services/ai/business-system";
 import { localMarketBrief } from "@/constants/city-market";
 
 const schema = z.object({
@@ -70,7 +71,12 @@ export async function POST(request: Request) {
 
     try {
       const text = await completeClaude(
-        `You advise small shop owners in Tajikistan while they fill an onboarding form. Answer in ${llmLanguage(locale)}. JSON only: {"hints":["","",""]}. Exactly 3 hints, each under 160 characters, concrete, about their numbers. No greetings, no motivation.`,
+        businessSystemPrompt({
+          locale,
+          jsonOnly: true,
+          role: "You coach the owner while they fill onboarding.",
+          format: 'JSON: {"hints":["","",""]}. Exactly 3 hints, each under 160 characters, about their numbers.',
+        }),
         JSON.stringify({
           businessType: data.type,
           city: data.city,

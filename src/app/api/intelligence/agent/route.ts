@@ -3,9 +3,10 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { requireBusiness } from "@/lib/business";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
-import { parseLocale, llmLanguage } from "@/lib/locale-query";
+import { parseLocale } from "@/lib/locale-query";
 import { buildIntelligence, type AgentId } from "@/services/intelligence/engine";
 import { completeClaudeWithTools } from "@/services/ai/claude";
+import { businessSystemPrompt } from "@/services/ai/business-system";
 import { BUSINESS_TOOLS, makeToolRunner } from "@/services/ai/tools";
 import { addAudit, addMemory } from "@/services/intelligence/persist";
 import { readDb } from "@/lib/store";
@@ -73,7 +74,12 @@ export async function POST(request: Request) {
     let toolsUsed: string[] = [];
     try {
       const result = await completeClaudeWithTools({
-        system: `${role} Language: ${llmLanguage(locale)}. You have tools that read this owner's real numbers — call them before answering and never invent figures. Format: 1) fact from the data 2) risk or opportunity in TJS 3) one action. No jokes, no filler. Forecast, not guarantee.`,
+        system: businessSystemPrompt({
+          locale,
+          role,
+          format:
+            "Call tools before any figure. Format: 1) fact from the data 2) risk or opportunity in TJS 3) one action.",
+        }),
         user: `Question: ${parsed.data.question}\nBusiness: ${snap.businessName}, ${snap.city}, stage ${business.stage}.`,
         tools: BUSINESS_TOOLS,
         runTool: makeToolRunner(business, locale),

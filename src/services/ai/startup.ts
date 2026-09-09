@@ -4,8 +4,8 @@
  */
 import type { PlanOption } from "@/lib/store";
 import type { Locale } from "@/lib/locale-query";
-import { llmLanguage } from "@/lib/locale-query";
 import { completeClaude, extractJsonObject } from "@/services/ai/claude";
+import { businessSystemPrompt } from "@/services/ai/business-system";
 
 export type StartupInput = {
   budget: number;
@@ -310,7 +310,13 @@ export async function planStartup(
   const local = planLocally(input);
   try {
     const text = await completeClaude(
-      `You are a business planner for small entrepreneurs in Tajikistan. Answer in ${llmLanguage(input.locale)}. JSON only. Conservative, concrete, no hype. Never guarantee profit.`,
+      businessSystemPrompt({
+        locale: input.locale,
+        jsonOnly: true,
+        role: "You plan a first shop or stall for someone who may have no business yet.",
+        format:
+          "Conservative. startupCost must fit the budget. Subtract rent, transport, spoilage and a tax buffer from monthlyProfit. Exactly 3 options.",
+      }),
       buildPrompt(input),
     );
     const raw = extractJsonObject(text) as Record<string, unknown>;
