@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Compass } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { EASE, gsap, reducedMotion } from "@/lib/gsap";
+import { isLocaleSwap } from "@/lib/locale-swap";
 import { APP_NAME } from "@/constants";
 
 type Props = {
@@ -21,7 +22,7 @@ export function AuthShell({ title, lead, children, footer, points }: Props) {
   const root = useRef<HTMLDivElement>(null);
   const t = useTranslations("landing");
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const node = root.current;
     if (!node) return;
     const head = node.querySelectorAll<HTMLElement>("[data-auth-head] > *");
@@ -30,7 +31,7 @@ export function AuthShell({ title, lead, children, footer, points }: Props) {
     const panel = node.querySelectorAll<HTMLElement>("[data-auth-panel] > *");
     const all = [...head, ...fields, ...foot, ...panel];
 
-    if (reducedMotion()) {
+    if (reducedMotion() || isLocaleSwap()) {
       gsap.set(all, { opacity: 1, y: 0, clearProps: "all" });
       return;
     }

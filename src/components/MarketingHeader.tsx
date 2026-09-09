@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Compass, Menu, X } from "lucide-react";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
@@ -8,11 +8,24 @@ import { MotionLink } from "@/components/motion/MotionLink";
 import { usePathname } from "@/i18n/navigation";
 import { APP_NAME } from "@/constants";
 
+/** Менюи мобилӣ пас аз ивази забон боз мемонад (дарахт аз нав сохта мешавад). */
+let marketingMenuOpen = false;
+
 export function MarketingHeader() {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(marketingMenuOpen);
+
+  function setOpen(value: boolean | ((prev: boolean) => boolean)) {
+    setOpenState((prev) => {
+      const next = typeof value === "function" ? value(prev) : value;
+      marketingMenuOpen = next;
+      return next;
+    });
+  }
+
+  const pathnameRef = useRef(pathname);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -22,7 +35,10 @@ export function MarketingHeader() {
   }, []);
 
   useEffect(() => {
-    setOpen(false);
+    if (pathnameRef.current === pathname) return;
+    pathnameRef.current = pathname;
+    marketingMenuOpen = false;
+    setOpenState(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -95,9 +111,10 @@ export function MarketingHeader() {
         <div
           id="mobile-site-menu"
           data-nav="panel"
-          className="border-t border-border bg-background md:hidden"
+          className="w-full border-t border-border bg-background md:hidden"
         >
-          <div className="gutter-x mx-auto flex w-full max-w-6xl flex-col gap-3 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
+          <div className="gutter-x mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-2 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <p className="text-xs font-medium text-muted-foreground">{t("language")}</p>
             <LanguageSwitch className="flex w-full" />
             <MotionLink href="/login" className="btn btn-ghost w-full">
               {t("login")}

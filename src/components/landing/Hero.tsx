@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { EASE, gsap, reducedMotion } from "@/lib/gsap";
+import { isLocaleSwap } from "@/lib/locale-swap";
 import { MotionLink } from "@/components/motion/MotionLink";
 import { ProductPreview } from "@/components/landing/ProductPreview";
 
@@ -11,11 +12,11 @@ export function Hero() {
   const t = useTranslations("landing");
   const root = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const node = root.current;
     if (!node) return;
     const items = node.querySelectorAll<HTMLElement>("[data-hero]");
-    if (reducedMotion() || window.matchMedia("(max-width: 767.98px)").matches) {
+    if (reducedMotion() || isLocaleSwap() || window.matchMedia("(max-width: 767.98px)").matches) {
       gsap.set(items, { opacity: 1, y: 0 });
       return;
     }

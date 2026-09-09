@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, type ElementType, type ReactNode } from "react";
+import { useLayoutEffect, useRef, type ElementType, type ReactNode } from "react";
 import { EASE, gsap, reducedMotion } from "@/lib/gsap";
+import { isLocaleSwap } from "@/lib/locale-swap";
 
 type Props = {
   children: ReactNode;
@@ -17,12 +18,12 @@ export function Reveal({ children, className, stagger = false, delay = 0, as }: 
   const ref = useRef<HTMLDivElement>(null);
   const Tag = (as ?? "div") as ElementType;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const node = ref.current;
     if (!node) return;
     const targets = stagger ? Array.from(node.children) : [node];
     const mobile = window.matchMedia("(max-width: 767.98px)").matches;
-    if (reducedMotion() || mobile) {
+    if (reducedMotion() || mobile || isLocaleSwap()) {
       gsap.set(targets, { clearProps: "all", opacity: 1, y: 0 });
       node.classList.remove("reveal-init");
       return;

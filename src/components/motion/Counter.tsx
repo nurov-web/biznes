@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { EASE, gsap, reducedMotion } from "@/lib/gsap";
+import { isLocaleSwap } from "@/lib/locale-swap";
 
 type Props = {
   to: number;
@@ -25,7 +26,7 @@ export function Counter({ to, prefix = "", suffix = "", decimals = 0, className 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
-    if (reducedMotion()) {
+    if (reducedMotion() || isLocaleSwap()) {
       node.textContent = `${prefix}${format(to, decimals)}${suffix}`;
       return;
     }

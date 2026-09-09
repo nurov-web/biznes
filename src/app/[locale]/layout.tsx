@@ -1,17 +1,10 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { LocaleTransition } from "@/components/motion/LocaleTransition";
-import "../globals.css";
-
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 5,
-  viewportFit: "cover",
-};
+import { DocumentLang } from "@/components/motion/DocumentLang";
 
 export const metadata: Metadata = {
   title: "BusinessPilot AI",
@@ -33,20 +26,9 @@ export default async function LocaleLayout({ children, params }: Props) {
   setRequestLocale(locale);
   const messages = await getMessages();
   return (
-    <html lang={locale} className="h-full w-full max-w-full antialiased">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&family=JetBrains+Mono:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="min-h-full w-full max-w-full bg-background font-sans text-foreground">
-        <NextIntlClientProvider messages={messages}>
-          <LocaleTransition>{children}</LocaleTransition>
-        </NextIntlClientProvider>
-      </body>
-    </html>
+    <NextIntlClientProvider messages={messages}>
+      <DocumentLang locale={locale} />
+      <LocaleTransition>{children}</LocaleTransition>
+    </NextIntlClientProvider>
   );
 }

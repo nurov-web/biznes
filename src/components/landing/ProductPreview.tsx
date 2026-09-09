@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { AlertTriangle, BadgePercent, Boxes, FlaskConical, LayoutDashboard } from "lucide-react";
 import { EASE, gsap, reducedMotion } from "@/lib/gsap";
+import { isLocaleSwap } from "@/lib/locale-swap";
 
 const TABS = ["dash", "price", "sim"] as const;
 type Tab = (typeof TABS)[number];
@@ -32,7 +33,7 @@ function Ring({ score }: { score: number }) {
     const node = ref.current;
     if (!node) return;
     const offset = circumference * (1 - score / 100);
-    if (reducedMotion()) {
+    if (reducedMotion() || isLocaleSwap()) {
       gsap.set(node, { strokeDashoffset: offset });
       return;
     }
@@ -81,7 +82,10 @@ export function ProductPreview() {
 
   useEffect(() => {
     const node = bodyRef.current;
-    if (!node || reducedMotion()) return;
+    if (!node || reducedMotion() || isLocaleSwap()) {
+      if (node) gsap.set(node.children, { opacity: 1, y: 0 });
+      return;
+    }
     const ctx = gsap.context(() => {
       gsap.fromTo(
         node.children,

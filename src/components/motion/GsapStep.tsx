@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
+import { isLocaleSwap } from "@/lib/locale-swap";
 
 type Props = {
   step: number;
@@ -16,7 +17,7 @@ export function GsapStep({ step, children }: Props) {
     const node = ref.current;
     if (!node) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) {
+    if (reduce || isLocaleSwap()) {
       gsap.set(node, { opacity: 1, y: 0 });
       return;
     }
