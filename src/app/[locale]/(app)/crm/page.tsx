@@ -59,10 +59,15 @@ export default function CrmOverviewPage() {
       title={t("overview")}
       lead={t("overviewLead")}
       action={
-        <Link href="/crm/sales" className="btn btn-primary">
-          {t("sales")}
-          <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden />
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/crm/clients" className="btn btn-ghost">
+            {t("clients")}
+          </Link>
+          <Link href="/crm/sales" className="btn btn-primary">
+            {t("sales")}
+            <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden />
+          </Link>
+        </div>
       }
     >
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">

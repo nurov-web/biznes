@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ChevronDown, GraduationCap, LogOut, Plug, Settings, Store, UserRound } from "lucide-react";
+import { ChevronDown, LogOut, Settings, UserRound } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { EASE, gsap, reducedMotion } from "@/lib/gsap";
 
@@ -57,19 +57,11 @@ export function ProfileMenu({ firstName, lastName, businessName, onLogout }: Pro
     return () => ctx.revert();
   }, [open]);
 
-  const items = [
-    { href: "/profile", key: "profile", icon: UserRound },
-    { href: "/learn", key: "learn", icon: GraduationCap },
-    { href: "/settings", key: "settings", icon: Settings },
-    { href: "/market", key: "market", icon: Store },
-    { href: "/integrations", key: "integrations", icon: Plug },
-  ] as const;
-
   return (
     <div ref={root} className="relative">
       <button
         type="button"
-        className="flex min-h-11 max-w-full items-center gap-2 rounded-xl px-1.5 py-1 text-left transition-colors duration-200 hover:bg-muted"
+        className="flex min-h-11 max-w-full items-center gap-2 rounded-xl px-1.5 py-1 text-left hover:bg-muted"
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={tp("openMenu")}
@@ -85,9 +77,7 @@ export function ProfileMenu({ firstName, lastName, businessName, onLogout }: Pro
           <span className="truncate text-[11px] text-muted-foreground">{businessName}</span>
         </span>
         <ChevronDown
-          className={`hidden h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 sm:block ${
-            open ? "rotate-180" : ""
-          }`}
+          className={`hidden h-4 w-4 shrink-0 text-muted-foreground sm:block ${open ? "rotate-180" : ""}`}
           strokeWidth={1.75}
           aria-hidden
         />
@@ -97,27 +87,30 @@ export function ProfileMenu({ firstName, lastName, businessName, onLogout }: Pro
         <div
           ref={panel}
           role="menu"
-          className="absolute right-0 z-40 mt-2 w-72 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-border bg-background py-1.5 shadow-[var(--shadow-lg)]"
+          className="absolute right-0 z-40 mt-2 w-64 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-border bg-background py-1.5 shadow-[var(--shadow-lg)]"
         >
-          <p className="truncate px-3 py-2 text-xs text-muted-foreground sm:hidden">
-            {firstName} {lastName}
-          </p>
-          {items.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              role="menuitem"
-              className="flex min-h-11 items-center gap-2.5 px-3 text-sm text-foreground transition-colors duration-200 hover:bg-muted"
-              onClick={() => setOpen(false)}
-            >
-              <item.icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} aria-hidden />
-              {t(item.key)}
-            </Link>
-          ))}
+          <Link
+            href="/profile"
+            role="menuitem"
+            className="flex min-h-11 items-center gap-2.5 px-3 text-sm hover:bg-muted"
+            onClick={() => setOpen(false)}
+          >
+            <UserRound className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} aria-hidden />
+            {t("profile")}
+          </Link>
+          <Link
+            href="/settings"
+            role="menuitem"
+            className="flex min-h-11 items-center gap-2.5 px-3 text-sm hover:bg-muted"
+            onClick={() => setOpen(false)}
+          >
+            <Settings className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} aria-hidden />
+            {t("settings")}
+          </Link>
           <button
             type="button"
             role="menuitem"
-            className="flex min-h-11 w-full items-center gap-2.5 px-3 text-left text-sm text-destructive transition-colors duration-200 hover:bg-muted"
+            className="flex min-h-11 w-full items-center gap-2.5 px-3 text-left text-sm text-destructive hover:bg-muted"
             onClick={() => {
               setOpen(false);
               onLogout();

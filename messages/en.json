@@ -18,6 +18,7 @@
     "simulator": "Simulator",
     "actions": "Actions",
     "agents": "Agents",
+    "crm": "Clients",
     "crmOverview": "CRM overview",
     "clients": "Clients",
     "sales": "Sales",
