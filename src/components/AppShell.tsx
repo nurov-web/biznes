@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { AppSidebar, MobileNav } from "@/components/AppSidebar";
 import { ProfileMenu } from "@/components/shell/ProfileMenu";
@@ -22,33 +22,36 @@ type Gate = "boot" | "splash" | "app";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const routerRef = useRef(router);
+  routerRef.current = router;
   const [me, setMe] = useState<Me | null>(null);
   const [gate, setGate] = useState<Gate>("boot");
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/auth/me")
+    fetch("/api/auth/me", { credentials: "include" })
       .then((r) => {
         if (r.status === 401) {
-          router.replace("/login");
+          routerRef.current.replace("/login");
           return null;
         }
+        if (!r.ok) return null;
         return r.json() as Promise<Me>;
       })
       .then((data) => {
         if (cancelled || !data) return;
         if (!data.business?.onboardingDone) {
-          router.replace("/onboarding");
+          routerRef.current.replace("/onboarding");
           return;
         }
         setMe(data);
         setGate(hasPlayedEntrySplash() ? "app" : "splash");
       })
-      .catch(() => router.replace("/login"));
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, []);
 
   const onSplashDone = useCallback(() => {
     markEntrySplashPlayed();

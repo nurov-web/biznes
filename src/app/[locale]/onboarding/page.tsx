@@ -14,10 +14,10 @@ export default function OnboardingPage() {
   const [path, setPath] = useState<Path>("choice");
 
   useEffect(() => {
-    fetch("/api/auth/me").then((r) => {
+    fetch("/api/auth/me", { credentials: "include" }).then((r) => {
       if (r.status === 401) router.replace("/login");
-    });
-  }, [router]);
+    }).catch(() => undefined);
+  }, [router.replace]);
 
   return (
     <div className="gutter-x mx-auto max-w-3xl py-8 sm:py-10">

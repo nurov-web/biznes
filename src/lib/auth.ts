@@ -114,15 +114,27 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   const payload = await readSessionToken(token);
   if (!payload) return null;
   const user = (await readDb()).users.find((u) => u.id === payload.sub);
-  if (!user) return null;
+  if (user) {
+    return {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
+      role: user.role as Role,
+      phoneVerified: user.phoneVerified,
+    };
+  }
+  // Куки дуруст аст; дар инстанси дигари Vercel снапшот холӣ буда метавонад.
+  if (!payload.email && !payload.phone) return null;
   return {
-    id: user.id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    phone: user.phone,
-    role: user.role as Role,
-    phoneVerified: user.phoneVerified,
+    id: payload.sub,
+    firstName: payload.firstName || "",
+    lastName: payload.lastName || "",
+    email: payload.email || "",
+    phone: payload.phone || "",
+    role: payload.role,
+    phoneVerified: false,
   };
 }
 
