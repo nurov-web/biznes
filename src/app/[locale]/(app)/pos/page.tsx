@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
+import { Link } from "@/i18n/navigation";
 import { ProductGrid } from "@/components/pos/ProductGrid";
 import { ConfirmBar } from "@/components/pos/ConfirmBar";
 import { PosEmptyState } from "@/components/pos/PosEmptyState";
@@ -163,10 +164,18 @@ export default function PosPage() {
         {successMsg && (
           <div
             role="status"
-            className="flex items-center gap-3 rounded-xl border border-success/40 bg-[#e7f6ee] p-4 text-sm font-semibold text-success shadow-sm"
+            className="flex flex-col gap-3 rounded-xl border border-success/40 bg-[#e7f6ee] p-4 text-sm font-semibold text-success shadow-sm sm:flex-row sm:items-center"
           >
-            <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden />
-            <span>{successMsg}</span>
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+              <div>
+                <p>{successMsg}</p>
+                <p className="mt-1 font-normal text-muted-foreground">{t("saleWhere")}</p>
+              </div>
+            </div>
+            <Link href="/dashboard" className="btn btn-primary min-h-12 shrink-0">
+              {t("toDash")}
+            </Link>
           </div>
         )}
 

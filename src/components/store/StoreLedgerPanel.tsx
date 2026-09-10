@@ -156,6 +156,9 @@ export function StoreLedgerPanel() {
           <button type="submit" className="btn btn-primary min-h-12" disabled={busy}>
             {busy ? t("ledgerSaving") : t("ledgerSave")}
           </button>
+          <Link href="/dashboard" className="btn btn-ghost min-h-12">
+            {t("ledgerToDash")}
+          </Link>
           <Link href="/finance" className="btn btn-ghost min-h-12">
             {t("ledgerToFinance")}
           </Link>

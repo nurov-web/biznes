@@ -10,6 +10,7 @@ import { RecommendedNote } from "@/components/ui/Recommended";
 import { SalesChart } from "@/components/SalesChart";
 import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
 import { SellCoachCard } from "@/components/dashboard/SellCoachCard";
+import { PurposeMap } from "@/components/dashboard/PurposeMap";
 import { StoreGapBanner } from "@/components/dashboard/StoreGapBanner";
 import { EphemeralStoreBanner } from "@/components/dashboard/EphemeralStoreBanner";
 import { healthTone, money, useIntelligence } from "@/hooks/useIntelligence";
@@ -101,6 +102,7 @@ export default function DashboardPage() {
       }
     >
       <EphemeralStoreBanner show={ephemeral} />
+      <PurposeMap salesCount={data.salesCount} />
       <StoreGapBanner salesCount={data.salesCount} />
 
       <SellCoachCard

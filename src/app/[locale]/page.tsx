@@ -2,6 +2,8 @@ import { setRequestLocale } from "next-intl/server";
 import { MarketingFooter } from "@/components/MarketingFooter";
 import { MarketingHeader } from "@/components/MarketingHeader";
 import { Hero } from "@/components/landing/Hero";
+import { PurposeSteps } from "@/components/landing/PurposeSteps";
+import { TrustBand } from "@/components/landing/TrustBand";
 import { CtaBand } from "@/components/landing/CtaBand";
 
 export default async function LandingPage({ params }: { params: Promise<{ locale: string }> }) {
@@ -12,6 +14,8 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
       <MarketingHeader />
       <main className="min-w-0 flex-1">
         <Hero />
+        <PurposeSteps />
+        <TrustBand />
         <CtaBand />
       </main>
       <MarketingFooter />
