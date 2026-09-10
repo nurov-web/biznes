@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { FormErrorSummary } from "@/components/FormErrorSummary";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { saveRememberedLogin } from "@/lib/remember-login";
 
 export default function RegisterPage() {
   const t = useTranslations("auth");
@@ -116,6 +117,7 @@ export default function RegisterPage() {
       requestAnimationFrame(() => document.getElementById("form-errors")?.focus());
       return;
     }
+    saveRememberedLogin(form.email);
     window.location.assign(`/${locale}/onboarding`);
   }
 

@@ -1,11 +1,12 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { FormErrorSummary } from "@/components/FormErrorSummary";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { EntryVeil } from "@/components/motion/EntryVeil";
+import { readRememberedLogin, saveRememberedLogin } from "@/lib/remember-login";
 
 export default function LoginPage() {
   const t = useTranslations("auth");
@@ -18,6 +19,23 @@ export default function LoginPage() {
   const [summary, setSummary] = useState("");
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
+
+  useEffect(() => {
+    const saved = readRememberedLogin();
+    if (saved) setLogin(saved);
+    let cancelled = false;
+    fetch("/api/auth/me", { credentials: "include", cache: "no-store" })
+      .then((r) => {
+        if (!cancelled && r.ok) {
+          setLeaving(true);
+          window.location.assign(`/${locale}/dashboard`);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
 
   function validate(): boolean {
     const next: { login?: string; password?: string } = {};
@@ -50,6 +68,7 @@ export default function LoginPage() {
       return;
     }
     setLeaving(true);
+    saveRememberedLogin(login);
     window.location.assign(`/${locale}/dashboard`);
   }
 
@@ -79,7 +98,7 @@ export default function LoginPage() {
             <input
               id="login"
               className={`input-field ${fieldErrors.login ? "input-error" : ""}`}
-              autoComplete="username"
+              autoComplete="email"
               value={login}
               aria-invalid={Boolean(fieldErrors.login)}
               aria-describedby={fieldErrors.login ? "login-error" : undefined}

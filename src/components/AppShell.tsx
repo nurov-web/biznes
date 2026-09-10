@@ -7,9 +7,10 @@ import { ProfileMenu } from "@/components/shell/ProfileMenu";
 import { EntryVeil } from "@/components/motion/EntryVeil";
 import { useRouter } from "@/i18n/navigation";
 import { clearEntrySplash } from "@/lib/splash";
+import { saveRememberedLogin } from "@/lib/remember-login";
 
 type Me = {
-  user: { firstName: string; lastName: string; phoneVerified: boolean };
+  user: { firstName: string; lastName: string; email: string; phoneVerified: boolean };
   business: { onboardingDone: boolean; name: string; city: string } | null;
 };
 
@@ -51,6 +52,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       if (cancelled || !data?.user) return;
       sessionStorage.setItem(ME_KEY, JSON.stringify(data));
       setMe(data);
+      saveRememberedLogin(data.user.email || "");
+      void fetch("/api/auth/refresh", { method: "POST", credentials: "include" });
     }
 
     void loadMe().catch(() => undefined);

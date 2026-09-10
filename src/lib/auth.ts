@@ -3,7 +3,7 @@ import { compare, hash } from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { ACCOUNT_COOKIE, SESSION_COOKIE, type Role } from "@/constants";
+import { ACCOUNT_COOKIE, LOGIN_HINT_COOKIE, SESSION_COOKIE, type Role } from "@/constants";
 import { GENERATED_SESSION_SECRET } from "@/lib/generated-session-secret";
 import { normalizePhone } from "@/lib/phone";
 import {
@@ -16,7 +16,7 @@ import {
 import type { SessionPayload, SessionProfile, SessionUser } from "@/types";
 
 const SALT_ROUNDS = 12;
-const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
+const SESSION_MAX_AGE = 60 * 60 * 24 * 180;
 const ACCOUNT_MAX_AGE = 60 * 60 * 24 * 180;
 
 export const JWT_NOT_CONFIGURED = "JWT_SECRET is not configured";
@@ -79,12 +79,14 @@ function claimBool(value: unknown): boolean {
   return value === true || value === "true";
 }
 
-function cookieBase() {
+function cookieBase(maxAge: number, httpOnly = true) {
   return {
-    httpOnly: true,
+    httpOnly,
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
     path: "/",
+    maxAge,
+    expires: new Date(Date.now() + maxAge * 1000),
   };
 }
 
@@ -164,10 +166,13 @@ function payloadFromUser(user: UserRow, business: BusinessRow | null): SessionPa
   };
 }
 
-function applyCookiesToResponse(res: NextResponse, token: string): void {
-  const base = cookieBase();
-  res.cookies.set(SESSION_COOKIE, token, { ...base, maxAge: SESSION_MAX_AGE });
-  res.cookies.set(ACCOUNT_COOKIE, token, { ...base, maxAge: ACCOUNT_MAX_AGE });
+function applyCookiesToResponse(res: NextResponse, token: string, loginHint: string): void {
+  res.cookies.set(SESSION_COOKIE, token, cookieBase(SESSION_MAX_AGE));
+  res.cookies.set(ACCOUNT_COOKIE, token, cookieBase(ACCOUNT_MAX_AGE));
+  const hint = loginHint.trim().slice(0, 120);
+  if (hint) {
+    res.cookies.set(LOGIN_HINT_COOKIE, hint, cookieBase(ACCOUNT_MAX_AGE, false));
+  }
 }
 
 export async function stampAuthCookies(
@@ -176,7 +181,7 @@ export async function stampAuthCookies(
   business?: BusinessRow | null,
 ): Promise<void> {
   const token = await signSession(payloadFromUser(user, business ?? null));
-  applyCookiesToResponse(res, token);
+  applyCookiesToResponse(res, token, user.email || user.phone);
 }
 
 export async function stampAuthCookiesByUserId(res: NextResponse, userId: string): Promise<void> {
@@ -214,9 +219,12 @@ export async function setSessionCookie(
         },
   );
   const store = await cookies();
-  const base = cookieBase();
-  store.set(SESSION_COOKIE, token, { ...base, maxAge: SESSION_MAX_AGE });
-  store.set(ACCOUNT_COOKIE, token, { ...base, maxAge: ACCOUNT_MAX_AGE });
+  store.set(SESSION_COOKIE, token, cookieBase(SESSION_MAX_AGE));
+  store.set(ACCOUNT_COOKIE, token, cookieBase(ACCOUNT_MAX_AGE));
+  const hint = (user?.email || profile?.email || user?.phone || profile?.phone || "").trim().slice(0, 120);
+  if (hint) {
+    store.set(LOGIN_HINT_COOKIE, hint, cookieBase(ACCOUNT_MAX_AGE, false));
+  }
 }
 
 export async function clearSessionCookie(): Promise<void> {
