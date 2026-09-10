@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Rocket, Store } from "lucide-react";
-import { Icon } from "@/components/ui/Icon";
+import { IconWell } from "@/components/ui/Icon";
 
 export function StartChoice({ onPick }: { onPick: (path: "running" | "idea") => void }) {
   const t = useTranslations("start");
@@ -20,11 +20,9 @@ export function StartChoice({ onPick }: { onPick: (path: "running" | "idea") => 
             key={card.id}
             type="button"
             onClick={() => onPick(card.id)}
-            className="card hover-lift p-6 text-left transition-colors duration-200 hover:border-primary"
+            className="card p-6 text-left hover:border-border-strong"
           >
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-100 text-slate-800">
-              <Icon icon={card.icon} className="h-5 w-5" />
-            </span>
+            <IconWell icon={card.icon} />
             <h2 className="mt-4 text-lg font-semibold">{card.title}</h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{card.text}</p>
           </button>

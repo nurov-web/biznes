@@ -32,7 +32,7 @@ export function ConfirmBar({
   const canSell = selectedProduct !== null && selectedProduct.quantity >= quantity && quantity > 0 && !busy;
 
   return (
-    <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-20 border-t border-border bg-card/95 p-4 shadow-lg backdrop-blur-md md:bottom-0 md:rounded-2xl md:border md:shadow-md">
+    <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-20 border-t border-border bg-card p-4 md:bottom-0 md:border">
       {selectedProduct ? (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center justify-between gap-4 sm:justify-start">
@@ -40,7 +40,7 @@ export function ConfirmBar({
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {selectedProduct.brand} {selectedProduct.model}
               </p>
-              <p className="text-2xl font-extrabold text-foreground">
+              <p className="num text-2xl font-semibold tracking-tight text-foreground">
                 {t("total", { total: totalPrice.toLocaleString("ru-RU") })}
               </p>
             </div>
@@ -57,7 +57,7 @@ export function ConfirmBar({
             type="button"
             onClick={onConfirmSale}
             disabled={!canSell}
-            className="btn flex min-h-[52px] w-full items-center justify-center gap-2.5 rounded-xl bg-primary px-8 text-base font-bold text-on-primary shadow-md transition-all duration-200 hover:bg-primary/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto min-w-[200px]"
+            className="btn btn-primary min-h-12 w-full min-w-[200px] sm:w-auto"
           >
             {busy ? (
               <>

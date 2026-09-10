@@ -1,46 +1,43 @@
 @import "tailwindcss";
 
 :root {
-  /* Сатҳҳо */
-  --background: #ffffff;
-  --surface: #f6f7f9;
+  /* B2B: Swiss / sales — на бозӣ */
+  --background: #f7f8fa;
+  --surface: #f1f3f6;
   --card: #ffffff;
   --ink: #0b1220;
-  --foreground: #0f172a;
-  --muted: #f1f4f8;
-  --muted-foreground: #5b6779;
-  --border: #e6e9ee;
-  --border-strong: #d3d9e2;
+  --foreground: #0b1220;
+  --muted: #eef0f3;
+  --muted-foreground: #4b5563;
+  --border: #e2e5ea;
+  --border-strong: #cfd4dc;
 
-  /* Бренд */
   --primary: #1565c0;
-  --primary-hover: #0f4f9c;
-  --primary-soft: #e8f1fc;
+  --primary-hover: #0d4a8f;
+  --primary-soft: #eef4fb;
   --on-primary: #ffffff;
-  --secondary: #42a5f5;
+  --secondary: #334155;
   --accent: #1565c0;
   --on-accent: #ffffff;
   --ring: #1565c0;
 
-  /* Ҳолат */
-  --destructive: #d92d20;
+  --destructive: #b42318;
   --success: #067647;
   --warning: #b54708;
 
-  /* Сатҳи торик */
-  --dark-bg: #080d17;
-  --dark-surface: #0f1626;
-  --dark-border: #1e2942;
-  --dark-text: #e8edf6;
-  --dark-muted: #93a1b8;
-  --dark-accent: #5aa2f7;
+  --dark-bg: #0b1220;
+  --dark-surface: #111827;
+  --dark-border: #1f2937;
+  --dark-text: #f3f4f6;
+  --dark-muted: #9ca3af;
+  --dark-accent: #93c5fd;
 
-  /* Сояҳо */
-  --shadow-xs: 0 1px 2px rgb(11 18 32 / 0.05);
-  --shadow-sm: 0 1px 3px rgb(11 18 32 / 0.06), 0 1px 2px rgb(11 18 32 / 0.04);
-  --shadow-md: 0 4px 12px rgb(11 18 32 / 0.07), 0 2px 4px rgb(11 18 32 / 0.04);
-  --shadow-lg: 0 12px 32px rgb(11 18 32 / 0.10), 0 4px 8px rgb(11 18 32 / 0.04);
-  --shadow-xl: 0 32px 64px rgb(11 18 32 / 0.16), 0 8px 16px rgb(11 18 32 / 0.06);
+  --shadow-xs: 0 1px 0 rgb(11 18 32 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(11 18 32 / 0.05);
+  --shadow-md: 0 2px 8px rgb(11 18 32 / 0.06);
+  --shadow-lg: 0 8px 24px rgb(11 18 32 / 0.08);
+  --shadow-xl: 0 16px 40px rgb(11 18 32 / 0.12);
+  --radius: 0.375rem;
 }
 
 @theme inline {
@@ -69,7 +66,7 @@
   --color-dark-text: var(--dark-text);
   --color-dark-muted: var(--dark-muted);
   --color-dark-accent: var(--dark-accent);
-  --font-sans: Inter, "Segoe UI", Roboto, Tahoma, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", Inter, "Segoe UI", Roboto, Tahoma, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -144,15 +141,14 @@ svg {
 /* ── Типографияи сайёл ───────────────────────────────── */
 
 .display-1 {
-  font-size: clamp(1.375rem, 0.9rem + 3.6vw, 4.5rem);
-  line-height: 1.15;
-  letter-spacing: -0.028em;
-  font-weight: 600;
+  font-size: clamp(1.75rem, 1.1rem + 2.4vw, 3.25rem);
+  line-height: 1.12;
+  letter-spacing: -0.038em;
+  font-weight: 650;
   max-width: 100%;
   overflow-wrap: break-word;
   word-break: normal;
   hyphens: none;
-  padding-inline-end: 0.2em;
 }
 
 @media (max-width: 767.98px) {
@@ -189,10 +185,11 @@ svg {
 }
 
 .eyebrow {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  color: var(--muted-foreground);
 }
 
 .num {
@@ -205,30 +202,15 @@ svg {
 /* ── Заминаҳо ────────────────────────────────────────── */
 
 .blueprint {
-  background-image:
-    linear-gradient(to right, rgb(148 163 184 / 0.14) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(148 163 184 / 0.14) 1px, transparent 1px);
-  background-size: 56px 56px;
+  background-image: none;
 }
 
 .blueprint-dark {
-  background-image:
-    linear-gradient(to right, rgb(148 178 232 / 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(148 178 232 / 0.07) 1px, transparent 1px);
-  background-size: 56px 56px;
-}
-
-.fade-edges {
-  -webkit-mask-image: radial-gradient(ellipse 78% 62% at 50% 38%, #000 42%, transparent 100%);
-  mask-image: radial-gradient(ellipse 78% 62% at 50% 38%, #000 42%, transparent 100%);
+  background-image: none;
 }
 
 .glow-primary {
-  background: radial-gradient(
-    ellipse 62% 52% at 62% 12%,
-    rgb(37 122 214 / 0.32),
-    transparent 66%
-  );
+  background: none;
 }
 
 .section-dark {
@@ -244,20 +226,19 @@ svg {
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  border-radius: 0.7rem;
-  font-weight: 550;
-  font-size: 0.9375rem;
-  letter-spacing: -0.006em;
-  padding: 0.65rem 1.15rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+  padding: 0.625rem 1rem;
   min-height: 44px;
   max-width: 100%;
   white-space: nowrap;
   transition:
-    background-color 160ms cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 160ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 160ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 160ms ease;
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease;
 }
 
 @media (max-width: 768px) {
@@ -280,18 +261,18 @@ svg {
 }
 
 .btn:not(:disabled):hover {
-  transform: translateY(-1px);
+  opacity: 0.94;
 }
 
 .btn:not(:disabled):active {
-  transform: translateY(0) scale(0.985);
+  opacity: 0.88;
 }
 
 .btn-sm {
   min-height: 36px;
   padding: 0.35rem 0.8rem;
   font-size: 0.875rem;
-  border-radius: 0.6rem;
+  border-radius: var(--radius);
 }
 
 @media (max-width: 768px) {
@@ -309,7 +290,7 @@ svg {
   max-width: 100%;
   overflow: hidden;
   flex-wrap: nowrap;
-  border-radius: 0.6rem;
+  border-radius: var(--radius);
   border: 1px solid var(--border-strong);
   background: var(--card);
 }
@@ -344,8 +325,8 @@ svg {
 }
 
 .seg-item[data-active="true"] {
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--ink);
+  color: #ffffff;
 }
 
 /* Варианти бо нишондиҳандаи лағжанда */
@@ -398,16 +379,12 @@ svg {
 .btn-primary {
   background: var(--primary);
   color: var(--on-primary);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.16),
-    var(--shadow-sm);
+  box-shadow: none;
 }
 
 .btn-primary:not(:disabled):hover {
   background: var(--primary-hover);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.16),
-    0 8px 20px rgb(21 101 192 / 0.26);
+  box-shadow: none;
 }
 
 .btn-ghost {
@@ -446,43 +423,37 @@ svg {
 .card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 1rem;
+  border-radius: var(--radius);
 }
 
 .card-raised {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 1.15rem;
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius);
+  box-shadow: none;
 }
 
 .hover-lift {
-  transition:
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 220ms ease;
+  transition: border-color 150ms ease;
 }
 
 .hover-lift:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
+  transform: none;
+  box-shadow: none;
   border-color: var(--border-strong);
 }
 
 .panel-dark {
   background: var(--dark-surface);
   border: 1px solid var(--dark-border);
-  border-radius: 1rem;
+  border-radius: var(--radius);
 }
 
-/* Чорчӯбаи тирезаи барнома барои намоиши маҳсулот */
 .app-frame {
-  border-radius: 1.15rem;
-  border: 1px solid var(--dark-border);
-  background: linear-gradient(180deg, #101a2c 0%, #0b1220 100%);
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.04),
-    var(--shadow-xl);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
 }
 
@@ -493,7 +464,7 @@ svg {
   min-width: 0;
   border: 1px solid var(--border-strong);
   background: var(--card);
-  border-radius: 0.7rem;
+  border-radius: var(--radius);
   padding: 0.7rem 0.9rem;
   font-size: 16px;
   color: var(--foreground);
@@ -572,12 +543,13 @@ svg {
   max-width: 100%;
   align-items: center;
   gap: 0.35rem;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  background: var(--card);
-  padding: 0.3rem 0.7rem;
-  font-size: 0.8125rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--muted);
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
   color: var(--muted-foreground);
+  font-weight: 500;
   flex-wrap: wrap;
   overflow-wrap: anywhere;
   word-break: break-word;

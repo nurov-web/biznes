@@ -44,7 +44,7 @@ export function ProductGrid({ products, selectedProductId, onSelectProduct }: Pr
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t("searchPlaceholder")}
-          className="w-full rounded-xl border border-input bg-background pl-10 pr-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[48px]"
+          className="input-field min-h-12 w-full pl-10 pr-4"
         />
       </div>
 
@@ -61,12 +61,12 @@ export function ProductGrid({ products, selectedProductId, onSelectProduct }: Pr
               type="button"
               disabled={isOutOfStock}
               onClick={() => onSelectProduct(product)}
-              className={`group relative flex min-h-[72px] w-full flex-col justify-between rounded-xl border p-4 text-left transition-all duration-150 active:scale-[0.99] min-w-0 ${
+              className={`group relative flex min-h-[72px] w-full min-w-0 flex-col justify-between border p-4 text-left ${
                 isSelected
-                  ? "border-primary bg-primary/5 ring-2 ring-primary shadow-sm"
+                  ? "border-ink bg-muted"
                   : isOutOfStock
-                    ? "cursor-not-allowed border-border/50 bg-muted/40 opacity-60"
-                    : "border-border bg-card hover:border-primary/50 hover:bg-muted/30 hover:shadow-sm"
+                    ? "cursor-not-allowed border-border bg-muted/40 opacity-60"
+                    : "border-border bg-card hover:border-border-strong"
               }`}
             >
               <div className="flex items-start justify-between gap-2">
@@ -81,7 +81,7 @@ export function ProductGrid({ products, selectedProductId, onSelectProduct }: Pr
                   </p>
                 </div>
                 {isSelected && (
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-on-primary">
+                  <span className="grid h-5 w-5 shrink-0 place-items-center bg-ink text-white">
                     <Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
                   </span>
                 )}

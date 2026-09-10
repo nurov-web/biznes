@@ -131,12 +131,12 @@ export function ImportHub({ onImported }: Props) {
 
   return (
     <section className="card-raised p-4 sm:p-6">
-      <p className="eyebrow text-primary">{t("kicker")}</p>
+      <p className="eyebrow">{t("kicker")}</p>
       <h2 className="display-3 mt-1">{t("title")}</h2>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{t("lead")}</p>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-3">
-        <article className="rounded-xl border border-border p-4">
+        <article className="border border-border p-4">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <Globe className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
             {t("urlTitle")}
@@ -161,7 +161,7 @@ export function ImportHub({ onImported }: Props) {
           </form>
         </article>
 
-        <article className="rounded-xl border border-border p-4">
+        <article className="border border-border p-4">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <Table2 className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
             {t("csvTitle")}
@@ -188,7 +188,7 @@ export function ImportHub({ onImported }: Props) {
           </div>
         </article>
 
-        <article className="rounded-xl border border-border p-4">
+        <article className="border border-border p-4">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <Plug className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
             {t("pipeTitle")}

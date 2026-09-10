@@ -8,20 +8,20 @@ import { Link } from "@/i18n/navigation";
 export function PurposeMap({ salesCount }: { salesCount: number }) {
   const t = useTranslations("purpose");
   return (
-    <section className="card-raised border-primary/25 p-4 sm:p-6">
-      <p className="eyebrow text-primary">{t("kicker")}</p>
+    <section className="card-raised p-4 sm:p-6">
+      <p className="eyebrow">{t("kicker")}</p>
       <h2 className="display-3 mt-1">{t("title")}</h2>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{t("lead")}</p>
       <ol className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
-        <li className="rounded-xl border border-border bg-muted/40 px-3 py-3">
+        <li className="border border-border px-3 py-3">
           <Package className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
           <p className="mt-2 font-medium">{t("stock")}</p>
         </li>
-        <li className="rounded-xl border border-border bg-muted/40 px-3 py-3">
+        <li className="border border-border px-3 py-3">
           <Banknote className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
           <p className="mt-2 font-medium">{t("sale")}</p>
         </li>
-        <li className="rounded-xl border border-border bg-muted/40 px-3 py-3">
+        <li className="border border-border px-3 py-3">
           <LayoutDashboard className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
           <p className="mt-2 font-medium">{t("report")}</p>
         </li>

@@ -75,7 +75,7 @@ export default function DashboardPage() {
 
   const cards = questions.map((q) => (
     <article key={q.k} className="card-raised min-h-[9.5rem] min-w-0 p-4 sm:p-6">
-      <p className="eyebrow text-primary">{q.k}</p>
+      <p className="eyebrow">{q.k}</p>
       <p className="mt-2.5 text-sm leading-relaxed">{q.v}</p>
     </article>
   ));
@@ -139,9 +139,9 @@ export default function DashboardPage() {
             {data.healthScore}
             <span className="text-base text-muted-foreground">/100</span>
           </p>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+          <div className="mt-3 h-1 overflow-hidden bg-muted">
             <div
-              className="h-full rounded-full bg-primary transition-[width] duration-700"
+              className="h-full bg-ink"
               style={{ width: `${data.healthScore}%` }}
             />
           </div>
@@ -175,7 +175,7 @@ export default function DashboardPage() {
 
       {decision ? (
         <article className="card-raised border-primary/30 p-4 sm:p-6">
-          <p className="eyebrow text-primary">{t("pipeline")}</p>
+          <p className="eyebrow">{t("pipeline")}</p>
           <p className="mt-2.5 whitespace-pre-wrap text-sm leading-relaxed">{decision}</p>
         </article>
       ) : null}
@@ -193,7 +193,7 @@ export default function DashboardPage() {
               <li className="text-sm text-muted-foreground">{t("noAlerts")}</li>
             ) : (
               data.alerts.map((a) => (
-                <li key={a.title} className="rounded-xl border border-border px-4 py-3">
+                <li key={a.title} className="border border-border px-4 py-3">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm font-medium">

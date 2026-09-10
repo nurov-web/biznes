@@ -9,9 +9,8 @@ import {
   Boxes,
   CheckSquare,
   ChevronDown,
-  Compass,
-  Ellipsis,
   Database,
+  Ellipsis,
   FlaskConical,
   GraduationCap,
   LayoutDashboard,
@@ -28,6 +27,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
+import { BrandMark } from "@/components/ui/BrandMark";
 import { APP_NAME } from "@/constants";
 
 type Item = { href: string; key: string; icon: LucideIcon };
@@ -75,12 +75,12 @@ function NavLink({ item, pathname, nested }: { item: Item; pathname: string; nes
     <Link
       href={item.href}
       aria-current={active ? "page" : undefined}
-      className={`group flex min-h-12 items-center gap-2.5 rounded-lg px-3 text-sm transition-colors ${
+      className={`group flex min-h-11 items-center gap-2.5 border-l-2 px-3 text-sm ${
         nested ? "pl-3" : ""
       } ${
         active
-          ? "bg-primary text-on-primary"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          ? "border-ink bg-muted font-medium text-foreground"
+          : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
       }`}
     >
       <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden />
@@ -105,9 +105,7 @@ export function AppSidebar() {
         href="/dashboard"
         className="flex items-center gap-2.5 px-4 py-4 text-sm font-semibold tracking-tight"
       >
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-on-primary">
-          <Compass className="h-4 w-4" strokeWidth={2} aria-hidden />
-        </span>
+        <BrandMark size={28} />
         {APP_NAME}
       </Link>
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3">
@@ -118,7 +116,7 @@ export function AppSidebar() {
         <div className="mt-2 border-t border-border pt-2">
           <button
             type="button"
-            className="flex min-h-12 w-full items-center justify-between rounded-lg px-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="flex min-h-11 w-full items-center justify-between px-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
           >
@@ -147,10 +145,10 @@ export function AppSidebar() {
       </nav>
       <Link
         href="/profile"
-        className={`mx-3 mb-4 flex min-h-12 items-center gap-2.5 rounded-lg px-3 text-sm transition-colors ${
+        className={`mx-3 mb-4 flex min-h-11 items-center gap-2.5 border-l-2 px-3 text-sm ${
           isActive(pathname, "/profile")
-            ? "bg-primary text-on-primary"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            ? "border-ink bg-muted font-medium text-foreground"
+            : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
         }`}
       >
         <UserRound className="h-4 w-4" strokeWidth={1.75} aria-hidden />

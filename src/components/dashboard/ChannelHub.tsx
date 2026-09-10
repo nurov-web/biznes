@@ -89,7 +89,7 @@ export function ChannelHub() {
 
   return (
     <section className="card-raised p-4 sm:p-6">
-      <p className="eyebrow text-primary">{t("kicker")}</p>
+      <p className="eyebrow">{t("kicker")}</p>
       <h2 className="display-3 mt-1">{t("title")}</h2>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{t("lead")}</p>
       {error ? (
@@ -102,7 +102,7 @@ export function ChannelHub() {
           const Glyph = ICONS[kind];
           const saved = rows.find((row) => row.kind === kind);
           return (
-            <li key={kind} className="rounded-xl border border-border p-4">
+            <li key={kind} className="border border-border p-4">
               <p className="flex items-center gap-2 text-sm font-semibold">
                 <Glyph className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
                 {t(`kind_${kind}`)}

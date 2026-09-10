@@ -49,7 +49,7 @@ export function Pipeline() {
       <div ref={root} className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
         <div className="lg:sticky lg:top-28 lg:self-start">
           <Reveal>
-            <p className="eyebrow text-primary">{t("pipeEyebrow")}</p>
+            <p className="eyebrow">{t("pipeEyebrow")}</p>
             <h2 className="display-2 mt-3 text-balance">{t("pipeTitle")}</h2>
             <p className="lead mt-4">{t("pipeLead")}</p>
             <p className="num mt-8 text-sm text-muted-foreground">
@@ -69,16 +69,14 @@ export function Pipeline() {
             {STEPS.map((key, i) => (
               <li key={key} data-step>
                 <div
-                  className={`relative flex gap-4 rounded-2xl border p-5 transition-all duration-300 sm:pl-14 ${
-                    active === i
-                      ? "border-primary/35 bg-card shadow-[var(--shadow-md)]"
-                      : "border-transparent bg-transparent"
+                  className={`relative flex gap-4 border p-5 sm:pl-14 ${
+                    active === i ? "border-border bg-card" : "border-transparent bg-transparent"
                   }`}
                 >
                   <span
-                    className={`num absolute left-0 top-5 hidden h-8 w-8 place-items-center rounded-full border text-xs font-semibold transition-colors duration-300 sm:grid ${
+                    className={`num absolute left-0 top-5 hidden h-8 w-8 place-items-center border text-xs font-semibold sm:grid ${
                       active === i
-                        ? "border-primary bg-primary text-on-primary"
+                        ? "border-ink bg-ink text-white"
                         : "border-border bg-background text-muted-foreground"
                     }`}
                   >

@@ -77,7 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen w-full min-w-0 bg-surface">
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 w-full min-w-0 border-b border-border bg-background/85 pt-[max(0.625rem,env(safe-area-inset-top))] backdrop-blur-xl">
+        <header className="sticky top-0 z-20 w-full min-w-0 border-b border-border bg-background pt-[max(0.625rem,env(safe-area-inset-top))]">
           <div className="gutter-x flex w-full min-w-0 flex-wrap items-center justify-between gap-2 py-2.5">
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{me.business?.name}</p>

@@ -18,7 +18,7 @@ export function Pricing() {
     <section id="pricing" className="border-y border-border bg-surface">
       <div className="gutter-x mx-auto w-full min-w-0 max-w-6xl py-16 md:py-20">
         <Reveal>
-          <p className="eyebrow text-primary">{t("prices")}</p>
+          <p className="eyebrow">{t("prices")}</p>
           <h2 className="display-2 mt-3 text-balance">{t("priceHead")}</h2>
           <p className="lead mt-4 max-w-xl">{t("trial")}</p>
         </Reveal>
@@ -28,14 +28,12 @@ export function Pricing() {
             return (
               <article
                 key={row.id}
-                className={`relative flex flex-col rounded-2xl border p-5 transition-shadow duration-200 sm:p-6 ${
-                  featured
-                    ? "border-primary bg-card shadow-[var(--shadow-lg)]"
-                    : "border-border bg-card shadow-[var(--shadow-xs)]"
+                className={`relative flex flex-col border p-5 sm:p-6 ${
+                  featured ? "border-ink bg-card" : "border-border bg-card"
                 }`}
               >
                 {featured ? (
-                  <span className="absolute -top-3 left-6 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-on-primary">
+                  <span className="absolute -top-3 left-6 bg-ink px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
                     {t("popular")}
                   </span>
                 ) : null}

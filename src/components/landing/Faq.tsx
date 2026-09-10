@@ -11,7 +11,7 @@ export function Faq() {
   return (
     <section className="gutter-x mx-auto max-w-3xl py-16 md:py-20">
       <Reveal>
-        <p className="eyebrow text-primary">{t("faqEyebrow")}</p>
+        <p className="eyebrow">{t("faqEyebrow")}</p>
         <h2 className="display-2 mt-3 text-balance">{t("faqTitle")}</h2>
       </Reveal>
       <Reveal stagger className="mt-8 divide-y divide-border border-y border-border">

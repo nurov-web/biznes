@@ -39,9 +39,9 @@ export function SellCoachCard({
   });
 
   return (
-    <section className="card-raised overflow-hidden border-primary/25">
-      <div className="border-b border-border bg-primary-soft/50 px-4 py-5 sm:px-6">
-        <p className="eyebrow text-primary">{t("kicker")}</p>
+    <section className="card-raised overflow-hidden">
+      <div className="border-b border-border px-4 py-5 sm:px-6">
+        <p className="eyebrow">{t("kicker")}</p>
         <h2 className="display-3 mt-1">{t("title")}</h2>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{t("lead")}</p>
         {view.hasProducts ? (
@@ -135,7 +135,7 @@ function CoachColumn({
       <ol className="mt-3 space-y-3">
         {items.map((line, i) => (
           <li key={line} className="flex gap-3 text-sm leading-relaxed">
-            <span className="num mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary-soft text-xs font-semibold text-primary">
+            <span className="num mt-0.5 grid h-6 w-6 shrink-0 place-items-center border border-border text-xs text-muted-foreground">
               {i + 1}
             </span>
             <span>{line}</span>

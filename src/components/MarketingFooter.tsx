@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Compass } from "lucide-react";
+import { BrandMark } from "@/components/ui/BrandMark";
 import { Link } from "@/i18n/navigation";
 import { APP_NAME } from "@/constants";
 
@@ -15,9 +15,7 @@ export function MarketingFooter() {
         <div className="flex flex-wrap items-start justify-between gap-8">
           <div>
             <p className="flex items-center gap-2.5 font-semibold tracking-tight">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-on-primary">
-                <Compass className="h-4 w-4" strokeWidth={2} aria-hidden />
-              </span>
+              <BrandMark size={28} />
               {APP_NAME}
             </p>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">

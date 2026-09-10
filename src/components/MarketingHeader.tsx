@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Compass, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { MotionLink } from "@/components/motion/MotionLink";
+import { BrandMark } from "@/components/ui/BrandMark";
 import { usePathname } from "@/i18n/navigation";
 import { APP_NAME } from "@/constants";
 
@@ -57,8 +58,8 @@ export function MarketingHeader() {
 
   return (
     <header
-      className={`sticky top-0 z-30 w-full min-w-0 border-b bg-background/90 pt-[env(safe-area-inset-top,0px)] backdrop-blur-xl transition-[padding,box-shadow,border-color] duration-300 ${
-        scrolled ? "border-border shadow-[var(--shadow-xs)]" : "border-transparent"
+      className={`sticky top-0 z-30 w-full min-w-0 border-b bg-background pt-[env(safe-area-inset-top,0px)] ${
+        scrolled ? "border-border" : "border-transparent"
       }`}
     >
       <div
@@ -70,9 +71,7 @@ export function MarketingHeader() {
           href="/"
           className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-[0.9375rem] font-semibold tracking-tight"
         >
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-on-primary">
-            <Compass className="h-4 w-4" strokeWidth={2} aria-hidden />
-          </span>
+          <BrandMark size={28} />
           <span className="truncate">{APP_NAME}</span>
         </MotionLink>
 
@@ -93,7 +92,7 @@ export function MarketingHeader() {
         <button
           type="button"
           data-nav="toggle"
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-lg border border-border text-foreground md:hidden"
+          className="grid h-12 w-12 shrink-0 place-items-center border border-border-strong text-foreground md:hidden"
           aria-label={open ? t("closeMenu") : t("menu")}
           aria-expanded={open}
           aria-controls="mobile-site-menu"

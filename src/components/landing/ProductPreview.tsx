@@ -14,32 +14,27 @@ export function ProductPreview() {
 
   return (
     <div className="app-frame w-full max-w-full overflow-hidden select-none" aria-hidden>
-      <div className="flex min-w-0 items-center gap-3 border-b border-dark-border px-3 py-3 sm:px-4">
-        <div className="flex gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#2b3854]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#2b3854]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#2b3854]" />
-        </div>
-        <p className="num min-w-0 truncate text-[11px] text-dark-muted">{t("window")}</p>
+      <div className="flex min-w-0 items-center justify-between border-b border-border px-4 py-3">
+        <p className="truncate text-[11px] font-medium text-muted-foreground">{t("window")}</p>
+        <p className="text-[11px] text-muted-foreground">{t("sample")}</p>
       </div>
-      <div className="space-y-3 p-3 sm:p-5">
-        <p className="text-[11px] uppercase tracking-[0.12em] text-dark-muted">{t("sample")}</p>
-        <ul className="space-y-2.5">
+      <div className="space-y-2 p-4">
+        <ul className="space-y-2">
           {steps.map((step) => (
-            <li key={step.n} className="flex gap-3 rounded-lg border border-dark-border bg-[#0c1421] p-3">
-              <span className="num grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#17243c] text-xs font-semibold text-dark-accent">
+            <li key={step.n} className="flex gap-3 border border-border bg-background px-3 py-3">
+              <span className="num grid h-6 w-6 shrink-0 place-items-center border border-border text-[11px] font-semibold text-muted-foreground">
                 {step.n}
               </span>
               <div className="min-w-0">
-                <p className="text-xs font-medium text-dark-text">{step.title}</p>
-                <p className="mt-1 text-[11px] leading-relaxed text-dark-muted">{step.text}</p>
+                <p className="text-sm font-medium text-foreground">{step.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{step.text}</p>
               </div>
             </li>
           ))}
         </ul>
-        <p className="flex items-center gap-1.5 text-[11px] text-dark-muted">
+        <p className="flex items-center gap-1.5 pt-1 text-[11px] text-muted-foreground">
+          <ArrowRight className="h-3 w-3" strokeWidth={2} aria-hidden />
           {t("flow")}
-          <ArrowRight className="h-3 w-3 shrink-0" strokeWidth={2} />
         </p>
       </div>
     </div>

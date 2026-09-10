@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { Compass } from "lucide-react";
-import { Icon } from "@/components/ui/Icon";
+import { BrandMark } from "@/components/ui/BrandMark";
 import { APP_NAME } from "@/constants";
 import { EASE, EASE_PREMIUM, gsap, reducedMotion } from "@/lib/gsap";
 
@@ -128,9 +127,6 @@ export function WelcomeSplash({ onDone }: Props) {
       aria-labelledby="splash-title"
       className="section-dark fixed inset-0 z-[200] flex flex-col"
     >
-      <div className="pointer-events-none absolute inset-0 blueprint-dark fade-edges" />
-      <div className="pointer-events-none absolute inset-0 glow-primary opacity-80" />
-
       <div className="relative flex justify-end px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))]">
         <button
           ref={skipRef}
@@ -143,11 +139,8 @@ export function WelcomeSplash({ onDone }: Props) {
       </div>
 
       <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center px-6 pb-16">
-        <div
-          ref={mark}
-          className="grid h-12 w-12 place-items-center rounded-2xl bg-primary text-on-primary"
-        >
-          <Icon icon={Compass} className="h-6 w-6" />
+        <div ref={mark}>
+          <BrandMark size={40} />
         </div>
         <p
           id="splash-title"
