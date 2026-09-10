@@ -14,10 +14,22 @@ export default function OnboardingPage() {
   const [path, setPath] = useState<Path>("choice");
 
   useEffect(() => {
-    fetch("/api/auth/me", { credentials: "include" }).then((r) => {
-      if (r.status === 401) router.replace("/login");
-    }).catch(() => undefined);
-  }, [router.replace]);
+    let cancelled = false;
+    const pull = () => fetch("/api/auth/me", { credentials: "include", cache: "no-store" });
+    void pull()
+      .then(async (r) => {
+        if (r.status !== 401) return r;
+        await new Promise((done) => setTimeout(done, 350));
+        return pull();
+      })
+      .then((r) => {
+        if (!cancelled && r.status === 401) router.replace("/login");
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   return (
     <div className="gutter-x mx-auto max-w-3xl py-8 sm:py-10">

@@ -6,7 +6,10 @@ export function jsonError(
   status: number,
   fields?: Record<string, string>,
 ): NextResponse<ApiErrorBody> {
-  return NextResponse.json({ error, fields }, { status });
+  return NextResponse.json(
+    { error, fields },
+    { status, headers: { "Cache-Control": "no-store, private" } },
+  );
 }
 
 export function isUnauthorized(error: unknown): boolean {

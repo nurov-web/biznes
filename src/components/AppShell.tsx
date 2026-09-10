@@ -13,6 +13,8 @@ type Me = {
   business: { onboardingDone: boolean; name: string; city: string } | null;
 };
 
+const ME_KEY = "bp_me_cache";
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const routerRef = useRef(router);
@@ -21,24 +23,37 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/auth/me", { credentials: "include" })
-      .then((r) => {
-        if (r.status === 401) {
-          routerRef.current.replace("/login");
-          return null;
-        }
-        if (!r.ok) return null;
-        return r.json() as Promise<Me>;
-      })
-      .then((data) => {
-        if (cancelled || !data) return;
-        if (!data.business?.onboardingDone) {
-          routerRef.current.replace("/onboarding");
-          return;
-        }
-        setMe(data);
-      })
-      .catch(() => undefined);
+    try {
+      const raw = sessionStorage.getItem(ME_KEY);
+      if (raw) {
+        const cached = JSON.parse(raw) as Me;
+        if (cached?.user) setMe(cached);
+      }
+    } catch {
+      /* холӣ */
+    }
+
+    async function loadMe(): Promise<void> {
+      const pull = () => fetch("/api/auth/me", { credentials: "include", cache: "no-store" });
+      let response = await pull();
+      if (response.status === 401) {
+        await new Promise((r) => setTimeout(r, 350));
+        response = await pull();
+      }
+      if (cancelled) return;
+      if (response.status === 401) {
+        sessionStorage.removeItem(ME_KEY);
+        routerRef.current.replace("/login");
+        return;
+      }
+      if (!response.ok) return;
+      const data = (await response.json()) as Me;
+      if (cancelled || !data?.user) return;
+      sessionStorage.setItem(ME_KEY, JSON.stringify(data));
+      setMe(data);
+    }
+
+    void loadMe().catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -46,7 +61,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   async function logout() {
     clearEntrySplash();
-    await fetch("/api/auth/logout", { method: "POST" });
+    sessionStorage.removeItem(ME_KEY);
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
     router.replace("/login");
   }
 

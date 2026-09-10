@@ -19,6 +19,8 @@ import { originForbidden } from "@/lib/origin";
 import { normalizePhone } from "@/lib/phone";
 import { newId, nowIso, readDb, StoreWriteError, withDb, type UserRow } from "@/lib/store";
 
+export const dynamic = "force-dynamic";
+
 const schema = z.object({
   firstName: z.string().trim().min(1).max(80),
   lastName: z.string().trim().min(1).max(80),

@@ -20,6 +20,8 @@ import { normalizePhone } from "@/lib/phone";
 import { nowIso, readDb, type UserRow } from "@/lib/store";
 import type { Role } from "@/constants";
 
+export const dynamic = "force-dynamic";
+
 const schema = z.object({
   login: z.string().trim().min(3).max(120),
   password: z.string().min(1).max(100),

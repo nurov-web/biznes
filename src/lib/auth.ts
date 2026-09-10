@@ -21,21 +21,37 @@ const ACCOUNT_MAX_AGE = 60 * 60 * 24 * 180;
 
 export const JWT_NOT_CONFIGURED = "JWT_SECRET is not configured";
 
-function jwtSecret(): Uint8Array {
-  const fromEnv = process.env.JWT_SECRET?.trim();
-  if (fromEnv) return new TextEncoder().encode(fromEnv);
-  // Дар Vercel як project-id — куки пас аз deploy намемирад.
+function encodeSecret(value: string): Uint8Array {
+  return new TextEncoder().encode(value);
+}
+
+function jwtSecrets(): Uint8Array[] {
+  const seen = new Set<string>();
+  const list: Uint8Array[] = [];
+  const add = (value: string | undefined) => {
+    const raw = value?.trim();
+    if (!raw || seen.has(raw)) return;
+    seen.add(raw);
+    list.push(encodeSecret(raw));
+  };
+  add(process.env.JWT_SECRET);
   const project = process.env.VERCEL_PROJECT_ID?.trim();
   if (project) {
-    const stable = createHash("sha256").update(`bp.session.v1:${project}`).digest("hex");
-    return new TextEncoder().encode(stable);
+    add(createHash("sha256").update(`bp.session.v1:${project}`).digest("hex"));
   }
-  const generated = GENERATED_SESSION_SECRET.trim();
-  if (generated) return new TextEncoder().encode(generated);
-  if (process.env.NODE_ENV === "production") {
+  add(GENERATED_SESSION_SECRET);
+  if (process.env.NODE_ENV !== "production") {
+    add("dev-only-not-for-production");
+  }
+  return list;
+}
+
+function jwtSecret(): Uint8Array {
+  const first = jwtSecrets()[0];
+  if (!first) {
     throw new Error(JWT_NOT_CONFIGURED);
   }
-  return new TextEncoder().encode("dev-only-not-for-production");
+  return first;
 }
 
 /** Пеш аз сабти ҳисоб — то ятим намонад. */
@@ -98,32 +114,35 @@ export async function signSession(payload: SessionPayload): Promise<string> {
 export async function readSessionToken(
   token: string,
 ): Promise<SessionPayload | null> {
-  try {
-    const { payload } = await jwtVerify(token, jwtSecret());
-    const sub = typeof payload.sub === "string" ? payload.sub : "";
-    const role = payload.role;
-    if (!sub || (role !== "owner" && role !== "manager" && role !== "cashier")) {
-      return null;
+  for (const secret of jwtSecrets()) {
+    try {
+      const { payload } = await jwtVerify(token, secret);
+      const sub = typeof payload.sub === "string" ? payload.sub : "";
+      const role = payload.role;
+      if (!sub || (role !== "owner" && role !== "manager" && role !== "cashier")) {
+        continue;
+      }
+      return {
+        sub,
+        role,
+        firstName: claimString(payload.firstName),
+        lastName: claimString(payload.lastName),
+        email: claimString(payload.email),
+        phone: claimString(payload.phone),
+        ph: claimString(payload.ph),
+        bid: claimString(payload.bid),
+        bname: claimString(payload.bname),
+        bcity: claimString(payload.bcity),
+        bdone: claimBool(payload.bdone),
+        btype: claimString(payload.btype),
+        bnote: claimString(payload.bnote),
+        bgoal: claimString(payload.bgoal),
+      };
+    } catch {
+      /* калиди дигар */
     }
-    return {
-      sub,
-      role,
-      firstName: claimString(payload.firstName),
-      lastName: claimString(payload.lastName),
-      email: claimString(payload.email),
-      phone: claimString(payload.phone),
-      ph: claimString(payload.ph),
-      bid: claimString(payload.bid),
-      bname: claimString(payload.bname),
-      bcity: claimString(payload.bcity),
-      bdone: claimBool(payload.bdone),
-      btype: claimString(payload.btype),
-      bnote: claimString(payload.bnote),
-      bgoal: claimString(payload.bgoal),
-    };
-  } catch {
-    return null;
   }
+  return null;
 }
 
 function payloadFromUser(user: UserRow, business: BusinessRow | null): SessionPayload {
@@ -158,10 +177,6 @@ export async function stampAuthCookies(
 ): Promise<void> {
   const token = await signSession(payloadFromUser(user, business ?? null));
   applyCookiesToResponse(res, token);
-  const store = await cookies();
-  const base = cookieBase();
-  store.set(SESSION_COOKIE, token, { ...base, maxAge: SESSION_MAX_AGE });
-  store.set(ACCOUNT_COOKIE, token, { ...base, maxAge: ACCOUNT_MAX_AGE });
 }
 
 export async function stampAuthCookiesByUserId(res: NextResponse, userId: string): Promise<void> {

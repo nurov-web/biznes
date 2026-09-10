@@ -2,9 +2,11 @@
  * GET /api/auth/me
  */
 import { NextResponse } from "next/server";
-import { getSessionUser, readAuthPayload, stampAuthCookiesByUserId } from "@/lib/auth";
+import { getSessionUser, readAuthPayload } from "@/lib/auth";
 import { getOwnedBusiness } from "@/lib/business";
 import { jsonError } from "@/lib/api-error";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const user = await getSessionUser();
@@ -32,7 +34,8 @@ export async function GET() {
           goal: saved.bgoal || "",
         }
       : null;
-  const res = NextResponse.json({ user, business });
-  await stampAuthCookiesByUserId(res, user.id);
-  return res;
+  return NextResponse.json(
+    { user, business },
+    { headers: { "Cache-Control": "no-store, private" } },
+  );
 }
