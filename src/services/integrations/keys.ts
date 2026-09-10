@@ -11,7 +11,7 @@ export function hashKey(raw: string): string {
   return createHash("sha256").update(raw).digest("hex");
 }
 
-export function createApiKey(businessId: string, name: string): { row: ApiKeyRow; raw: string } {
+export function makeApiKey(businessId: string, name: string): { row: ApiKeyRow; raw: string } {
   const secret = randomBytes(24).toString("base64url");
   const raw = `${PREFIX}${secret}`;
   const row: ApiKeyRow = {
@@ -23,19 +23,24 @@ export function createApiKey(businessId: string, name: string): { row: ApiKeyRow
     createdAt: nowIso(),
     lastUsedAt: null,
   };
-  withDb((db) => {
-    db.apiKeys.push(row);
-  });
   return { row, raw };
 }
 
-export function listApiKeys(businessId: string): ApiKeyRow[] {
-  return readDb()
+export async function createApiKey(businessId: string, name: string): Promise<{ row: ApiKeyRow; raw: string }> {
+  const made = makeApiKey(businessId, name);
+  await withDb((db) => {
+    db.apiKeys.push(made.row);
+  });
+  return made;
+}
+
+export async function listApiKeys(businessId: string): Promise<ApiKeyRow[]> {
+  return (await readDb())
     .apiKeys.filter((k) => k.businessId === businessId)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export function revokeApiKey(businessId: string, id: string): boolean {
+export async function revokeApiKey(businessId: string, id: string): Promise<boolean> {
   return withDb((db) => {
     const before = db.apiKeys.length;
     db.apiKeys = db.apiKeys.filter((k) => !(k.id === id && k.businessId === businessId));
@@ -51,7 +56,7 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 /** Калидро месанҷад ва businessId-ро бармегардонад. */
-export function resolveApiKey(raw: string | null): string | null {
+export async function resolveApiKey(raw: string | null): Promise<string | null> {
   if (!raw || !raw.startsWith(PREFIX)) return null;
   const hash = hashKey(raw);
   return withDb((db) => {

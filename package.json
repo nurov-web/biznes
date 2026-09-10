@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/ensure-jwt.cjs && next build",
+    "build": "node scripts/prisma-build.cjs && node scripts/ensure-jwt.cjs && next build",
     "start": "next start",
     "lint": "eslint",
-    "db:migrate": "prisma migrate dev --name init",
+    "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force"
   },

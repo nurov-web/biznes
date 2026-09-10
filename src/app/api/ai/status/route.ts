@@ -1,22 +1,34 @@
 /**
  * GET /api/ai/status — оё калиди Claude воқеан кор мекунад?
  * Худи калид ҳеҷ гоҳ бармегардад — танҳо ҳолат ва хатои сервер.
+ * Проверяет работоспособность ключа Claude. Сам ключ никогда не возвращается.
  */
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
-import { aiConfigured, completeClaude } from "@/services/ai/claude";
+import { classifyClaudeError, completeClaude, getAiKeyStatus } from "@/services/ai/claude";
 
 export async function GET() {
   try {
     await requireUser();
-    if (!aiConfigured()) {
+    const keyStatus = getAiKeyStatus();
+
+    if (keyStatus === "missing") {
       return NextResponse.json({
         state: "missing",
         model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
-        detail: "ANTHROPIC_API_KEY is not set in .env",
+        detail: "no_key",
       });
     }
+
+    if (keyStatus === "invalid_prefix") {
+      return NextResponse.json({
+        state: "invalid_prefix",
+        model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
+        detail: "invalid_prefix",
+      });
+    }
+
     try {
       await completeClaude("Reply with the single word OK.", "ping");
       return NextResponse.json({
@@ -25,10 +37,9 @@ export async function GET() {
         detail: "",
       });
     } catch (error) {
-      const raw = error instanceof Error ? error.message : "unknown";
-      const detail = raw.includes("invalid x-api-key")
-        ? "invalid_api_key"
-        : raw.slice(0, 120);
+      const kind = classifyClaudeError(error);
+      const detail =
+        kind === "bad_key" ? "invalid_api_key" : kind === "timeout" ? "timeout" : "failed";
       return NextResponse.json({
         state: "failed",
         model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",

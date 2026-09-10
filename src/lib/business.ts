@@ -1,7 +1,7 @@
 import { readDb } from "@/lib/store";
 
 export async function getOwnedBusiness(userId: string) {
-  const rows = readDb().businesses.filter((b) => b.ownerId === userId);
+  const rows = (await readDb()).businesses.filter((b) => b.ownerId === userId);
   return rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
 }
 

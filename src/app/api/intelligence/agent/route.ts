@@ -62,7 +62,8 @@ export async function POST(request: Request) {
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) return jsonError("validation", 400);
     const locale = parseLocale(parsed.data.locale);
-    const snap = buildIntelligence(readDb(), business, locale);
+    const db = await readDb();
+    const snap = buildIntelligence(db, business, locale);
     const role = ROLE[parsed.data.agent][locale];
     const fallback =
       locale === "en"
@@ -90,10 +91,10 @@ export async function POST(request: Request) {
     } catch (error) {
       console.warn("[agent] fallback", error);
     }
-    addMemory(business.id, `agent:${parsed.data.agent}`, parsed.data.question.slice(0, 80), {
+    await addMemory(business.id, `agent:${parsed.data.agent}`, parsed.data.question.slice(0, 80), {
       answer: answer.slice(0, 4000),
     });
-    addAudit(business.id, user.id, `agent.${parsed.data.agent}`);
+    await addAudit(business.id, user.id, `agent.${parsed.data.agent}`);
     return NextResponse.json({
       answer,
       agent: parsed.data.agent,

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Boxes, LayoutDashboard, Percent, Plug, Settings, Wallet } from "lucide-react";
+import { Boxes, GraduationCap, LayoutDashboard, Percent, Plug, Settings, Wallet } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { MarketScanCard } from "@/components/market/MarketScanCard";
 import { Reveal } from "@/components/motion/Reveal";
@@ -28,6 +28,7 @@ export default function ProfilePage() {
 
   const shortcuts = [
     { href: "/dashboard", key: "dashboard" as const, icon: LayoutDashboard },
+    { href: "/learn", key: "learn" as const, icon: GraduationCap },
     { href: "/market", key: "market" as const, icon: Boxes },
     { href: "/pricing", key: "pricing" as const, icon: Percent },
     { href: "/finance", key: "finance" as const, icon: Wallet },

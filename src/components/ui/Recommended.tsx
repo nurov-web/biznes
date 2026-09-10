@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ArrowRight, Clock, Sparkles } from "lucide-react";
+import { ArrowRight, Clock, Compass } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import type { Suggestion } from "@/services/intelligence/advice";
 
@@ -10,7 +10,7 @@ export function RecommendedBadge() {
   const t = useTranslations("advice");
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-semibold text-primary">
-      <Sparkles className="h-3 w-3" strokeWidth={2} aria-hidden />
+      <Compass className="h-3 w-3" strokeWidth={2} aria-hidden />
       {t("badge")}
     </span>
   );
@@ -23,7 +23,7 @@ export function RecommendedNote({ suggestion }: { suggestion: Suggestion | null 
   return (
     <aside className="rounded-2xl border border-primary/25 bg-primary-soft/60 p-4">
       <p className="flex items-center gap-1.5 text-sm font-semibold text-primary">
-        <Sparkles className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+        <Compass className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
         {t("title")}
       </p>
       <p className="mt-1.5 text-sm leading-relaxed">{suggestion.reason}</p>

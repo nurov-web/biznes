@@ -7,6 +7,8 @@ import { DEAL_STAGES } from "@/constants";
 import { requireUser } from "@/lib/auth";
 import { requireBusiness } from "@/lib/business";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
+import { originForbidden } from "@/lib/origin";
+import { addAudit } from "@/services/intelligence/persist";
 import { createDeal, listDeals, updateDealStage } from "@/services/crm";
 
 const createSchema = z.object({
@@ -34,6 +36,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    if (originForbidden(request)) return jsonError("forbidden", 403);
     const user = await requireUser();
     const business = await requireBusiness(user.id);
     const parsed = createSchema.safeParse(await request.json());
@@ -48,6 +51,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    if (originForbidden(request)) return jsonError("forbidden", 403);
     const user = await requireUser();
     const business = await requireBusiness(user.id);
     const parsed = stageSchema.safeParse(await request.json());
@@ -59,6 +63,7 @@ export async function PATCH(request: Request) {
       parsed.data.lostReason,
     );
     if (!deal) return jsonError("not_found", 404);
+    if (parsed.data.stage === "won") await addAudit(business.id, user.id, "crm.deal.won");
     return NextResponse.json({ deal });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);

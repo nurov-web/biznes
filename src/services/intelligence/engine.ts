@@ -206,23 +206,27 @@ export function buildIntelligence(
   const expense = sumFinance(finance, "expense") + sales.reduce((s, r) => s + r.cost, 0);
   const stockValue = products.reduce((s, p) => s + avg(p.buyPriceMin, p.buyPriceMax) * p.quantity, 0);
   const profit = income - expense;
-  const marginPct = income > 0 ? (profit / income) * 100 : estimatedCatalogMargin(products);
+  const hasRealSales = income > 0;
+  const marginPct = hasRealSales ? (profit / income) * 100 : 0;
   const cashFlow = profit;
   const dataQuality = dataScore(products, finance, sales, competitors);
 
   const prices = products.map((p) => priceFor(p, competitors, locale, business.city));
   const inventory = products.map((p) => inventoryFor(p, sales, locale));
 
-  const revenueProxy = income > 0 ? income : prices.reduce((s, p) => s + p.recommended * 4, 0);
+  const okShare =
+    products.length === 0
+      ? 0
+      : inventory.filter((i) => i.status === "ok").length / products.length;
   const healthScore = Math.round(
     clamp(
-      dataQuality * 0.2 +
-        clamp(marginPct / 30, 0, 1) * 25 +
-        (inventory.filter((i) => i.status === "ok").length / Math.max(products.length, 1)) * 20 +
-        (cashFlow >= 0 ? 20 : 8) +
-        (competitors.length > 0 ? 15 : 7),
-      18,
-      96,
+      dataQuality * 20 +
+        (hasRealSales ? clamp(marginPct / 30, 0, 1) * 25 : 0) +
+        okShare * 20 +
+        (hasRealSales ? (cashFlow >= 0 ? 20 : 8) : 0) +
+        (competitors.length > 0 ? 10 : 0),
+      0,
+      100,
     ),
   );
 
@@ -231,7 +235,7 @@ export function buildIntelligence(
     locale,
     business,
     healthScore,
-    income: revenueProxy,
+    income,
     profit,
     marginPct,
     alerts,
@@ -249,18 +253,18 @@ export function buildIntelligence(
     currency: "TJS",
     dataQuality: Math.round(dataQuality * 100),
     healthScore,
-    revenue: round(revenueProxy),
+    revenue: round(income),
     profit: round(profit),
     marginPct: round(marginPct),
     cashFlow: round(cashFlow),
     ...narrative,
     kpis: [
-      { key: "health", label: "Health", value: healthScore, unit: "/100" },
-      { key: "rev", label: "Revenue", value: round(revenueProxy), unit: "TJS" },
-      { key: "profit", label: "Profit", value: round(profit), unit: "TJS" },
-      { key: "margin", label: "Margin", value: round(marginPct), unit: "%" },
-      { key: "cash", label: "Cash-flow", value: round(cashFlow), unit: "TJS" },
-      { key: "stock", label: "Stock", value: round(stockValue), unit: "TJS" },
+      { key: "health", label: txt(locale, "Здоровье", "Саломатӣ", "Health"), value: healthScore, unit: "/100" },
+      { key: "rev", label: txt(locale, "Выручка", "Даромад", "Revenue"), value: round(income), unit: "TJS" },
+      { key: "profit", label: txt(locale, "Прибыль", "Фоида", "Profit"), value: round(profit), unit: "TJS" },
+      { key: "margin", label: txt(locale, "Маржа", "Маржа", "Margin"), value: round(marginPct), unit: "%" },
+      { key: "cash", label: txt(locale, "Денежный поток", "Ҷараёни пул", "Cash-flow"), value: round(cashFlow), unit: "TJS" },
+      { key: "stock", label: txt(locale, "Склад", "Анбор", "Stock"), value: round(stockValue), unit: "TJS" },
     ],
     market: {
       sizeNote: txt(
@@ -357,16 +361,6 @@ export function crashTest(snap: IntelligenceSnapshot, shock: ShockInput, locale:
 
 function sumFinance(rows: FinanceRow[], type: string): number {
   return rows.filter((r) => r.type === type).reduce((s, r) => s + r.amount, 0);
-}
-
-function estimatedCatalogMargin(products: ProductRow[]): number {
-  if (!products.length) return 0;
-  const ms = products.map((p) => {
-    const buy = avg(p.buyPriceMin, p.buyPriceMax);
-    const sell = avg(p.sellPriceMin, p.sellPriceMax);
-    return buy > 0 ? ((sell - buy) / buy) * 100 : 0;
-  });
-  return ms.reduce((a, b) => a + b, 0) / ms.length;
 }
 
 function dataScore(

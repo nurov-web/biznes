@@ -23,7 +23,8 @@ export async function POST(request: Request) {
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) return jsonError("validation", 400);
 
-    const plan = readDb().plans.find(
+    const db = await readDb();
+    const plan = db.plans.find(
       (p) => p.id === parsed.data.planId && p.businessId === business.id,
     );
     if (!plan) return jsonError("not_found", 404);
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
     if (!option) return jsonError("not_found", 404);
 
     const now = nowIso();
-    const added = withDb((db) => {
+    const added = await withDb((db) => {
       const row = db.businesses.find((b) => b.id === business.id);
       if (row) {
         row.name = option.name;
@@ -64,12 +65,12 @@ export async function POST(request: Request) {
       return n;
     });
 
-    addMemory(business.id, "plan_adopted", option.name.slice(0, 120), {
+    await addMemory(business.id, "plan_adopted", option.name.slice(0, 120), {
       planId: plan.id,
       monthlyProfit: option.monthlyProfit,
       breakEvenMonths: option.breakEvenMonths,
     });
-    addAudit(business.id, user.id, "startup.adopt");
+    await addAudit(business.id, user.id, "startup.adopt");
     return NextResponse.json({ ok: true, products: added });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);

@@ -84,7 +84,7 @@ function numberOf(value: unknown): number {
 export function makeToolRunner(business: BusinessRow, locale: Locale) {
   return async function runTool(name: string, rawInput: unknown): Promise<unknown> {
     const input = asRecord(rawInput);
-    const db = readDb();
+    const db = await readDb();
     const snap = buildIntelligence(db, business, locale);
 
     if (name === "get_business_snapshot") {
@@ -144,7 +144,7 @@ export function makeToolRunner(business: BusinessRow, locale: Locale) {
     if (name === "propose_action") {
       const title = String(input.title ?? "").slice(0, 140);
       if (!title) return { error: "title_required" };
-      const action = addAction(
+      const action = await addAction(
         business.id,
         title,
         String(input.detail ?? "").slice(0, 800),

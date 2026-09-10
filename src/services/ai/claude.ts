@@ -1,5 +1,6 @@
 /**
- * Вызовы Claude API. Все AI-запросы только отсюда.
+ * Даъвати Claude API. Ҳамаи зангҳои AI танҳо аз ҳамин ҷо мегузаранд.
+ * Вызовы Claude API. Все AI-запросы проходят только отсюда.
  */
 export type ToolSpec = {
   name: string;
@@ -20,9 +21,31 @@ type ContentBlock =
 
 type Message = { role: "user" | "assistant"; content: string | ContentBlock[] };
 
-function apiKey(): string {
+export type AiKeyStatus = "missing" | "invalid_prefix" | "configured";
+
+/**
+ * Вазъияти калиди API-ро месанҷад (бе фош кардани худи калид).
+ * Проверяет статус API-ключа без утечки самого ключа.
+ */
+export function getAiKeyStatus(): AiKeyStatus {
   const key = process.env.ANTHROPIC_API_KEY?.trim();
+  if (!key) return "missing";
+  if (!key.startsWith("sk-ant-")) return "invalid_prefix";
+  return "configured";
+}
+
+/**
+ * Оё калиди Claude дуруст танзим шудааст? (ғайрихолӣ ва бо sk-ant- сар мешавад).
+ * Настроен ли ключ Claude корректно (не пустой и начинается с sk-ant-).
+ */
+export function aiConfigured(): boolean {
+  return getAiKeyStatus() === "configured";
+}
+
+function apiKey(): string {
+  const key = process.env.ANTHROPIC_API_KEY?.trim() ?? "";
   if (!key) throw new Error("NO_API_KEY");
+  if (!key.startsWith("sk-ant-")) throw new Error("INVALID_PREFIX");
   return key;
 }
 
@@ -32,17 +55,21 @@ function model(): string {
 
 const CLAUDE_TIMEOUT_MS = 16000;
 
-async function callApi(body: Record<string, unknown>): Promise<{
+async function callApi(
+  body: Record<string, unknown>,
+  timeoutMs = CLAUDE_TIMEOUT_MS,
+): Promise<{
   content?: ContentBlock[];
   stop_reason?: string;
 }> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), CLAUDE_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    const key = apiKey();
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        "x-api-key": apiKey(),
+        "x-api-key": key,
         "anthropic-version": "2023-06-01",
         "content-type": "application/json",
       },
@@ -50,8 +77,10 @@ async function callApi(body: Record<string, unknown>): Promise<{
       signal: controller.signal,
     });
     if (!response.ok) {
-      const detail = (await response.text()).slice(0, 300);
-      throw new Error(`CLAUDE_HTTP_${response.status}: ${detail}`);
+      if (response.status === 401) {
+        throw new Error("CLAUDE_UNAUTHORIZED");
+      }
+      throw new Error(`CLAUDE_HTTP_${response.status}`);
     }
     return response.json();
   } catch (error) {
@@ -64,12 +93,19 @@ async function callApi(body: Record<string, unknown>): Promise<{
   }
 }
 
-export async function completeClaude(system: string, user: string): Promise<string> {
-  const data = await callApi({
-    max_tokens: 4000,
-    system,
-    messages: [{ role: "user", content: user.slice(0, 8000) }],
-  });
+export async function completeClaude(
+  system: string,
+  user: string,
+  options?: { timeoutMs?: number; maxTokens?: number; userLimit?: number },
+): Promise<string> {
+  const data = await callApi(
+    {
+      max_tokens: options?.maxTokens ?? 4000,
+      system,
+      messages: [{ role: "user", content: user.slice(0, options?.userLimit ?? 8000) }],
+    },
+    options?.timeoutMs ?? CLAUDE_TIMEOUT_MS,
+  );
   const text = data.content?.find((c) => c.type === "text")?.text?.trim();
   if (!text) {
     throw new Error("Empty Claude response");
@@ -145,8 +181,23 @@ export function extractJsonObject(text: string): unknown {
   return JSON.parse(cleaned.slice(start, end + 1));
 }
 
-export function aiConfigured(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY?.trim());
+export type ClaudeFail = "no_key" | "invalid_prefix" | "bad_key" | "timeout" | "fail";
+
+export function classifyClaudeError(error: unknown): ClaudeFail {
+  const msg = error instanceof Error ? error.message : "";
+  if (msg === "NO_API_KEY") return "no_key";
+  if (msg === "INVALID_PREFIX") return "invalid_prefix";
+  if (
+    msg === "CLAUDE_UNAUTHORIZED" ||
+    msg.includes("CLAUDE_HTTP_401") ||
+    msg.includes("authentication_error") ||
+    msg.includes("invalid x-api-key") ||
+    msg.includes("invalid_api_key")
+  ) {
+    return "bad_key";
+  }
+  if (msg.includes("CLAUDE_TIMEOUT")) return "timeout";
+  return "fail";
 }
 
 /**

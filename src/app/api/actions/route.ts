@@ -15,8 +15,9 @@ export async function GET() {
   try {
     const user = await requireUser();
     const business = await requireBusiness(user.id);
-    const actions = readDb()
-      .actions.filter((a) => a.businessId === business.id)
+    const db = await readDb();
+    const actions = db.actions
+      .filter((a) => a.businessId === business.id)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return NextResponse.json({ actions });
   } catch (error) {
@@ -31,7 +32,7 @@ export async function PATCH(request: Request) {
     const business = await requireBusiness(user.id);
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) return jsonError("validation", 400);
-    const action = withDb((db) => {
+    const action = await withDb((db) => {
       const row = db.actions.find(
         (a) => a.id === parsed.data.id && a.businessId === business.id,
       );
@@ -41,7 +42,7 @@ export async function PATCH(request: Request) {
       return row;
     });
     if (!action) return jsonError("not_found", 404);
-    addAudit(business.id, user.id, `action.${parsed.data.status}`);
+    await addAudit(business.id, user.id, `action.${parsed.data.status}`);
     return NextResponse.json({ action });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);

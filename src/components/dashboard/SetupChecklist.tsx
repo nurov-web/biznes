@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowRight, Check } from "lucide-react";
 import { Link } from "@/i18n/navigation";
@@ -17,10 +18,41 @@ export function SetupChecklist({
   hasCompetitors: boolean;
 }) {
   const t = useTranslations("intel");
+  const [hasStore, setHasStore] = useState(false);
+  const [hasLearn, setHasLearn] = useState(false);
+  const [hasClients, setHasClients] = useState(false);
+  const [hasCash, setHasCash] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/store").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/learn").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/crm/clients").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/finance").then((r) => (r.ok ? r.json() : null)),
+    ])
+      .then(([store, learn, clients, finance]) => {
+        const row = store as { connection?: { status?: string; storeUrl?: string } } | null;
+        const path = learn as { completedLessonIds?: string[] } | null;
+        const people = clients as { customers?: { id: string }[] } | null;
+        const cash = finance as { entries?: { id: string }[] } | null;
+        const storeDone =
+          row?.connection?.status === "connected" && Boolean(row.connection.storeUrl);
+        setHasStore(storeDone);
+        setHasLearn((path?.completedLessonIds?.length ?? 0) > 0);
+        setHasClients((people?.customers?.length ?? 0) > 0);
+        setHasCash((cash?.entries?.length ?? 0) > 0);
+      })
+      .catch(() => undefined);
+  }, []);
+
   const steps: Step[] = [
+    { done: hasStore, label: t("setupStore"), href: "/store", cta: t("setupStoreCta") },
     { done: hasProducts, label: t("setup1"), href: "/inventory", cta: t("setup1cta") },
-    { done: hasSales, label: t("setup2"), href: "/data", cta: t("setup2cta") },
+    { done: hasClients, label: t("setupCrm"), href: "/crm/clients", cta: t("setupCrmCta") },
+    { done: hasCash, label: t("setupFinance"), href: "/finance", cta: t("setupFinanceCta") },
+    { done: hasSales, label: t("setup2"), href: "/crm/sales", cta: t("setup2cta") },
     { done: hasCompetitors, label: t("setup3"), href: "/competitors", cta: t("setup3cta") },
+    { done: hasLearn, label: t("setupLearn"), href: "/learn", cta: t("setupLearnCta") },
   ];
   const left = steps.filter((s) => !s.done).length;
   if (left === 0) return null;

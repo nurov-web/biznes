@@ -3,7 +3,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, type Role } from "@/constants";
 import { GENERATED_SESSION_SECRET } from "@/lib/generated-session-secret";
-import { nowIso, readDb, withDb } from "@/lib/store";
+import { readDb } from "@/lib/store";
 import type { SessionPayload, SessionProfile, SessionUser } from "@/types";
 
 const SALT_ROUNDS = 12;
@@ -52,7 +52,7 @@ export async function signSession(payload: SessionPayload): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
     .setIssuedAt()
-    .setExpirationTime("7d")
+    .setExpirationTime("30d")
     .sign(jwtSecret());
 }
 
@@ -98,7 +98,7 @@ export async function setSessionCookie(
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: 60 * 60 * 24 * 30,
   });
 }
 
@@ -113,33 +113,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   if (!token) return null;
   const payload = await readSessionToken(token);
   if (!payload) return null;
-  let user = readDb().users.find((u) => u.id === payload.sub);
-  if (!user && payload.email) {
-    const now = nowIso();
-    const row = {
-      id: payload.sub,
-      firstName: payload.firstName || "User",
-      lastName: payload.lastName || "",
-      email: payload.email,
-      phone: payload.phone || "",
-      passwordHash: "",
-      phoneVerified: true,
-      offerAccepted: true,
-      role: payload.role,
-      createdAt: now,
-      updatedAt: now,
-    };
-    try {
-      withDb((db) => {
-        if (!db.users.some((u) => u.id === row.id || u.email === row.email)) {
-          db.users.push(row);
-        }
-      });
-    } catch {
-      // Vercel: cookie кофӣ аст, диск навишта нашавад ҳам.
-    }
-    user = readDb().users.find((u) => u.id === payload.sub) ?? row;
-  }
+  const user = (await readDb()).users.find((u) => u.id === payload.sub);
   if (!user) return null;
   return {
     id: user.id,

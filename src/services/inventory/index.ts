@@ -2,8 +2,29 @@ import type { ProductDraft } from "@/types";
 import { newId, nowIso, readDb, withDb } from "@/lib/store";
 import type { ProductRow } from "@/lib/store";
 
+export async function listMovements(businessId: string, limit = 12) {
+  const db = await readDb();
+  const catalog = db.products.filter((p) => p.businessId === businessId);
+  const ids = new Set(catalog.map((p) => p.id));
+  return db.movements
+    .filter((m) => ids.has(m.productId))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, limit)
+    .map((m) => {
+      const product = catalog.find((p) => p.id === m.productId);
+      return {
+        id: m.id,
+        type: m.type,
+        quantity: m.quantity,
+        note: m.note,
+        createdAt: m.createdAt,
+        sku: product ? `${product.brand} ${product.model}`.trim() : m.productId,
+      };
+    });
+}
+
 export async function listProducts(businessId: string): Promise<ProductRow[]> {
-  return readDb()
+  return (await readDb())
     .products.filter((p) => p.businessId === businessId && !p.archived)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
@@ -18,7 +39,7 @@ export async function createProduct(businessId: string, data: ProductDraft): Pro
     createdAt: now,
     updatedAt: now,
   };
-  withDb((db) => {
+  await withDb((db) => {
     db.products.push(product);
   });
   return product;

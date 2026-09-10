@@ -18,7 +18,8 @@ export async function GET() {
   try {
     const user = await requireUser();
     const business = await requireBusiness(user.id);
-    const competitors = readDb().competitors.filter((c) => c.businessId === business.id);
+    const db = await readDb();
+    const competitors = db.competitors.filter((c) => c.businessId === business.id);
     return NextResponse.json({ competitors });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
     const business = await requireBusiness(user.id);
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) return jsonError("validation", 400);
-    const competitor = withDb((db) => {
+    const competitor = await withDb((db) => {
       const row = {
         id: newId(),
         businessId: business.id,
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
       db.competitors.push(row);
       return row;
     });
-    addAudit(business.id, user.id, "competitor.create");
+    await addAudit(business.id, user.id, "competitor.create");
     return NextResponse.json({ competitor });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
@@ -57,12 +58,12 @@ export async function DELETE(request: Request) {
     const parsed = z.object({ id: z.string().trim().min(1).max(80) }).safeParse(await request.json());
     if (!parsed.success) return jsonError("validation", 400);
     const { id } = parsed.data;
-    withDb((db) => {
+    await withDb((db) => {
       db.competitors = db.competitors.filter(
         (c) => !(c.id === id && c.businessId === business.id),
       );
     });
-    addAudit(business.id, user.id, "competitor.delete");
+    await addAudit(business.id, user.id, "competitor.delete");
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);

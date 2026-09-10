@@ -26,6 +26,7 @@ export default function ClientsPage() {
   const [query, setQuery] = useState("");
   const [segment, setSegment] = useState<string>("all");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   async function load() {
     const r = await fetch("/api/crm/clients");
@@ -53,15 +54,22 @@ export default function ClientsPage() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
+    setError("");
     try {
-      await fetch("/api/crm/clients", {
+      const response = await fetch("/api/crm/clients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+      if (!response.ok) {
+        setError(t("saveError"));
+        return;
+      }
       setForm(EMPTY);
       setOpen(false);
       await load();
+    } catch {
+      setError(t("saveError"));
     } finally {
       setBusy(false);
     }
@@ -94,7 +102,7 @@ export default function ClientsPage() {
           <label className="grid gap-1.5 text-sm font-medium">
             {t("name")}
             <input
-              className="input-field"
+              className="input-field min-h-12"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
@@ -103,7 +111,7 @@ export default function ClientsPage() {
           <label className="grid gap-1.5 text-sm font-medium">
             {t("phone")}
             <input
-              className="input-field"
+              className="input-field min-h-12"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
             />
@@ -111,7 +119,7 @@ export default function ClientsPage() {
           <label className="grid gap-1.5 text-sm font-medium">
             {t("email")}
             <input
-              className="input-field"
+              className="input-field min-h-12"
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -120,7 +128,7 @@ export default function ClientsPage() {
           <label className="grid gap-1.5 text-sm font-medium">
             {t("segment")}
             <select
-              className="input-field"
+              className="input-field min-h-12"
               value={form.tags}
               onChange={(e) => setForm({ ...form, tags: e.target.value })}
             >
@@ -139,9 +147,14 @@ export default function ClientsPage() {
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
           </label>
-          <button className="btn btn-primary md:col-span-2" type="submit" disabled={busy}>
+          <button className="btn btn-primary min-h-12 md:col-span-2" type="submit" disabled={busy}>
             {t("addClient")}
           </button>
+          {error ? (
+            <p className="text-sm text-destructive md:col-span-2" role="alert">
+              {error}
+            </p>
+          ) : null}
         </form>
       ) : null}
 

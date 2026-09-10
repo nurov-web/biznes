@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { BUSINESS_TYPES, CHANNELS } from "@/constants";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
+import { originForbidden } from "@/lib/origin";
 import { newId, nowIso, readDb, withDb } from "@/lib/store";
 
 const productSchema = z.object({
@@ -38,16 +39,17 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   try {
+    if (originForbidden(request)) return jsonError("forbidden", 403);
     const user = await requireUser();
-    if (!user.phoneVerified) return jsonError("phone_unverified", 403);
     const json = await request.json();
     const parsed = schema.safeParse(json);
     if (!parsed.success) return jsonError("validation", 400);
     const data = parsed.data;
     const now = nowIso();
-    const existing = readDb().businesses.find((b) => b.ownerId === user.id);
+    const db = await readDb();
+    const existing = db.businesses.find((b) => b.ownerId === user.id);
     const businessId = existing?.id ?? newId();
-    withDb((db) => {
+    await withDb((db) => {
       if (existing) {
         const row = db.businesses.find((b) => b.id === existing.id);
         if (row) {

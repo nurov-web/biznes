@@ -23,8 +23,9 @@ export async function POST(request: Request) {
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) return jsonError("validation", 400);
     const locale: AppLocale = parsed.data.locale;
-    const products = readDb()
-      .products.filter((p) => p.businessId === business.id && !p.archived)
+    const db = await readDb();
+    const products = db.products
+      .filter((p) => p.businessId === business.id && !p.archived)
       .slice(0, 20);
     const fallback =
       locale === "en"

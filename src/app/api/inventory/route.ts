@@ -6,9 +6,11 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { requireBusiness } from "@/lib/business";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
+import { originForbidden } from "@/lib/origin";
 import {
   archiveProduct,
   createProduct,
+  listMovements,
   listProducts,
   updateProduct,
 } from "@/services/inventory";
@@ -30,7 +32,8 @@ export async function GET() {
     const user = await requireUser();
     const business = await requireBusiness(user.id);
     const products = await listProducts(business.id);
-    return NextResponse.json({ products });
+    const movements = await listMovements(business.id);
+    return NextResponse.json({ products, movements });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
     if (error instanceof Error && error.message === "NO_BUSINESS") {
@@ -42,6 +45,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    if (originForbidden(request)) return jsonError("forbidden", 403);
     const user = await requireUser();
     const business = await requireBusiness(user.id);
     const parsed = schema.safeParse(await request.json());
@@ -56,6 +60,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    if (originForbidden(request)) return jsonError("forbidden", 403);
     const user = await requireUser();
     const business = await requireBusiness(user.id);
     const body = (await request.json()) as { id?: string } & Record<string, unknown>;
@@ -73,6 +78,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    if (originForbidden(request)) return jsonError("forbidden", 403);
     const user = await requireUser();
     const business = await requireBusiness(user.id);
     const { id } = (await request.json()) as { id?: string };

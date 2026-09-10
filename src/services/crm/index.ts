@@ -1,9 +1,10 @@
 import type { DealStage } from "@/constants";
 import { newId, nowIso, readDb, withDb } from "@/lib/store";
 import type { CustomerRow, DealRow } from "@/lib/store";
+import { matchProduct } from "@/services/inventory/match";
 
 export async function listCustomers(businessId: string): Promise<CustomerRow[]> {
-  return readDb()
+  return (await readDb())
     .customers.filter((c) => c.businessId === businessId && !c.archived)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
@@ -21,14 +22,14 @@ export async function createCustomer(
     createdAt: now,
     updatedAt: now,
   };
-  withDb((db) => {
+  await withDb((db) => {
     db.customers.push(customer);
   });
   return customer;
 }
 
 export async function archiveCustomer(businessId: string, id: string): Promise<CustomerRow | null> {
-  return withDb((db) => {
+  return await withDb((db) => {
     const row = db.customers.find((c) => c.id === id && c.businessId === businessId && !c.archived);
     if (!row) return null;
     row.archived = true;
@@ -38,7 +39,7 @@ export async function archiveCustomer(businessId: string, id: string): Promise<C
 }
 
 export async function listDeals(businessId: string): Promise<DealRow[]> {
-  return readDb()
+  return (await readDb())
     .deals.filter((d) => d.businessId === businessId && !d.archived)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
@@ -60,7 +61,7 @@ export async function createDeal(
     createdAt: now,
     updatedAt: now,
   };
-  withDb((db) => {
+  await withDb((db) => {
     db.deals.push(deal);
   });
   return deal;
@@ -72,12 +73,48 @@ export async function updateDealStage(
   stage: DealStage,
   lostReason = "",
 ): Promise<DealRow | null> {
-  return withDb((db) => {
+  return await withDb((db) => {
     const row = db.deals.find((d) => d.id === id && d.businessId === businessId && !d.archived);
     if (!row) return null;
+    const previous = row.stage;
     row.stage = stage;
     row.lostReason = stage === "lost" ? lostReason : "";
     row.updatedAt = nowIso();
+    if (stage === "won" && previous !== "won") {
+      const already = db.salesLines.some((line) => line.dealId === row.id);
+      if (!already) {
+        const activeProducts = db.products.filter(
+          (p) => p.businessId === businessId && !p.archived,
+        );
+        const product = matchProduct(activeProducts, row.title);
+        const cost = product ? (product.buyPriceMin + product.buyPriceMax) / 2 : 0;
+
+        if (product && product.quantity >= 1) {
+          product.quantity -= 1;
+          product.updatedAt = nowIso();
+          db.movements.push({
+            id: newId(),
+            productId: product.id,
+            type: "out",
+            quantity: 1,
+            note: `crm.won:${row.id}`,
+            createdAt: nowIso(),
+          });
+        }
+
+        db.salesLines.push({
+          id: newId(),
+          businessId,
+          date: nowIso().slice(0, 10),
+          sku: row.title,
+          quantity: 1,
+          revenue: row.amount,
+          cost,
+          dealId: row.id,
+          createdAt: nowIso(),
+        });
+      }
+    }
     return row;
   });
 }

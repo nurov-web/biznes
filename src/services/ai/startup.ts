@@ -226,14 +226,17 @@ const TEMPLATES: Template[] = [
 function pickTemplates(input: StartupInput): Template[] {
   const niche = detectNiche(input.goal);
   const byNiche = TEMPLATES.filter((t) => t.niche === niche);
+  let picked: Template[];
   if (niche !== "general" && byNiche.length) {
     const affordable = byNiche.filter((t) => t.minBudget <= Math.max(input.budget, 1));
-    return (affordable.length ? affordable : byNiche).slice(0, 3);
+    picked = (affordable.length ? affordable : byNiche).slice(0, 3);
+  } else {
+    const affordable = TEMPLATES.filter(
+      (t) => t.niche !== "phones" && t.minBudget <= Math.max(input.budget, 1),
+    );
+    picked = (affordable.length ? affordable : TEMPLATES.filter((t) => t.niche === "online")).slice(0, 3);
   }
-  const affordable = TEMPLATES.filter(
-    (t) => t.niche !== "phones" && t.minBudget <= Math.max(input.budget, 1),
-  );
-  return (affordable.length ? affordable : TEMPLATES.filter((t) => t.niche === "online")).slice(0, 3);
+  return picked;
 }
 
 function money(n: number): string {

@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     if (!parsed.success) return jsonError("validation", 400);
     const ok = await verifySmsCode(user.phone, parsed.data.code);
     if (!ok) return jsonError("bad_code", 400);
-    withDb((db) => {
+    await withDb((db) => {
       const row = db.users.find((u) => u.id === user.id);
       if (row) {
         row.phoneVerified = true;

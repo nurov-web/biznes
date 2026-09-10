@@ -4,26 +4,28 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Copy, KeyRound, Plug, Trash2 } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
+import { StoreConnectCard } from "@/components/store/StoreConnectCard";
 import { Link } from "@/i18n/navigation";
 
 type ApiKey = { id: string; name: string; prefix: string; createdAt: string; lastUsedAt: string | null };
 
 const CATALOG = [
-  { name: "CSV / Excel", state: "live", href: "/data" },
-  { name: "POS (webhook)", state: "live", href: null },
-  { name: "REST API", state: "live", href: null },
-  { name: "Shopify", state: "queued", href: null },
-  { name: "WooCommerce", state: "queued", href: null },
-  { name: "Amazon", state: "queued", href: null },
-  { name: "Stripe", state: "queued", href: null },
-  { name: "PayPal", state: "queued", href: null },
-  { name: "Google Analytics", state: "queued", href: null },
+  { name: "CSV / Excel", state: "live", href: "/data", platform: null },
+  { name: "POS (webhook)", state: "live", href: null, platform: null },
+  { name: "REST API", state: "live", href: null, platform: null },
+  { name: "Shopify", state: "queued", href: null, platform: "shopify" },
+  { name: "WooCommerce", state: "queued", href: null, platform: "woocommerce" },
+  { name: "Instagram", state: "queued", href: null, platform: "instagram" },
+  { name: "Custom site", state: "queued", href: null, platform: "custom" },
+  { name: "Amazon", state: "queued", href: null, platform: null },
+  { name: "Stripe", state: "queued", href: null, platform: null },
 ] as const;
 
 export default function IntegrationsPage() {
   const t = useTranslations("integrations");
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [webhook, setWebhook] = useState("");
+  const [webhookBuy, setWebhookBuy] = useState("");
   const [fresh, setFresh] = useState("");
   const [copied, setCopied] = useState("");
   const [busy, setBusy] = useState(false);
@@ -31,9 +33,10 @@ export default function IntegrationsPage() {
   async function load() {
     const r = await fetch("/api/integrations");
     if (!r.ok) return;
-    const data = (await r.json()) as { keys: ApiKey[]; webhook: string };
+    const data = (await r.json()) as { keys: ApiKey[]; webhook: string; webhookBuy?: string };
     setKeys(data.keys);
     setWebhook(data.webhook);
+    setWebhookBuy(data.webhookBuy ?? "");
   }
 
   useEffect(() => {
@@ -76,13 +79,22 @@ export default function IntegrationsPage() {
     }
   }
 
-  const sample = `curl -X POST ${webhook || "/api/ingest/sale"} \\
+  const saleUrl = webhook || "/api/ingest/sale";
+  const buyUrl = webhookBuy || "/api/ingest/buy";
+  const sample = `curl -X POST ${saleUrl} \\
   -H "x-bp-key: bp_live_..." \\
   -H "content-type: application/json" \\
-  -d '{"sku":"Lenovo IdeaPad 3","quantity":1,"revenue":5200,"cost":4100}'`;
+  -d '{"sku":"Lenovo IdeaPad 3","quantity":1,"revenue":5200,"cost":4100}'
+
+curl -X POST ${buyUrl} \\
+  -H "x-bp-key: bp_live_..." \\
+  -H "content-type: application/json" \\
+  -d '{"sku":"Lenovo IdeaPad 3","quantity":2,"cost":8200,"sellPrice":5200}'`;
 
   return (
     <PageShell title={t("title")} lead={t("lead")}>
+      <StoreConnectCard />
+
       <section className="card-raised p-6">
         <h2 className="display-3 flex items-center gap-2">
           <KeyRound className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
@@ -161,9 +173,20 @@ export default function IntegrationsPage() {
         <h2 className="display-3">{t("webhookTitle")}</h2>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t("webhookLead")}</p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <code className="num min-w-0 flex-1 truncate rounded-lg bg-muted px-3 py-2 text-xs">{webhook}</code>
-          <button type="button" className="btn btn-sm btn-ghost" onClick={() => void copy(webhook, "hook")}>
+          <code className="num min-w-0 flex-1 truncate rounded-lg bg-muted px-3 py-2 text-xs">{saleUrl}</code>
+          <button type="button" className="btn btn-sm btn-ghost" onClick={() => void copy(saleUrl, "hook")}>
             {copied === "hook" ? (
+              <Check className="h-3.5 w-3.5 text-success" strokeWidth={2} aria-hidden />
+            ) : (
+              <Copy className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            )}
+            {t("copy")}
+          </button>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <code className="num min-w-0 flex-1 truncate rounded-lg bg-muted px-3 py-2 text-xs">{buyUrl}</code>
+          <button type="button" className="btn btn-sm btn-ghost" onClick={() => void copy(buyUrl, "hookBuy")}>
+            {copied === "hookBuy" ? (
               <Check className="h-3.5 w-3.5 text-success" strokeWidth={2} aria-hidden />
             ) : (
               <Copy className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
@@ -182,23 +205,26 @@ export default function IntegrationsPage() {
           {t("catalogTitle")}
         </h2>
         <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {CATALOG.map((item) => (
+          {CATALOG.map((item) => {
+            const live = item.state === "live";
+            return (
             <li
               key={item.name}
               className="flex items-center justify-between gap-2 rounded-xl border border-border px-4 py-3 text-sm"
             >
-              <span>{item.name}</span>
+              <span>{item.name === "Custom site" ? t("catalogCustom") : item.name}</span>
               {item.href ? (
                 <Link href={item.href} className="text-xs font-medium text-primary hover:underline">
                   {t("open")}
                 </Link>
               ) : (
-                <span className={item.state === "live" ? "text-xs text-success" : "text-xs text-muted-foreground"}>
-                  {item.state === "live" ? t("live") : t("queued")}
+                <span className={live ? "text-xs text-success" : "text-xs text-muted-foreground"}>
+                  {live ? t("live") : t("queued")}
                 </span>
               )}
             </li>
-          ))}
+            );
+          })}
         </ul>
         <p className="mt-4 text-xs leading-relaxed text-muted-foreground">{t("catalogNote")}</p>
       </section>

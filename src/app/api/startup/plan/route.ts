@@ -26,8 +26,9 @@ export async function GET() {
   try {
     const user = await requireUser();
     const business = await requireBusiness(user.id);
-    const plan = readDb()
-      .plans.filter((p) => p.businessId === business.id)
+    const db = await readDb();
+    const plan = db.plans
+      .filter((p) => p.businessId === business.id)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
     return NextResponse.json({ plan: plan ?? null, stage: business.stage });
   } catch (error) {
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
       createdAt: now,
     };
 
-    withDb((db) => {
+    await withDb((db) => {
       const row = db.businesses.find((b) => b.id === businessId);
       if (row) {
         Object.assign(row, {
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
       db.plans.push(plan);
     });
 
-    addAudit(businessId, user.id, "startup.plan");
+    await addAudit(businessId, user.id, "startup.plan");
     return NextResponse.json({ plan, usedAi: generated.usedAi });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);

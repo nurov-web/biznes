@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     const user = await requireUser();
     const business = await requireBusiness(user.id);
     const locale = localeFromRequest(request);
-    const data = syncIntelligence(business.id, locale, user.id);
+    const data = await syncIntelligence(business.id, locale, user.id);
     return NextResponse.json({
       data,
       crashPresets: Object.keys(CRASH_PRESETS),

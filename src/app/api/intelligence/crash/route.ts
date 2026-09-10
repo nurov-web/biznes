@@ -38,11 +38,11 @@ export async function POST(request: Request) {
         Object.entries(rest).filter(([, value]) => typeof value === "number"),
       ),
     };
-    const db = readDb();
+    const db = await readDb();
     const snap = buildIntelligence(db, business, locale);
     const result = crashTest(snap, shock, locale);
-    addMemory(business.id, "crash", `Crash ${presetKey || "custom"}`, result);
-    addAudit(business.id, user.id, "intelligence.crash");
+    await addMemory(business.id, "crash", `Crash ${presetKey || "custom"}`, result);
+    await addAudit(business.id, user.id, "intelligence.crash");
     return NextResponse.json({ result, shock });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);

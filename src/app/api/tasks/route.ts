@@ -17,8 +17,9 @@ export async function GET() {
   try {
     const user = await requireUser();
     const business = await requireBusiness(user.id);
-    const tasks = readDb()
-      .tasks.filter((t) => t.businessId === business.id && !t.archived)
+    const db = await readDb();
+    const tasks = db.tasks
+      .filter((t) => t.businessId === business.id && !t.archived)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return NextResponse.json({ tasks });
   } catch (error) {
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
       archived: false,
       createdAt: now,
     };
-    withDb((db) => {
+    await withDb((db) => {
       db.tasks.push(task);
     });
     return NextResponse.json({ task });
@@ -59,7 +60,7 @@ export async function PATCH(request: Request) {
     const business = await requireBusiness(user.id);
     const body = (await request.json()) as { id?: string; done?: boolean };
     if (!body.id) return jsonError("validation", 400);
-    const task = withDb((db) => {
+    const task = await withDb((db) => {
       const existing = db.tasks.find(
         (t) => t.id === body.id && t.businessId === business.id && !t.archived,
       );

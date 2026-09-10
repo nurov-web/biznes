@@ -38,11 +38,11 @@ function seedCompetitors(business: BusinessRow, existing: CompetitorRow[]): Comp
     }));
 }
 
-export function syncIntelligence(
+export async function syncIntelligence(
   businessId: string,
   locale: Locale,
   userId: string,
-): IntelligencePayload {
+): Promise<IntelligencePayload> {
   return withDb((db) => {
     const business = db.businesses.find((b) => b.id === businessId);
     if (!business) throw new Error("NO_BUSINESS");
@@ -106,12 +106,12 @@ export function syncIntelligence(
   });
 }
 
-export function addMemory(
+export async function addMemory(
   businessId: string,
   kind: string,
   title: string,
   payload: unknown,
-): MemoryRow {
+): Promise<MemoryRow> {
   return withDb((db) => {
     const row: MemoryRow = {
       id: newId(),
@@ -126,12 +126,12 @@ export function addMemory(
   });
 }
 
-export function addAction(
+export async function addAction(
   businessId: string,
   title: string,
   detail: string,
   impactMonthly: number,
-): ActionRow {
+): Promise<ActionRow> {
   return withDb((db) => {
     const existing = db.actions.find(
       (a) => a.businessId === businessId && a.title === title && a.status === "pending",
@@ -152,8 +152,8 @@ export function addAction(
   });
 }
 
-export function addAudit(businessId: string, userId: string, action: string): void {
-  withDb((db) => {
+export async function addAudit(businessId: string, userId: string, action: string): Promise<void> {
+  await withDb((db) => {
     db.auditLogs.push({
       id: newId(),
       businessId,

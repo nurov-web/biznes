@@ -6,24 +6,19 @@ import { LOW_STOCK_THRESHOLD } from "@/constants";
 import { requireUser } from "@/lib/auth";
 import { requireBusiness } from "@/lib/business";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
-import { financeTotals } from "@/services/finance";
-import { readDb } from "@/lib/store";
+import { financeTotals, incomeInRange } from "@/services/finance";
+import { isEphemeralStore, readDb } from "@/lib/store";
 
 export async function GET() {
   try {
     const user = await requireUser();
     const business = await requireBusiness(user.id);
-    const db = readDb();
+    const db = await readDb();
     const start = new Date();
     start.setHours(0, 0, 0, 0);
-    const todaySales = db.financeEntries
-      .filter(
-        (e) =>
-          e.businessId === business.id &&
-          e.type === "income" &&
-          new Date(e.entryDate).getTime() >= start.getTime(),
-      )
-      .reduce((s, e) => s + e.amount, 0);
+    const tomorrow = new Date(start);
+    tomorrow.setDate(start.getDate() + 1);
+    const todaySales = await incomeInRange(business.id, start, tomorrow);
     const totals = await financeTotals(business.id);
     const newClients = db.customers.filter(
       (c) =>
@@ -45,14 +40,10 @@ export async function GET() {
       d.setDate(d.getDate() - i);
       const next = new Date(d);
       next.setDate(d.getDate() + 1);
-      const value = db.financeEntries
-        .filter((e) => {
-          if (e.businessId !== business.id || e.type !== "income") return false;
-          const t = new Date(e.entryDate).getTime();
-          return t >= d.getTime() && t < next.getTime();
-        })
-        .reduce((s, e) => s + e.amount, 0);
-      week.push({ day: d.toISOString().slice(5, 10), value });
+      week.push({
+        day: `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
+        value: await incomeInRange(business.id, d, next),
+      });
     }
     return NextResponse.json({
       stats: {
@@ -68,6 +59,7 @@ export async function GET() {
         ? (JSON.parse(lastAi.payload) as { dailyTip?: string }).dailyTip
         : null,
       businessName: business.name,
+      ephemeralStore: isEphemeralStore(),
     });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);

@@ -8,8 +8,9 @@ export async function GET() {
   try {
     const user = await requireUser();
     const business = await requireBusiness(user.id);
-    const logs = readDb()
-      .auditLogs.filter((a) => a.businessId === business.id)
+    const db = await readDb();
+    const logs = db.auditLogs
+      .filter((a) => a.businessId === business.id)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .slice(0, 30);
     return NextResponse.json({ logs, role: user.role });

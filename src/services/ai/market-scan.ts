@@ -127,14 +127,16 @@ export async function scanCityMarket(input: MarketScanInput): Promise<MarketBrie
       city: citySearchLocation(city).city,
       maxUses: 2,
     });
-    return mergeBrief(base, extractJsonObject(web.text), true, web.usedWeb, niche);
+    const merged = mergeBrief(base, extractJsonObject(web.text), true, web.usedWeb, niche);
+    return merged;
   } catch (error) {
     console.warn("[market-scan] web fallback", error);
   }
 
   try {
     const text = await completeClaude(system, prompt);
-    return mergeBrief(base, extractJsonObject(text), true, false, niche);
+    const merged = mergeBrief(base, extractJsonObject(text), true, false, niche);
+    return merged;
   } catch (error) {
     console.warn("[market-scan] local fallback", error);
     return { ...base, usedAi: false, usedWeb: false };

@@ -11,7 +11,7 @@ function randomCode(): string {
 export async function sendSmsCode(phone: string): Promise<{ devCode?: string }> {
   const code = randomCode();
   const codeHash = await hash(code, 10);
-  withDb((db) => {
+  await withDb((db) => {
     db.smsCodes.push({
       id: newId(),
       phone,
@@ -27,15 +27,16 @@ export async function sendSmsCode(phone: string): Promise<{ devCode?: string }> 
 
 export async function verifySmsCode(phone: string, code: string): Promise<boolean> {
   const now = Date.now();
-  const rows = readDb()
-    .smsCodes.filter((r) => r.phone === phone && !r.used)
+  const db = await readDb();
+  const rows = db.smsCodes
+    .filter((r) => r.phone === phone && !r.used)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, 3);
   for (const row of rows) {
     if (new Date(row.expiresAt).getTime() < now) continue;
     const ok = await compare(code, row.codeHash);
     if (ok) {
-      withDb((db) => {
+      await withDb((db) => {
         const found = db.smsCodes.find((r) => r.id === row.id);
         if (found) found.used = true;
       });

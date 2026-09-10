@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Sparkles } from "lucide-react";
+import { Compass } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { money, useIntelligence } from "@/hooks/useIntelligence";
 import { parseLocale } from "@/lib/locale-query";
@@ -154,7 +154,7 @@ export default function SimulatorPage() {
 
           <div className="rounded-2xl border border-primary/25 bg-primary-soft/60 p-4">
             <p className="flex items-center gap-1.5 text-sm font-semibold text-primary">
-              <Sparkles className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+              <Compass className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
               {ta("startWith")}
             </p>
             <p className="mt-1.5 text-sm leading-relaxed">{advice.reason}</p>

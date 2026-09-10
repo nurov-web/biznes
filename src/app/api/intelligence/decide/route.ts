@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const parsed = schema.safeParse(await request.json().catch(() => ({})));
     if (!parsed.success) return jsonError("validation", 400);
     const locale = parseLocale(parsed.data.locale);
-    const db = readDb();
+    const db = await readDb();
     const snap = buildIntelligence(db, business, locale);
     const simInput = recommendedSim(snap);
     const sim = simulate(snap, simInput, locale);
@@ -58,13 +58,13 @@ export async function POST(request: Request) {
       console.warn("[decide] fallback", error);
     }
     const impact = snap.alerts[0]?.impactMonthly ?? Math.round(sim.profit - snap.profit);
-    const action = addAction(business.id, snap.shouldDo.slice(0, 140), narrative.slice(0, 800), impact);
-    addMemory(business.id, "decision", snap.shouldDo.slice(0, 120), {
+    const action = await addAction(business.id, snap.shouldDo.slice(0, 140), narrative.slice(0, 800), impact);
+    await addMemory(business.id, "decision", snap.shouldDo.slice(0, 120), {
       question: parsed.data.question || "",
       sim,
       healthScore: snap.healthScore,
     });
-    addAudit(business.id, user.id, "intelligence.decide");
+    await addAudit(business.id, user.id, "intelligence.decide");
     return NextResponse.json({
       analyze: snap.happened,
       explain: snap.why,

@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Sparkles, TrendingUp } from "lucide-react";
+import { AlertTriangle, ClipboardCheck, TrendingUp } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { Reveal } from "@/components/motion/Reveal";
 import { Slider } from "@/components/ui/Slider";
 import { RecommendedNote } from "@/components/ui/Recommended";
 import { SalesChart } from "@/components/SalesChart";
 import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
+import { StoreGapBanner } from "@/components/dashboard/StoreGapBanner";
+import { EphemeralStoreBanner } from "@/components/dashboard/EphemeralStoreBanner";
+import { StoreConnectCard } from "@/components/store/StoreConnectCard";
+import { LearnHero } from "@/components/learn/LearnHero";
 import { healthTone, money, useIntelligence } from "@/hooks/useIntelligence";
 import { parseLocale } from "@/lib/locale-query";
 import { suggestNextMove } from "@/services/intelligence/advice";
@@ -21,11 +25,15 @@ export default function DashboardPage() {
   const [busy, setBusy] = useState(false);
   const [decision, setDecision] = useState("");
   const [week, setWeek] = useState<Week>([]);
+  const [ephemeral, setEphemeral] = useState(false);
 
   useEffect(() => {
     fetch("/api/dashboard")
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { week?: Week } | null) => setWeek(d?.week ?? []))
+      .then((d: { week?: Week; ephemeralStore?: boolean } | null) => {
+        setWeek(d?.week ?? []);
+        setEphemeral(Boolean(d?.ephemeralStore));
+      })
       .catch(() => undefined);
   }, []);
 
@@ -46,7 +54,11 @@ export default function DashboardPage() {
   }
 
   if (loading || error || !data) {
-    return <p className="p-8 text-sm text-muted-foreground">{error ? t("error") : t("loading")}</p>;
+    return (
+      <p className="p-8 text-sm text-muted-foreground" role={error ? "alert" : undefined}>
+        {error ? t("error") : t("loading")}
+      </p>
+    );
   }
 
   const questions = [
@@ -82,14 +94,19 @@ export default function DashboardPage() {
       lead={`${data.businessName} · ${data.city}`}
       action={
         <button type="button" className="btn btn-primary" onClick={() => void decide()} disabled={busy}>
-          <Sparkles className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+          <ClipboardCheck className="h-4 w-4" strokeWidth={1.75} aria-hidden />
           {busy ? t("running") : t("decide")}
         </button>
       }
     >
+      <StoreConnectCard />
+      <EphemeralStoreBanner show={ephemeral} />
+      <LearnHero />
+      <StoreGapBanner salesCount={data.salesCount} />
+
       <SetupChecklist
         hasProducts={data.prices.length > 0}
-        hasSales={data.salesCount > 0 || data.revenue > 0}
+        hasSales={data.salesCount > 0}
         hasCompetitors={data.competitorRows.some((c) => c.price > 0)}
       />
 
@@ -97,7 +114,7 @@ export default function DashboardPage() {
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
         <article className="card-raised col-span-2 p-5 lg:col-span-1">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Health</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("health")}</p>
           <p className={`num mt-2 text-3xl font-semibold sm:text-4xl ${healthTone(data.healthScore)}`}>
             {data.healthScore}
             <span className="text-base text-muted-foreground">/100</span>

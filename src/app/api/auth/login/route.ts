@@ -10,6 +10,9 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { jsonError } from "@/lib/api-error";
+import { clientIp } from "@/lib/client-ip";
+import { originForbidden } from "@/lib/origin";
+import { rateLimit } from "@/lib/rate-limit";
 import { normalizePhone } from "@/lib/phone";
 import { readDb } from "@/lib/store";
 import type { Role } from "@/constants";
@@ -20,6 +23,10 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  if (originForbidden(request)) return jsonError("forbidden", 403);
+  if (!rateLimit(`login:${clientIp(request)}`, 8, 60_000)) {
+    return jsonError("rate", 429);
+  }
   let json: unknown;
   try {
     json = await request.json();
@@ -31,7 +38,8 @@ export async function POST(request: Request) {
   const raw = parsed.data.login.trim();
   const email = raw.toLowerCase();
   const phone = normalizePhone(raw);
-  const user = readDb().users.find(
+  const db = await readDb();
+  const user = db.users.find(
     (u) => u.email === email || (phone.length >= 10 && normalizePhone(u.phone) === phone),
   );
   if (!user) return jsonError("invalid_credentials", 401);

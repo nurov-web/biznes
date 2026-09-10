@@ -39,6 +39,9 @@ export type DealStage = (typeof DEAL_STAGES)[number];
 
 export const CUSTOMER_TAGS = ["vip", "regular", "once"] as const;
 
+export const FINANCE_CATEGORIES = ["sales", "store_buy", "cogs", "rent", "salary", "other"] as const;
+export type FinanceCategory = (typeof FINANCE_CATEGORIES)[number];
+
 export const CITIES_TJ = [
   "Душанбе",
   "Хуҷанд",

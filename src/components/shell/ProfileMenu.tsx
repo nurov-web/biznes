@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ChevronDown, LogOut, Plug, Settings, Store, UserRound } from "lucide-react";
+import { ChevronDown, GraduationCap, LogOut, Plug, Settings, Store, UserRound } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { EASE, gsap, reducedMotion } from "@/lib/gsap";
 
@@ -59,6 +59,7 @@ export function ProfileMenu({ firstName, lastName, businessName, onLogout }: Pro
 
   const items = [
     { href: "/profile", key: "profile", icon: UserRound },
+    { href: "/learn", key: "learn", icon: GraduationCap },
     { href: "/settings", key: "settings", icon: Settings },
     { href: "/market", key: "market", icon: Store },
     { href: "/integrations", key: "integrations", icon: Plug },

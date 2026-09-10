@@ -18,7 +18,8 @@ export async function POST(request: Request) {
     const business = await requireBusiness(user.id);
     const body = (await request.json().catch(() => ({}))) as { locale?: AppLocale };
     const locale: AppLocale = parseLocale(body.locale);
-    const products = readDb().products.filter(
+    const db = await readDb();
+    const products = db.products.filter(
       (p) => p.businessId === business.id && !p.archived,
     );
     const ctx = {
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
     } catch (error) {
       console.warn("[ai.analyze] fallback", error);
     }
-    withDb((db) => {
+    await withDb((db) => {
       db.aiReports.push({
         id: newId(),
         businessId: business.id,

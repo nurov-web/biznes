@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     if (!rows.length) return jsonError("empty_csv", 400);
 
     if (parsed.data.kind === "sales") {
-      const inserted = withDb((db) => {
+      const inserted = await withDb((db) => {
         let n = 0;
         for (const row of rows) {
           const sku = row.sku || row.product || row.мол || "";
@@ -38,18 +38,19 @@ export async function POST(request: Request) {
             quantity: quantity || 1,
             revenue,
             cost: num(row.cost || row.хароҷот || row.buy),
+            dealId: null,
             createdAt: nowIso(),
           });
           n += 1;
         }
         return n;
       });
-      addAudit(business.id, user.id, "import.sales");
+      await addAudit(business.id, user.id, "import.sales");
       return NextResponse.json({ imported: inserted, kind: "sales" });
     }
 
     if (parsed.data.kind === "competitors") {
-      const inserted = withDb((db) => {
+      const inserted = await withDb((db) => {
         let n = 0;
         for (const row of rows) {
           const name = row.name || row.рақиб || "";
@@ -68,7 +69,7 @@ export async function POST(request: Request) {
         }
         return n;
       });
-      addAudit(business.id, user.id, "import.competitors");
+      await addAudit(business.id, user.id, "import.competitors");
       return NextResponse.json({ imported: inserted, kind: "competitors" });
     }
 
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
       });
       imported += 1;
     }
-    addAudit(business.id, user.id, "import.inventory");
+    await addAudit(business.id, user.id, "import.inventory");
     return NextResponse.json({ imported, kind: "inventory" });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);

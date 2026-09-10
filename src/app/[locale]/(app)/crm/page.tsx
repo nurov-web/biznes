@@ -34,7 +34,9 @@ export default function CrmOverviewPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="p-8 text-sm text-muted-foreground">…</p>;
+  if (loading) {
+    return <p className="p-8 text-sm text-muted-foreground">{t("loading")}</p>;
+  }
 
   const open = deals.filter((d) => d.stage !== "won" && d.stage !== "lost");
   const won = deals.filter((d) => d.stage === "won");
@@ -116,7 +118,7 @@ export default function CrmOverviewPage() {
               customers.slice(0, 6).map((c) => (
                 <li key={c.id} className="flex items-center justify-between gap-3 border-b border-border pb-2 last:border-0">
                   <span className="min-w-0 truncate">{c.name}</span>
-                  <span className="chip text-xs">{c.tags || "—"}</span>
+                  <span className="chip text-xs">{c.tags ? t(`tagNames.${c.tags}` as "tagNames.vip") : t("noTag")}</span>
                 </li>
               ))
             )}

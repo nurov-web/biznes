@@ -28,21 +28,29 @@ export function MarketScanCard({ city, type, goal, products, onApply }: Props) {
 
   function load() {
     if (!city.trim()) return;
+    if (typeof goal === "string" && !goal.trim()) {
+      setBrief(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
+    const payload = {
+      locale,
+      city,
+      type,
+      goal,
+      products: products?.slice(0, 8),
+    };
     fetch("/api/market/scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        locale,
-        city,
-        type,
-        goal,
-        products: products?.slice(0, 8),
-      }),
+      body: JSON.stringify(payload),
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { brief?: MarketBrief } | null) => {
-        if (data?.brief) setBrief(data.brief);
+        if (data?.brief) {
+          setBrief(data.brief);
+        }
       })
       .catch(() => undefined)
       .finally(() => setLoading(false));

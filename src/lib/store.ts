@@ -1,5 +1,10 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import type { Prisma } from "@prisma/client";
+import type { StorePlatform } from "@/constants/store";
+import { isPostgresConfigured, prisma } from "@/lib/prisma";
+
+export { STORE_PLATFORMS, type StorePlatform } from "@/constants/store";
 
 /** Навиштан ба диск нашуд (дар Vercel лоиҳа read-only аст). */
 export class StoreWriteError extends Error {
@@ -35,7 +40,7 @@ export type SmsRow = {
   createdAt: string;
 };
 
-/** "running" — бизнес аллакай ҳаст; "idea" — ҳанӯз кушода нашудааст. */
+/** "running" — бизнес аллакай ҳаст; "idea" — ҳанӯз кушода نشدهаст. */
 export type BusinessStage = "running" | "idea";
 
 export type BusinessRow = {
@@ -191,6 +196,7 @@ export type SalesLineRow = {
   quantity: number;
   revenue: number;
   cost: number;
+  dealId: string | null;
   createdAt: string;
 };
 
@@ -235,6 +241,82 @@ export type ApiKeyRow = {
   lastUsedAt: string | null;
 };
 
+/** Пайвасти мағоза — парол танҳо hash, ҳеҷ гоҳ матн. */
+export type StoreConnectionRow = {
+  id: string;
+  businessId: string;
+  storeUrl: string;
+  platform: StorePlatform;
+  login: string;
+  passwordHash: string;
+  status: "connected" | "skipped";
+  reachable: boolean;
+  lastCheckAt: string;
+  apiKeyId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type LearnDiagnosis = {
+  answers: number[];
+  profile: string;
+  title: string;
+  summary: string;
+  strengths: string[];
+  gaps: string[];
+  focusUnitIds: string[];
+  firstAdvice: string;
+  courseLead: string;
+  usedAi: boolean;
+  aiError: string | null;
+  createdAt: string;
+};
+
+export type LearnProgressRow = {
+  id: string;
+  businessId: string;
+  userId: string;
+  xp: number;
+  streak: number;
+  lastLessonAt: string | null;
+  completedLessonIds: string[];
+  diagnosis: LearnDiagnosis | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StoreAuditSku = {
+  name: string;
+  category: string;
+  sellPrice: number;
+  estimatedBuy: number;
+  monthlyQty: number;
+  hoursPerWeek: number;
+  marginPct: number;
+  note: string;
+};
+
+export type StoreAuditRow = {
+  id: string;
+  businessId: string;
+  storeUrl: string;
+  summary: string;
+  products: StoreAuditSku[];
+  revenueMonthly: number;
+  costMonthly: number;
+  profitMonthly: number;
+  hoursMonthly: number;
+  risks: string[];
+  actions: string[];
+  disclaimer: string;
+  usedAi: boolean;
+  usedWeb: boolean;
+  aiError: string | null;
+  pagesRead: number;
+  importedAt: string | null;
+  createdAt: string;
+};
+
 export type AuditRow = {
   id: string;
   businessId: string;
@@ -262,6 +344,9 @@ export type Database = {
   auditLogs: AuditRow[];
   plans: PlanRow[];
   apiKeys: ApiKeyRow[];
+  storeConnections: StoreConnectionRow[];
+  learnProgress: LearnProgressRow[];
+  storeAudits: StoreAuditRow[];
 };
 
 const EMPTY: Database = {
@@ -283,6 +368,9 @@ const EMPTY: Database = {
   auditLogs: [],
   plans: [],
   apiKeys: [],
+  storeConnections: [],
+  learnProgress: [],
+  storeAudits: [],
 };
 
 type StoreMemory = { __bpDb?: Database };
@@ -290,7 +378,6 @@ type StoreMemory = { __bpDb?: Database };
 function dataFile(): string {
   const fromEnv = process.env.BP_DATA_FILE?.trim();
   if (fromEnv) return fromEnv;
-  // Vercel: process.cwd() навишта намешавад — танҳо /tmp.
   if (process.env.VERCEL) return join("/tmp", "businesspilot-app.json");
   return join(process.cwd(), "data", "app.json");
 }
@@ -321,13 +408,27 @@ function hydrate(raw: Partial<Database>): Database {
     tasks: raw.tasks ?? [],
     aiReports: raw.aiReports ?? [],
     competitors: raw.competitors ?? [],
-    salesLines: raw.salesLines ?? [],
+    salesLines: (raw.salesLines ?? []).map((row) => ({
+      ...row,
+      dealId: row.dealId ?? null,
+    })),
     memory: raw.memory ?? [],
     actions: raw.actions ?? [],
     alerts: raw.alerts ?? [],
     auditLogs: raw.auditLogs ?? [],
     plans: raw.plans ?? [],
     apiKeys: raw.apiKeys ?? [],
+    storeConnections: raw.storeConnections ?? [],
+    learnProgress: (raw.learnProgress ?? []).map((row) => ({
+      ...row,
+      diagnosis: row.diagnosis
+        ? { ...row.diagnosis, aiError: row.diagnosis.aiError ?? null }
+        : null,
+    })),
+    storeAudits: (raw.storeAudits ?? []).map((row) => ({
+      ...row,
+      aiError: row.aiError ?? null,
+    })),
     businesses: (raw.businesses ?? []).map((b) => ({
       ...b,
       stage: b.stage === "idea" ? "idea" : "running",
@@ -338,42 +439,112 @@ function hydrate(raw: Partial<Database>): Database {
   };
 }
 
-function load(): Database {
-  const g = storeMemory();
-  if (process.env.VERCEL && g.__bpDb) return g.__bpDb;
+function loadFromFile(): Database {
   try {
     const raw = JSON.parse(readFileSync(dataFile(), "utf8")) as Partial<Database>;
-    const db = hydrate(raw);
-    if (process.env.VERCEL) g.__bpDb = db;
-    return db;
+    return hydrate(raw);
   } catch {
-    const empty = structuredClone(EMPTY);
-    if (process.env.VERCEL) g.__bpDb = empty;
-    return empty;
+    return structuredClone(EMPTY);
   }
 }
 
-function save(db: Database): void {
-  if (process.env.VERCEL) storeMemory().__bpDb = db;
+async function load(): Promise<Database> {
+  const g = storeMemory();
+
+  if (isPostgresConfigured() && prisma) {
+    if (g.__bpDb) return g.__bpDb;
+    try {
+      const snap = await prisma.appSnapshot.findUnique({
+        where: { id: "global" },
+      });
+      if (snap && snap.payload) {
+        const raw = snap.payload as unknown as Partial<Database>;
+        const db = hydrate(raw);
+        g.__bpDb = db;
+        return db;
+      }
+    } catch (error) {
+      console.error("[store] Хатогии хондани PostgreSQL Snapshot:", error);
+    }
+    const fileDb = loadFromFile();
+    g.__bpDb = fileDb;
+    return fileDb;
+  }
+
+  if (process.env.VERCEL && g.__bpDb) return g.__bpDb;
+  const db = loadFromFile();
+  if (process.env.VERCEL) g.__bpDb = db;
+  return db;
+}
+
+function writeLocalFile(db: Database): void {
   const file = dataFile();
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, JSON.stringify(db, null, 2), "utf8");
+}
+
+async function save(db: Database): Promise<void> {
+  const g = storeMemory();
+  g.__bpDb = db;
+
+  if (isPostgresConfigured() && prisma) {
+    try {
+      await prisma.appSnapshot.upsert({
+        where: { id: "global" },
+        create: {
+          id: "global",
+          payload: db as unknown as Prisma.InputJsonValue,
+        },
+        update: {
+          payload: db as unknown as Prisma.InputJsonValue,
+        },
+      });
+      if (!process.env.VERCEL) {
+        try {
+          writeLocalFile(db);
+        } catch (error) {
+          console.error("[store] нусхаи файл навишта нашуд", error);
+        }
+      }
+      return;
+    } catch (error) {
+      console.error("[store] Хатогии навиштани PostgreSQL Snapshot:", error);
+      // Дар Vercel /tmp-ро «муваффақ» ҳисоб намекунем — маълумот пас аз sleep гум мешавад.
+      if (process.env.VERCEL) {
+        g.__bpDb = undefined;
+        throw new StoreWriteError(error);
+      }
+    }
+  }
+
   try {
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, JSON.stringify(db, null, 2), "utf8");
+    writeLocalFile(db);
   } catch (error) {
-    console.error("[store] навишта нашуд", file, error);
-    // Vercel: диск read-only — ҳисоб дар хотира /tmp мемонад, 500 намедиҳем.
+    console.error("[store] навишта нашуд", dataFile(), error);
     if (process.env.VERCEL) return;
     throw new StoreWriteError(error);
   }
 }
 
-export function withDb<T>(fn: (db: Database) => T): T {
-  const db = load();
-  const result = fn(db);
-  save(db);
-  return result;
+export async function withDb<T>(
+  fn: (db: Database) => T | Promise<T>
+): Promise<T> {
+  const db = await load();
+  try {
+    const result = await fn(db);
+    await save(db);
+    return result;
+  } catch (error) {
+    storeMemory().__bpDb = undefined;
+    throw error;
+  }
 }
 
-export function readDb(): Database {
+export async function readDb(): Promise<Database> {
   return load();
+}
+
+/** Vercel: /tmp + хотира танҳо вақте истифода мешавад, ки PostgreSQL танзим нашуда бошад. */
+export function isEphemeralStore(): boolean {
+  return Boolean(process.env.VERCEL && !isPostgresConfigured());
 }

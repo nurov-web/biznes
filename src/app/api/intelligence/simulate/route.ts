@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) return jsonError("validation", 400);
     const locale = parseLocale(parsed.data.locale);
-    const db = readDb();
+    const db = await readDb();
     const snap = buildIntelligence(db, business, locale);
     const sim = simulate(
       snap,
@@ -50,8 +50,8 @@ export async function POST(request: Request) {
       locale,
     );
     if (parsed.data.save) {
-      addMemory(business.id, "twin", "Simulation", sim);
-      addAudit(business.id, user.id, "intelligence.simulate");
+      await addMemory(business.id, "twin", "Simulation", sim);
+      await addAudit(business.id, user.id, "intelligence.simulate");
     }
     return NextResponse.json({ sim, baseline: { revenue: snap.revenue, profit: snap.profit } });
   } catch (error) {

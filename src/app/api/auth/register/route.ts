@@ -6,6 +6,7 @@ import { z } from "zod";
 import { NextResponse } from "next/server";
 import { assertAuthConfigured, hashPassword, JWT_NOT_CONFIGURED, setSessionCookie } from "@/lib/auth";
 import { jsonError } from "@/lib/api-error";
+import { originForbidden } from "@/lib/origin";
 import { normalizePhone } from "@/lib/phone";
 import { newId, nowIso, readDb, StoreWriteError, withDb } from "@/lib/store";
 
@@ -33,6 +34,7 @@ function registerFail(error: unknown): ReturnType<typeof jsonError> {
 }
 
 export async function POST(request: Request) {
+  if (originForbidden(request)) return jsonError("forbidden", 403);
   let json: unknown;
   try {
     json = await request.json();
@@ -51,7 +53,8 @@ export async function POST(request: Request) {
   const data = parsed.data;
   const email = data.email.toLowerCase();
   const phone = data.phone;
-  const existing = readDb().users.find(
+  const db = await readDb();
+  const existing = db.users.find(
     (u) => u.email === email || normalizePhone(u.phone) === phone,
   );
   if (existing) {
@@ -67,19 +70,15 @@ export async function POST(request: Request) {
       email,
       phone,
       passwordHash: await hashPassword(data.password),
-      phoneVerified: true,
+      phoneVerified: false,
       offerAccepted: true,
       role: "owner",
       createdAt: now,
       updatedAt: now,
     };
-    try {
-      withDb((db) => {
-        db.users.push(user);
-      });
-    } catch (error) {
-      if (!(error instanceof StoreWriteError)) throw error;
-    }
+    await withDb((db) => {
+      db.users.push(user);
+    });
     await setSessionCookie(user.id, "owner", {
       firstName: user.firstName,
       lastName: user.lastName,

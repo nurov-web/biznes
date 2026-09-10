@@ -36,29 +36,53 @@ export default function AiPage() {
   const [result, setResult] = useState<AiAnalysisPayload | null>(null);
   const [usedAi, setUsedAi] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [fail, setFail] = useState("");
   const [q, setQ] = useState("");
   const [answer, setAnswer] = useState("");
 
   async function run() {
     setBusy(true);
-    const r = await fetch("/api/ai/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ locale }),
-    });
-    const data = (await r.json()) as { result?: AiAnalysisPayload; usedAi?: boolean };
-    setResult(data.result ?? null);
-    setUsedAi(Boolean(data.usedAi));
-    setBusy(false);
+    setFail("");
+    try {
+      const r = await fetch("/api/ai/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locale }),
+      });
+      const data = (await r.json()) as { result?: AiAnalysisPayload; usedAi?: boolean };
+      if (!r.ok) {
+        setResult(null);
+        setFail(t("fail"));
+        return;
+      }
+      if (!data.result) {
+        setResult(null);
+        setFail(t("fail"));
+        return;
+      }
+      setResult(data.result);
+      setUsedAi(Boolean(data.usedAi));
+    } catch {
+      setResult(null);
+      setFail(t("fail"));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function onAsk(event: FormEvent) {
     event.preventDefault();
+    setFail("");
     const r = await fetch("/api/ai/advise", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question: q, locale }),
     });
+    if (!r.ok) {
+      setAnswer("");
+      setFail(t("fail"));
+      return;
+    }
     const data = (await r.json()) as { answer?: string };
     setAnswer(data.answer ?? "");
   }
@@ -71,6 +95,11 @@ export default function AiPage() {
           {busy ? t("running") : t("run")}
         </button>
       </div>
+      {fail ? (
+        <p className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm" role="alert">
+          {fail}
+        </p>
+      ) : null}
       {result ? (
         <>
           <p className="rounded-xl bg-muted px-4 py-3 text-sm">{usedAi ? t("live") : t("demo")}</p>

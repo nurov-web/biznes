@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { requireBusiness } from "@/lib/business";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
+import { originForbidden } from "@/lib/origin";
 import { addFinance, financeTotals, listFinance } from "@/services/finance";
 
 const schema = z.object({
@@ -32,6 +33,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    if (originForbidden(request)) return jsonError("forbidden", 403);
     const user = await requireUser();
     const business = await requireBusiness(user.id);
     const parsed = schema.safeParse(await request.json());
