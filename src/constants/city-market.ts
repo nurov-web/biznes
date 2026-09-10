@@ -5,15 +5,17 @@
 import type { MarketBrief, MarketSkuHint } from "@/types";
 import type { Locale } from "@/lib/locale-query";
 import { detectNiche, nicheLabel, type NicheId } from "@/lib/niche";
+import { tajikIncludes } from "@/lib/tajik-text";
 
 type CityId = "dushanbe" | "khujand" | "bokhtar" | "kulob" | "other";
 
 export function cityId(city: string): CityId {
-  const n = city.toLowerCase();
-  if (n.includes("душан") || n.includes("dushan")) return "dushanbe";
-  if (n.includes("хуҷанд") || n.includes("худжанд") || n.includes("khujand")) return "khujand";
-  if (n.includes("бохтар") || n.includes("bokhtar") || n.includes("қурғон")) return "bokhtar";
-  if (n.includes("кӯлоб") || n.includes("кулоб") || n.includes("kulob")) return "kulob";
+  if (tajikIncludes(city, "душанбе") || tajikIncludes(city, "dushanbe")) return "dushanbe";
+  if (tajikIncludes(city, "хуҷанд") || tajikIncludes(city, "khujand")) return "khujand";
+  if (tajikIncludes(city, "бохтар") || tajikIncludes(city, "bokhtar") || tajikIncludes(city, "қурғон")) {
+    return "bokhtar";
+  }
+  if (tajikIncludes(city, "кӯлоб") || tajikIncludes(city, "kulob")) return "kulob";
   return "other";
 }
 

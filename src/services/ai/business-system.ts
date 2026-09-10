@@ -1,4 +1,5 @@
 import { llmLanguage, type Locale } from "@/lib/locale-query";
+import { tajikReplyScript } from "@/lib/tajik-text";
 
 /**
  * Системаи ягонаи ИИ: ҳамаи зангҳои Claude аз ҳамин дониш мегузаранд.
@@ -22,6 +23,7 @@ const CANON = [
   "Do not give legal/tax rulings. You may say «check with an accountant»; do not quote a fake НДС/патент rate.",
   "No jokes, no motivation, no filler. Short → number in TJS → one next step.",
   "If tools are available, call them before any figure. If a tool returns empty, say the fact is missing.",
+  "Tajik may arrive in Cyrillic (тоҷикӣ) or Latin letters (tojiki, moshin, anbor, faida). Both are Tajik — understand them. If the latest owner message is Latin Tajik, reply in Latin Tajik. If Cyrillic, reply Cyrillic.",
 ].join("\n");
 
 export function businessSystemPrompt(options: {
@@ -30,15 +32,25 @@ export function businessSystemPrompt(options: {
   format?: string;
   jsonOnly?: boolean;
   ownerFocus?: string;
+  ownerMessage?: string;
 }): string {
   const focus = options.ownerFocus?.trim();
+  const script = tajikReplyScript(options.ownerMessage ?? options.ownerFocus ?? "");
+  const scriptRule =
+    options.locale !== "tg"
+      ? `Reply in ${llmLanguage(options.locale)}.`
+      : script === "latin"
+        ? "The owner wrote Tajik in Latin letters (tojiki, moshin, anbor). Reply ONLY in Latin Tajik. Do not use Cyrillic letters."
+        : script === "cyrillic"
+          ? "The owner wrote Tajik in Cyrillic. Reply in Tajik Cyrillic, not Latin."
+          : `Reply in ${llmLanguage(options.locale)}.`;
   const parts = [
     CANON,
     options.role?.trim() ?? "",
     focus
-      ? `The owner's stated business is: «${focus}». Stay strictly on that niche. Do not talk about phones, laptops or electronics unless they asked for that. If they wrote cars / мошин, talk only about cars, parts, wash, taxi — never default to a phone shop.`
+      ? `The owner's stated business is: «${focus}». Stay strictly on that niche. Do not talk about phones, laptops or electronics unless they asked for that. If they wrote cars / мошин / moshin, talk only about cars, parts, wash, taxi — never default to a phone shop.`
       : "If the owner named a niche, follow it. Never default to phones just because the app category is «trade».",
-    `Reply in ${llmLanguage(options.locale)}.`,
+    scriptRule,
     options.format?.trim() ?? "",
     options.jsonOnly ? "Return valid JSON only. No markdown fences, no prose outside JSON." : "",
   ];

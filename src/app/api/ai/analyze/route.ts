@@ -51,6 +51,7 @@ export async function POST(request: Request) {
           locale,
           jsonOnly: true,
           ownerFocus: [business.goal, business.typeNote, business.name].filter(Boolean).join(" · "),
+          ownerMessage: [business.goal, business.typeNote].filter(Boolean).join(" "),
           format: "Practical advice with numbers. Never guarantee profit. Stay on this owner's niche.",
         }),
         buildAnalyzePrompt(ctx),

@@ -117,6 +117,7 @@ export async function scanCityMarket(input: MarketScanInput): Promise<MarketBrie
     locale: input.locale,
     jsonOnly: true,
     ownerFocus: goal || label,
+    ownerMessage: goal,
     role: "You estimate city climate for this owner's niche only. Label every figure as an orienter, not a listing scrape.",
   });
 

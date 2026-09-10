@@ -10,6 +10,7 @@ import { ModuleEmpty } from "@/components/ops/ModuleEmpty";
 import { RecommendedBadge, RecommendedNote } from "@/components/ui/Recommended";
 import { LOW_STOCK_THRESHOLD } from "@/constants";
 import { parseLocale } from "@/lib/locale-query";
+import { tajikIncludes } from "@/lib/tajik-text";
 import { suggestReorder } from "@/services/intelligence/advice";
 
 type Product = {
@@ -73,9 +74,9 @@ export default function InventoryPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = query.trim();
     if (!q) return products;
-    return products.filter((p) => skuOf(p).toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+    return products.filter((p) => tajikIncludes(skuOf(p), q) || tajikIncludes(p.category, q));
   }, [products, query]);
 
   const lowNames = products.filter((p) => p.quantity <= LOW_STOCK_THRESHOLD).map(skuOf);

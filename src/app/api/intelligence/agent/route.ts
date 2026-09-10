@@ -79,6 +79,7 @@ export async function POST(request: Request) {
           locale,
           role,
           ownerFocus: [business.goal, business.typeNote, business.name].filter(Boolean).join(" · "),
+          ownerMessage: parsed.data.question,
           format:
             "Call tools before any figure. Format: 1) fact from the data 2) risk or opportunity in TJS 3) one action.",
         }),

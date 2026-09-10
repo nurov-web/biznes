@@ -76,6 +76,7 @@ export async function POST(request: Request) {
           locale,
           jsonOnly: true,
           ownerFocus: data.typeNote || data.name,
+          ownerMessage: [data.typeNote, data.name].filter(Boolean).join(" "),
           role: "You coach the owner while they fill onboarding. Stay on their niche.",
           format: 'JSON: {"hints":["","",""]}. Exactly 3 hints, each under 160 characters, about their numbers.',
         }),

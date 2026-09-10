@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Archive, Plus, Search, X } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { CUSTOMER_TAGS } from "@/constants";
+import { tajikIncludes } from "@/lib/tajik-text";
 
 type Customer = {
   id: string;
@@ -39,14 +40,15 @@ export default function ClientsPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = query.trim();
     return rows.filter((c) => {
       const bySegment = segment === "all" || c.tags === segment;
       const byQuery =
         !q ||
-        c.name.toLowerCase().includes(q) ||
-        c.phone.toLowerCase().includes(q) ||
-        c.email.toLowerCase().includes(q);
+        tajikIncludes(c.name, q) ||
+        c.phone.toLowerCase().includes(q.toLowerCase()) ||
+        c.email.toLowerCase().includes(q.toLowerCase()) ||
+        tajikIncludes(c.notes, q);
       return bySegment && byQuery;
     });
   }, [rows, query, segment]);

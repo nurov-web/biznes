@@ -1,5 +1,6 @@
 import type { BusinessType } from "@/constants";
 import type { Locale } from "@/lib/locale-query";
+import { foldTajik, tajikIncludes } from "@/lib/tajik-text";
 
 export const NICHES = [
   "cars",
@@ -35,6 +36,7 @@ const RULES: { id: NicheId; keys: string[] }[] = [
       "детейл",
       "такси",
       "car",
+      "moshin",
       "auto part",
       "tyre",
       "tire",
@@ -55,35 +57,36 @@ const RULES: { id: NicheId; keys: string[] }[] = [
       "laptop",
       "phone",
       "gadget",
+      "telefon",
     ],
   },
   {
     id: "clothes",
-    keys: ["либос", "одежд", "пойафзол", "обув", "cloth", "shoe", "куртка"],
+    keys: ["либос", "одежд", "пойафзол", "обув", "cloth", "shoe", "куртка", "libos"],
   },
   {
     id: "food",
-    keys: ["хӯрок", "еда", "кафе", "кофе", "қаҳва", "food", "coffee", "ресторан", "оши"],
+    keys: ["хӯрок", "еда", "кафе", "кофе", "қаҳва", "food", "coffee", "ресторан", "оши", "xurok"],
   },
   {
     id: "construction",
-    keys: ["сохтмон", "цемент", "масолеҳ", "строи", "cement", "construction"],
+    keys: ["сохтмон", "цемент", "масолеҳ", "строи", "cement", "construction", "soxtmon"],
   },
   {
     id: "agriculture",
-    keys: ["кишоварз", "тухм", "agricult", "ферма", "чорво"],
+    keys: ["кишоварз", "тухм", "agricult", "ферма", "чорво", "kishovarz"],
   },
   {
     id: "education",
-    keys: ["курс", "мактаб", "таълим", "educat", "репетитор"],
+    keys: ["курс", "мактаб", "таълим", "educat", "репетитор", "talim"],
   },
   {
     id: "it",
-    keys: ["сомона", "сайт", "it ", "программ", "разработ"],
+    keys: ["сомона", "сайт", "it ", "программ", "разработ", "somona"],
   },
   {
     id: "repair",
-    keys: ["таъмир", "ремонт", "repair", "сервис"],
+    keys: ["таъмир", "ремонт", "repair", "сервис", "tamir"],
   },
   {
     id: "online",
@@ -91,7 +94,7 @@ const RULES: { id: NicheId; keys: string[] }[] = [
   },
   {
     id: "service",
-    keys: ["хизмат", "услуг", "service"],
+    keys: ["хизмат", "услуг", "service", "xizmat", "hizmat"],
   },
 ];
 
@@ -99,11 +102,10 @@ const RULES: { id: NicheId; keys: string[] }[] = [
 export function detectNiche(...parts: Array<string | undefined | null>): NicheId {
   const text = parts
     .filter((p): p is string => Boolean(p && p.trim()))
-    .join(" ")
-    .toLowerCase();
-  if (!text) return "general";
+    .join(" ");
+  if (!foldTajik(text)) return "general";
   for (const rule of RULES) {
-    if (rule.keys.some((key) => text.includes(key))) return rule.id;
+    if (rule.keys.some((key) => tajikIncludes(text, key))) return rule.id;
   }
   return "general";
 }
@@ -144,8 +146,8 @@ export function ownerFocusText(parts: {
     .join(" · ");
 }
 
-const PHONE_MARK = /телефон|iphone|redmi|xiaomi|powerbank|ноутбук|lenovo|airpods|наушник|кабел type|смартфон|gadget|laptop/i;
-const CAR_MARK = /мошин|авто|шин[аые]|запчаст|мотор|равған|масло|тормоз|фильтр|детейл|car|tyre|tire/i;
+const PHONE_MARK = /телефон|iphone|redmi|xiaomi|powerbank|ноутбук|lenovo|airpods|наушник|кабел type|смартфон|gadget|laptop|telefon/i;
+const CAR_MARK = /мошин|авто|шин[аые]|запчаст|мотор|равған|масло|тормоз|фильтр|детейл|car|tyre|tire|moshin/i;
 
 /** SKU-и бегонаро (телефон ба ҷои мошин) аз ҷавоби AI мепартоем. */
 export function skuFitsNiche(name: string, category: string, niche: NicheId): boolean {

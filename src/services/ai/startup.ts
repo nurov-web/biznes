@@ -399,6 +399,7 @@ export async function planStartup(
         locale: input.locale,
         jsonOnly: true,
         ownerFocus: input.goal,
+        ownerMessage: input.goal,
         role: "You plan a first shop or stall for someone who may have no business yet. Follow their written niche only.",
         format:
           "Conservative. startupCost must fit the budget. Subtract rent, transport, spoilage and a tax buffer from monthlyProfit. Exactly 3 options in the owner's niche.",

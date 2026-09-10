@@ -129,6 +129,7 @@ export async function diagnoseMind(input: {
     locale: input.locale,
     jsonOnly: true,
     ownerFocus: input.focus,
+    ownerMessage: input.focus,
     role: "You diagnose a small-business owner's decision mindset from 10 answers. No praise fluff. Do not decide instead of them. Recommend 2 course unit ids from: asos, furush, narx, raqib, hafta.",
   });
   const ask = [

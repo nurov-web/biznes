@@ -1,4 +1,5 @@
 import type { ProductRow } from "@/lib/store";
+import { tajikEquals } from "@/lib/tajik-text";
 
 /**
  * Пайдо кардани маҳсулот бо SKU ё ном (case-insensitive, trimmed).
@@ -8,15 +9,13 @@ export function matchProduct(
   products: ProductRow[],
   query: string,
 ): ProductRow | null {
-  const needle = query.trim().toLowerCase();
+  const needle = query.trim();
   if (!needle) return null;
 
   return (
     products.find((p) => {
       if (p.archived) return false;
-      const model = p.model.trim().toLowerCase();
-      const fullName = `${p.brand} ${p.model}`.trim().toLowerCase();
-      return model === needle || fullName === needle;
+      return tajikEquals(p.model, needle) || tajikEquals(`${p.brand} ${p.model}`, needle);
     }) ?? null
   );
 }

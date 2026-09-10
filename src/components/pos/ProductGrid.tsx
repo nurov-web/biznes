@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { Search, Check } from "lucide-react";
 import type { ProductRow } from "@/lib/store";
 import { productSellPrice } from "@/services/pos/price";
+import { tajikIncludes } from "@/lib/tajik-text";
 
 export function getProductSellPrice(p: ProductRow): number {
   return productSellPrice(p);
@@ -25,13 +26,11 @@ export function ProductGrid({ products, selectedProductId, onSelectProduct }: Pr
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = query.trim();
     if (!q) return products;
     return products.filter(
       (p) =>
-        p.brand.toLowerCase().includes(q) ||
-        p.model.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q),
+        tajikIncludes(p.brand, q) || tajikIncludes(p.model, q) || tajikIncludes(p.category, q),
     );
   }, [products, query]);
 

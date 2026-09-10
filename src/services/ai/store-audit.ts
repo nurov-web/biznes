@@ -129,6 +129,7 @@ export async function auditStoreSite(input: {
     locale: input.locale,
     jsonOnly: true,
     ownerFocus: input.focus,
+    ownerMessage: input.focus,
     role: "You read a public shop page (not admin). Extract products and estimate monthly cost, profit and owner hours. Label every number as an estimate. Never claim you logged into wp-admin or Shopify admin. Never scrape Somon/OLX.",
   });
   const schema = `{"summary":"","products":[{"name":"","category":"","sellPrice":0,"estimatedBuy":0,"monthlyQty":0,"hoursPerWeek":0,"marginPct":0,"note":""}],"revenueMonthly":0,"costMonthly":0,"profitMonthly":0,"hoursMonthly":0,"risks":[],"actions":[],"disclaimer":""}`;

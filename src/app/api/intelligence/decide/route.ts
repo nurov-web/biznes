@@ -45,6 +45,7 @@ export async function POST(request: Request) {
           locale,
           role: "You are the Decision Engine for this owner.",
           ownerFocus: [business.goal, business.typeNote, business.name].filter(Boolean).join(" · "),
+          ownerMessage: parsed.data.question,
           format:
             "Use tools. Run at least one simulation before you recommend. Four short labeled paragraphs: Analyze → Explain → Simulate → Recommend.",
         }),
