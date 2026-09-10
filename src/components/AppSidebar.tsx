@@ -31,8 +31,31 @@ import { APP_NAME } from "@/constants";
 
 type Item = { href: string; key: string; icon: LucideIcon };
 
+const dashItem: Item = { href: "/dashboard", key: "dashboard", icon: LayoutDashboard };
+const posItem: Item = { href: "/pos", key: "pos", icon: Banknote };
+const inventoryItem: Item = { href: "/inventory", key: "inventory", icon: Package };
+const financeItem: Item = { href: "/finance", key: "finance", icon: Wallet };
+const clientsItem: Item = { href: "/crm/clients", key: "clients", icon: Users };
+
+/** Кори рӯз аввал: панел, касса, анбор, пул. */
+const OPS: Item[] = [
+  dashItem,
+  posItem,
+  inventoryItem,
+  financeItem,
+  { href: "/tasks", key: "tasks", icon: CheckSquare },
+  { href: "/store", key: "store", icon: Store },
+  { href: "/integrations", key: "integrations", icon: Plug },
+  { href: "/settings", key: "settings", icon: Settings },
+];
+
+const CRM: Item[] = [
+  { href: "/crm", key: "crmOverview", icon: Contact },
+  clientsItem,
+  { href: "/crm/sales", key: "sales", icon: Workflow },
+];
+
 const INTEL: Item[] = [
-  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/learn", key: "learn", icon: GraduationCap },
   { href: "/plan", key: "plan", icon: Rocket },
   { href: "/data", key: "data", icon: Database },
@@ -44,25 +67,7 @@ const INTEL: Item[] = [
   { href: "/agents", key: "agents", icon: Bot },
 ];
 
-const CRM: Item[] = [
-  { href: "/crm", key: "crmOverview", icon: Contact },
-  { href: "/crm/clients", key: "clients", icon: Users },
-  { href: "/crm/sales", key: "sales", icon: Workflow },
-];
-
-const posItem: Item = { href: "/pos", key: "pos", icon: Banknote };
-
-const OPS: Item[] = [
-  posItem,
-  { href: "/inventory", key: "inventory", icon: Package },
-  { href: "/finance", key: "finance", icon: Wallet },
-  { href: "/tasks", key: "tasks", icon: CheckSquare },
-  { href: "/store", key: "store", icon: Store },
-  { href: "/integrations", key: "integrations", icon: Plug },
-  { href: "/settings", key: "settings", icon: Settings },
-];
-
-const MOBILE: Item[] = [INTEL[0], posItem, OPS[1], OPS[2], CRM[0]];
+const MOBILE: Item[] = [dashItem, posItem, inventoryItem, financeItem, clientsItem];
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/crm") return pathname === "/crm";
@@ -105,9 +110,9 @@ export function AppSidebar() {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const groups: { label: string; items: Item[] }[] = [
-    { label: t("intelGroup"), items: INTEL },
-    { label: "CRM", items: CRM },
     { label: t("opsGroup"), items: OPS },
+    { label: t("crmGroup"), items: CRM },
+    { label: t("intelGroup"), items: INTEL },
   ];
 
   return (
