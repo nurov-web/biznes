@@ -5,7 +5,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { CITIES_TJ } from "@/constants";
 import { useRouter } from "@/i18n/navigation";
 import { GsapStep } from "@/components/motion/GsapStep";
-import { MarketScanCard } from "@/components/market/MarketScanCard";
 import { RecommendedBadge, RecommendedNote } from "@/components/ui/Recommended";
 import { parseLocale } from "@/lib/locale-query";
 import { suggestPlanOption } from "@/services/intelligence/advice";
@@ -170,7 +169,6 @@ export function NewBusinessFlow({ onBack }: { onBack: () => void }) {
               />
             </label>
           </div>
-          <MarketScanCard city={city} type="trade" goal={goal} />
           <div className="flex flex-wrap justify-between gap-3 pt-2">
             <button type="button" className="btn btn-ghost" onClick={onBack}>
               {t("back")}

@@ -7,8 +7,6 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { parseLocale } from "@/lib/locale-query";
-import { completeClaude, extractJsonObject } from "@/services/ai/claude";
-import { businessSystemPrompt } from "@/services/ai/business-system";
 import { localMarketBrief } from "@/constants/city-market";
 
 const schema = z.object({
@@ -69,36 +67,7 @@ export async function POST(request: Request) {
           ...localHints(locale, data.city).slice(0, 1),
         ]
       : localHints(locale, data.city);
-
-    try {
-      const text = await completeClaude(
-        businessSystemPrompt({
-          locale,
-          jsonOnly: true,
-          ownerFocus: data.typeNote || data.name,
-          ownerMessage: [data.typeNote, data.name].filter(Boolean).join(" "),
-          role: "You coach the owner while they fill onboarding. Stay on their niche.",
-          format: 'JSON: {"hints":["","",""]}. Exactly 3 hints, each under 160 characters, about their numbers.',
-        }),
-        JSON.stringify({
-          businessType: data.type,
-          direction: data.typeNote,
-          city: data.city,
-          name: data.name,
-          products: data.products,
-          cityClimate: market.climate,
-          citySummary: market.summary,
-        }).slice(0, 4000),
-      );
-      const raw = extractJsonObject(text) as { hints?: unknown };
-      const hints = Array.isArray(raw.hints)
-        ? raw.hints.map((h) => String(h)).filter(Boolean).slice(0, 3)
-        : [];
-      return NextResponse.json({ hints: hints.length ? hints : fallback, usedAi: hints.length > 0 });
-    } catch (error) {
-      console.warn("[onboarding.hints] fallback", error);
-      return NextResponse.json({ hints: fallback, usedAi: false });
-    }
+    return NextResponse.json({ hints: fallback, usedAi: false });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
     return jsonError("server", 500);

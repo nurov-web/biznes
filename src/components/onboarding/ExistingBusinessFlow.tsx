@@ -1,15 +1,12 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { BUSINESS_TYPES, CITIES_TJ, CHANNELS } from "@/constants";
 import { emptyProduct } from "@/constants/catalog";
-import { useRouter } from "@/i18n/navigation";
 import { GsapStep } from "@/components/motion/GsapStep";
 import { ProductCatalogForm } from "@/components/onboarding/ProductCatalogForm";
 import { AiHints } from "@/components/onboarding/AiHints";
-import { MarketScanCard } from "@/components/market/MarketScanCard";
-import { skuToDraft } from "@/lib/sku-draft";
 import type { ProductDraft } from "@/types";
 
 const STEP_KEYS = ["type", "details", "catalog", "market", "numbers"] as const;
@@ -18,7 +15,7 @@ const TOTAL = STEP_KEYS.length;
 export function ExistingBusinessFlow({ onBack }: { onBack: () => void }) {
   const t = useTranslations("onboarding");
   const ts = useTranslations("start");
-  const router = useRouter();
+  const locale = useLocale();
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -54,31 +51,42 @@ export function ExistingBusinessFlow({ onBack }: { onBack: () => void }) {
     }
     setBusy(true);
     setError("");
-    const response = await fetch("/api/onboarding", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        type,
-        typeNote,
-        city,
-        region,
-        yearsOpen: Number(yearsOpen),
-        employees: Number(employees),
-        channel,
-        competitors,
-        audience,
-        monthlyRevenue: Number(monthlyRevenue) || 0,
-        monthlyCost: Number(monthlyCost) || 0,
-        products: products.filter((p) => p.model.trim() || p.category.trim()),
-      }),
-    });
-    setBusy(false);
-    if (!response.ok) {
+    const controller = new AbortController();
+    const watchdog = window.setTimeout(() => controller.abort(), 20000);
+    try {
+      const response = await fetch("/api/onboarding", {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          name,
+          type,
+          typeNote,
+          city,
+          region,
+          yearsOpen: Number(yearsOpen),
+          employees: Number(employees),
+          channel,
+          competitors,
+          audience,
+          monthlyRevenue: Number(monthlyRevenue) || 0,
+          monthlyCost: Number(monthlyCost) || 0,
+          products: products.filter((p) => p.model.trim() || p.category.trim() || p.brand.trim()),
+        }),
+      });
+      if (!response.ok) {
+        setError(t("saveError"));
+        return;
+      }
+      window.location.assign(`/${locale}/dashboard`);
+    } catch {
       setError(t("saveError"));
-      return;
+    } finally {
+      window.clearTimeout(watchdog);
+      setBusy(false);
     }
-    router.push("/dashboard");
   }
 
   return (
@@ -238,24 +246,6 @@ export function ExistingBusinessFlow({ onBack }: { onBack: () => void }) {
           )}
         </GsapStep>
         <AiHints type={type} city={city} name={name} products={products} step={step} typeNote={typeNote} />
-        {step >= 2 ? (
-          <MarketScanCard
-            city={city}
-            type={type}
-            goal={typeNote}
-            products={products.map((p) => ({ category: p.category, brand: p.brand, model: p.model }))}
-            onApply={(sku) => {
-              setProducts((rows) => {
-                if (rows.some((row) => row.model === sku.name || `${row.brand} ${row.model}`.trim() === sku.name)) {
-                  return rows;
-                }
-                const next = skuToDraft(sku);
-                const blank = rows.length === 1 && !rows[0].model.trim() && !rows[0].category.trim();
-                return blank ? [next] : [...rows, next];
-              });
-            }}
-          />
-        ) : null}
         <div className="mt-8 flex flex-wrap justify-between gap-3">
           <button
             type="button"

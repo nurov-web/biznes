@@ -10,15 +10,15 @@ import { originForbidden } from "@/lib/origin";
 import { newId, nowIso, readDb, withDb } from "@/lib/store";
 
 const productSchema = z.object({
-  category: z.string().trim().min(1).max(80),
-  brand: z.string().trim().min(1).max(80),
-  model: z.string().trim().min(1).max(120),
-  buyPriceMin: z.number().nonnegative(),
-  buyPriceMax: z.number().nonnegative(),
-  sellPriceMin: z.number().nonnegative(),
-  sellPriceMax: z.number().nonnegative(),
-  quantity: z.number().int().nonnegative(),
-  condition: z.enum(["new", "used"]),
+  category: z.string().trim().max(80).default(""),
+  brand: z.string().trim().max(80).default(""),
+  model: z.string().trim().max(120).default(""),
+  buyPriceMin: z.number().nonnegative().default(0),
+  buyPriceMax: z.number().nonnegative().default(0),
+  sellPriceMin: z.number().nonnegative().default(0),
+  sellPriceMax: z.number().nonnegative().default(0),
+  quantity: z.number().int().nonnegative().default(0),
+  condition: z.enum(["new", "used"]).default("new"),
 });
 
 const schema = z.object({
@@ -93,10 +93,19 @@ export async function POST(request: Request) {
         });
       }
       for (const p of data.products) {
+        if (!p.model.trim() && !p.category.trim() && !p.brand.trim()) continue;
         db.products.push({
           id: newId(),
           businessId,
-          ...p,
+          category: p.category || "мол",
+          brand: p.brand || "—",
+          model: p.model || p.category || "SKU",
+          buyPriceMin: p.buyPriceMin,
+          buyPriceMax: p.buyPriceMax,
+          sellPriceMin: p.sellPriceMin,
+          sellPriceMax: p.sellPriceMax,
+          quantity: p.quantity,
+          condition: p.condition,
           archived: false,
           createdAt: now,
           updatedAt: now,
@@ -122,7 +131,11 @@ export async function POST(request: Request) {
       }
     });
     const res = NextResponse.json({ ok: true, businessId });
-    await stampAuthCookiesByUserId(res, user.id);
+    try {
+      await stampAuthCookiesByUserId(res, user.id);
+    } catch (error) {
+      console.warn("[onboarding] cookie", error);
+    }
     return res;
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
