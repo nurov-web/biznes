@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Archive, Plus, Search, X } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
+import { CrmTabs } from "@/components/crm/CrmTabs";
 import { CUSTOMER_TAGS } from "@/constants";
 import { tajikIncludes } from "@/lib/tajik-text";
 
@@ -99,6 +100,7 @@ export default function ClientsPage() {
         </button>
       }
     >
+      <CrmTabs />
       {open ? (
         <form onSubmit={onSubmit} className="card-raised grid gap-3 p-6 md:grid-cols-2">
           <label className="grid gap-1.5 text-sm font-medium">

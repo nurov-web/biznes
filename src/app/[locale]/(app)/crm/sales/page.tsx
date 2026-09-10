@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
+import { CrmTabs } from "@/components/crm/CrmTabs";
 import { DEAL_STAGES, type DealStage } from "@/constants";
 
 type Customer = { id: string; name: string };
@@ -105,6 +106,7 @@ export default function SalesPage() {
       lead={t("salesLead")}
       action={<span className="chip num">{money(total)}</span>}
     >
+      <CrmTabs />
       <form onSubmit={onSubmit} className="card-raised flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-end sm:p-5">
         <label className="grid min-w-0 w-full flex-1 gap-1.5 text-sm font-medium sm:min-w-56">
           {t("dealTitle")}

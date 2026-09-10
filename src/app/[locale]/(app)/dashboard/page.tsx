@@ -11,8 +11,6 @@ import { SalesChart } from "@/components/SalesChart";
 import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
 import { StoreGapBanner } from "@/components/dashboard/StoreGapBanner";
 import { EphemeralStoreBanner } from "@/components/dashboard/EphemeralStoreBanner";
-import { StoreConnectCard } from "@/components/store/StoreConnectCard";
-import { LearnHero } from "@/components/learn/LearnHero";
 import { healthTone, money, useIntelligence } from "@/hooks/useIntelligence";
 import { parseLocale } from "@/lib/locale-query";
 import { suggestNextMove } from "@/services/intelligence/advice";
@@ -100,16 +98,8 @@ export default function DashboardPage() {
         </button>
       }
     >
-      <StoreConnectCard />
       <EphemeralStoreBanner show={ephemeral} />
-      <LearnHero />
       <StoreGapBanner salesCount={data.salesCount} />
-
-      <SetupChecklist
-        hasProducts={data.prices.length > 0}
-        hasSales={data.salesCount > 0}
-        hasCompetitors={data.competitorRows.some((c) => c.price > 0)}
-      />
 
       <RecommendedNote suggestion={nextMove} />
 
@@ -219,6 +209,12 @@ export default function DashboardPage() {
         </article>
       </section>
       <p className="text-xs leading-relaxed text-muted-foreground">{data.disclaimer}</p>
+
+      <SetupChecklist
+        hasProducts={data.prices.length > 0}
+        hasSales={data.salesCount > 0}
+        hasCompetitors={data.competitorRows.some((c) => c.price > 0)}
+      />
     </PageShell>
   );
 }

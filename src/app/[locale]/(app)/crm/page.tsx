@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { ArrowRight } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
+import { CrmTabs } from "@/components/crm/CrmTabs";
 import { Reveal } from "@/components/motion/Reveal";
 import { DEAL_STAGES, type DealStage } from "@/constants";
 
@@ -65,6 +66,7 @@ export default function CrmOverviewPage() {
         </Link>
       }
     >
+      <CrmTabs />
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {kpis.map((kpi) => (
           <article key={kpi.k} className="card-raised p-5">

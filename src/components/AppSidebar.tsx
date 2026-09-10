@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -7,8 +8,9 @@ import {
   Bot,
   Boxes,
   CheckSquare,
+  ChevronDown,
   Compass,
-  Contact,
+  Ellipsis,
   Database,
   FlaskConical,
   GraduationCap,
@@ -23,7 +25,6 @@ import {
   UserRound,
   Users,
   Wallet,
-  Workflow,
   Zap,
 } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -35,27 +36,14 @@ const dashItem: Item = { href: "/dashboard", key: "dashboard", icon: LayoutDashb
 const posItem: Item = { href: "/pos", key: "pos", icon: Banknote };
 const inventoryItem: Item = { href: "/inventory", key: "inventory", icon: Package };
 const financeItem: Item = { href: "/finance", key: "finance", icon: Wallet };
-const clientsItem: Item = { href: "/crm/clients", key: "clients", icon: Users };
+const clientsItem: Item = { href: "/crm", key: "clients", icon: Users };
+const storeItem: Item = { href: "/store", key: "store", icon: Store };
+const settingsItem: Item = { href: "/settings", key: "settings", icon: Settings };
 
-/** Кори рӯз аввал: панел, касса, анбор, пул. */
-const OPS: Item[] = [
-  dashItem,
-  posItem,
-  inventoryItem,
-  financeItem,
-  { href: "/tasks", key: "tasks", icon: CheckSquare },
-  { href: "/store", key: "store", icon: Store },
-  { href: "/integrations", key: "integrations", icon: Plug },
-  { href: "/settings", key: "settings", icon: Settings },
-];
+/** 7 кори рӯз — бе гурӯҳҳои зиёд. */
+const MAIN: Item[] = [dashItem, posItem, inventoryItem, financeItem, clientsItem, storeItem];
 
-const CRM: Item[] = [
-  { href: "/crm", key: "crmOverview", icon: Contact },
-  clientsItem,
-  { href: "/crm/sales", key: "sales", icon: Workflow },
-];
-
-const INTEL: Item[] = [
+const MORE: Item[] = [
   { href: "/learn", key: "learn", icon: GraduationCap },
   { href: "/plan", key: "plan", icon: Rocket },
   { href: "/data", key: "data", icon: Database },
@@ -65,55 +53,51 @@ const INTEL: Item[] = [
   { href: "/simulator", key: "simulator", icon: FlaskConical },
   { href: "/actions", key: "actions", icon: Zap },
   { href: "/agents", key: "agents", icon: Bot },
+  { href: "/tasks", key: "tasks", icon: CheckSquare },
+  { href: "/integrations", key: "integrations", icon: Plug },
 ];
 
 const MOBILE: Item[] = [dashItem, posItem, inventoryItem, financeItem, clientsItem];
 
 function isActive(pathname: string, href: string): boolean {
-  if (href === "/crm") return pathname === "/crm";
+  if (href === "/crm") return pathname === "/crm" || pathname.startsWith("/crm/");
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function NavList({ items, pathname }: { items: Item[]; pathname: string }) {
+function moreContains(pathname: string): boolean {
+  return MORE.some((item) => isActive(pathname, item.href));
+}
+
+function NavLink({ item, pathname, nested }: { item: Item; pathname: string; nested?: boolean }) {
   const t = useTranslations("nav");
+  const active = isActive(pathname, item.href);
   return (
-    <>
-      {items.map((item) => {
-        const active = isActive(pathname, item.href);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={active ? "page" : undefined}
-            className={`group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all duration-200 ${
-              active
-                ? "bg-primary text-on-primary shadow-[var(--shadow-xs)]"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            <item.icon
-              className={`h-4 w-4 transition-transform duration-200 ${
-                active ? "" : "group-hover:scale-110"
-              }`}
-              strokeWidth={1.75}
-              aria-hidden
-            />
-            {t(item.key as "dashboard")}
-          </Link>
-        );
-      })}
-    </>
+    <Link
+      href={item.href}
+      aria-current={active ? "page" : undefined}
+      className={`group flex min-h-12 items-center gap-2.5 rounded-lg px-3 text-sm transition-colors ${
+        nested ? "pl-3" : ""
+      } ${
+        active
+          ? "bg-primary text-on-primary"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      }`}
+    >
+      <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden />
+      {t(item.key as "dashboard")}
+    </Link>
   );
 }
 
 export function AppSidebar() {
   const t = useTranslations("nav");
   const pathname = usePathname();
-  const groups: { label: string; items: Item[] }[] = [
-    { label: t("opsGroup"), items: OPS },
-    { label: t("crmGroup"), items: CRM },
-    { label: t("intelGroup"), items: INTEL },
-  ];
+  const onMore = moreContains(pathname);
+  const [open, setOpen] = useState(onMore);
+
+  useEffect(() => {
+    if (onMore) setOpen(true);
+  }, [onMore]);
 
   return (
     <aside className="hidden w-60 shrink-0 border-r border-border bg-background md:flex md:flex-col">
@@ -126,23 +110,46 @@ export function AppSidebar() {
         </span>
         {APP_NAME}
       </Link>
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pb-3">
-        {groups.map((group, i) => (
-          <div key={group.label} className={i > 0 ? "mt-5" : ""}>
-            <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              {group.label}
-            </p>
-            <div className="flex flex-col gap-0.5">
-              <NavList items={group.items} pathname={pathname} />
-            </div>
-          </div>
+      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3">
+        {MAIN.map((item) => (
+          <NavLink key={item.href} item={item} pathname={pathname} />
         ))}
+
+        <div className="mt-2 border-t border-border pt-2">
+          <button
+            type="button"
+            className="flex min-h-12 w-full items-center justify-between rounded-lg px-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            <span className="flex items-center gap-2.5">
+              <Ellipsis className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+              {t("moreGroup")}
+            </span>
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
+              strokeWidth={1.75}
+              aria-hidden
+            />
+          </button>
+          {open ? (
+            <div className="mt-0.5 flex flex-col gap-0.5">
+              {MORE.map((item) => (
+                <NavLink key={item.href} item={item} pathname={pathname} nested />
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mt-2 border-t border-border pt-2">
+          <NavLink item={settingsItem} pathname={pathname} />
+        </div>
       </nav>
       <Link
         href="/profile"
-        className={`mx-3 mb-4 mt-auto flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 ${
+        className={`mx-3 mb-4 flex min-h-12 items-center gap-2.5 rounded-lg px-3 text-sm transition-colors ${
           isActive(pathname, "/profile")
-            ? "bg-primary text-on-primary shadow-[var(--shadow-xs)]"
+            ? "bg-primary text-on-primary"
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
         }`}
       >
@@ -179,17 +186,11 @@ export function MobileNav() {
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-2 text-[10px] leading-tight transition-colors duration-200 ${
+                  className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-2 text-[10px] leading-tight ${
                     active ? "text-primary" : "text-muted-foreground"
                   }`}
                 >
-                  <item.icon
-                    className={`h-[18px] w-[18px] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                      active ? "-translate-y-0.5 scale-110" : ""
-                    }`}
-                    strokeWidth={1.75}
-                    aria-hidden
-                  />
+                  <item.icon className="h-[18px] w-[18px]" strokeWidth={1.75} aria-hidden />
                   <span className="max-w-full truncate px-0.5 text-center">{t(item.key as "dashboard")}</span>
                 </Link>
               </li>
