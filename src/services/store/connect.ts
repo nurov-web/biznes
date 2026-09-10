@@ -110,24 +110,25 @@ export async function disconnectStore(businessId: string): Promise<boolean> {
 
 export async function connectStore(
   businessId: string,
-  input: { storeUrl: string; login: string; password: string; platform?: string },
+  input: { storeUrl: string; login?: string; password?: string; platform?: string },
 ): Promise<ConnectOk | ConnectFail> {
   const storeUrl = normalizeStoreUrl(input.storeUrl);
   if (!storeUrl) {
     return { ok: false, error: "validation", fields: { storeUrl: "bad_url" } };
   }
-  const login = input.login.trim();
-  if (login.length < 2 || login.length > 80) {
+  const login = (input.login ?? "").trim();
+  if (login && (login.length < 2 || login.length > 80)) {
     return { ok: false, error: "validation", fields: { login: "short" } };
   }
-  if (input.password.length < 4 || input.password.length > 200) {
+  const password = input.password ?? "";
+  if (password && (password.length < 4 || password.length > 200)) {
     return { ok: false, error: "validation", fields: { password: "short" } };
   }
   const platform: StorePlatform =
     input.platform && isStorePlatform(input.platform)
       ? input.platform
       : detectStorePlatform(storeUrl);
-  const passwordHash = await hashPassword(input.password);
+  const passwordHash = password ? await hashPassword(password) : "";
   const now = nowIso();
   const host = new URL(storeUrl).hostname.replace(/^www\./, "");
   const reachable = await probeStoreReachable(storeUrl);
@@ -145,8 +146,8 @@ export async function connectStore(
     if (existing) {
       existing.storeUrl = storeUrl;
       existing.platform = platform;
-      existing.login = login;
-      existing.passwordHash = passwordHash;
+      existing.login = login || existing.login;
+      if (passwordHash) existing.passwordHash = passwordHash;
       existing.status = "connected";
       existing.reachable = reachable;
       existing.lastCheckAt = now;

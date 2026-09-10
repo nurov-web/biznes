@@ -16,6 +16,7 @@ import { ChannelHub } from "@/components/dashboard/ChannelHub";
 import { StockCountBoard } from "@/components/dashboard/StockCountBoard";
 import { StoreGapBanner } from "@/components/dashboard/StoreGapBanner";
 import { EphemeralStoreBanner } from "@/components/dashboard/EphemeralStoreBanner";
+import { ImportHub } from "@/components/dashboard/ImportHub";
 import { healthTone, money, useIntelligence } from "@/hooks/useIntelligence";
 import { parseLocale } from "@/lib/locale-query";
 import { suggestNextMove } from "@/services/intelligence/advice";
@@ -105,6 +106,7 @@ export default function DashboardPage() {
       }
     >
       <EphemeralStoreBanner show={ephemeral} />
+      <ImportHub onImported={() => void reload()} />
       <RescueBoard
         prices={data.prices}
         inventory={data.inventory}

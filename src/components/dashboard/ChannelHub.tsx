@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Camera, Globe, MapPin, Send, Smartphone } from "lucide-react";
 import { CHANNEL_KINDS, type ChannelKind } from "@/constants/channels";
+import { detectStorePlatform, isLoginWalledUrl, normalizeStoreUrl } from "@/lib/store-url";
 
 type Channel = { id: string; kind: ChannelKind; url: string };
 
@@ -63,6 +64,20 @@ export function ChannelHub() {
       if (!response.ok) {
         setError(t("badUrl"));
         return;
+      }
+      if (kind === "website") {
+        const preview = normalizeStoreUrl(drafts.website);
+        if (preview && !isLoginWalledUrl(preview)) {
+          await fetch("/api/store", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              storeUrl: preview,
+              platform: detectStorePlatform(preview),
+            }),
+          }).catch(() => undefined);
+        }
       }
       await load();
     } catch {

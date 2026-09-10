@@ -2,10 +2,10 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Check, Copy, Eye, EyeOff, Link2, Lock, Store } from "lucide-react";
+import { Check, Copy, Link2, Lock, Store } from "lucide-react";
 import { GsapStep } from "@/components/motion/GsapStep";
 import { Icon } from "@/components/ui/Icon";
-import { STORE_PLATFORMS, type StorePlatform } from "@/constants/store";
+import type { StorePlatform } from "@/constants/store";
 import { detectStorePlatform, normalizeStoreUrl } from "@/lib/store-url";
 import { Link } from "@/i18n/navigation";
 
@@ -27,14 +27,11 @@ type Props = {
   onDone?: () => void;
 };
 
+/** Силка кофӣ аст. Логини админ лозим нест — мо ворид намешавем. */
 export function StoreConnectWizard({ webhook, onDone }: Props) {
   const t = useTranslations("store");
   const [step, setStep] = useState(1);
   const [storeUrl, setStoreUrl] = useState("");
-  const [platform, setPlatform] = useState<StorePlatform>("custom");
-  const [login, setLogin] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPass, setShowPass] = useState(false);
   const [busy, setBusy] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});
   const [freshKey, setFreshKey] = useState("");
@@ -48,40 +45,22 @@ export function StoreConnectWizard({ webhook, onDone }: Props) {
     return t(`errors.${code}` as "errors.bad_url");
   }
 
-  function goNext() {
-    setFields({});
-    if (step === 1) {
-      if (!preview) {
-        setFields({ storeUrl: "bad_url" });
-        return;
-      }
-      setPlatform(detectStorePlatform(preview));
-      setStep(2);
-      return;
-    }
-  }
-
   async function onConnect(event: FormEvent) {
     event.preventDefault();
     setFields({});
-    if (login.trim().length < 2) {
-      setFields({ login: "short" });
-      return;
-    }
-    if (password.length < 4) {
-      setFields({ password: "short" });
+    if (!preview) {
+      setFields({ storeUrl: "bad_url" });
       return;
     }
     setBusy(true);
     try {
       const response = await fetch("/api/store", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           storeUrl,
-          login: login.trim(),
-          password,
-          platform,
+          platform: detectStorePlatform(preview),
         }),
       });
       const json = (await response.json()) as {
@@ -91,12 +70,10 @@ export function StoreConnectWizard({ webhook, onDone }: Props) {
       };
       if (!response.ok) {
         setFields(json.fields ?? { storeUrl: "bad_url" });
-        if (json.fields?.storeUrl) setStep(1);
         return;
       }
       setFreshKey(json.key ?? "");
-      setPassword("");
-      setStep(3);
+      setStep(2);
       onDone?.();
     } finally {
       setBusy(false);
@@ -115,8 +92,8 @@ export function StoreConnectWizard({ webhook, onDone }: Props) {
 
   return (
     <div>
-      <ol className="mb-5 flex gap-2" aria-label={t("step", { current: step, total: 3 })}>
-        {[1, 2, 3].map((n) => (
+      <ol className="mb-5 flex gap-2" aria-label={t("step", { current: step, total: 2 })}>
+        {[1, 2].map((n) => (
           <li
             key={n}
             className={`h-1.5 flex-1 rounded-full ${n <= step ? "bg-primary" : "bg-muted"}`}
@@ -126,11 +103,11 @@ export function StoreConnectWizard({ webhook, onDone }: Props) {
 
       <GsapStep step={step}>
         {step === 1 ? (
-          <div className="grid gap-4">
+          <form className="grid gap-4" onSubmit={(e) => void onConnect(e)}>
             <label className="grid gap-1.5 text-sm font-medium">
               {t("url")}
               <input
-                className={`input-field ${fields.storeUrl ? "input-error" : ""}`}
+                className={`input-field min-h-12 ${fields.storeUrl ? "input-error" : ""}`}
                 value={storeUrl}
                 onChange={(e) => {
                   setStoreUrl(e.target.value);
@@ -153,87 +130,13 @@ export function StoreConnectWizard({ webhook, onDone }: Props) {
             ) : (
               <p className="text-xs leading-relaxed text-muted-foreground">{t("urlHint")}</p>
             )}
-            <button type="button" className="btn btn-primary" onClick={goNext}>
-              {t("next")}
+            <button type="submit" className="btn btn-primary min-h-12" disabled={busy}>
+              {busy ? t("connecting") : t("connect")}
             </button>
-          </div>
-        ) : null}
-
-        {step === 2 ? (
-          <form className="grid gap-4" onSubmit={(e) => void onConnect(e)}>
-            <p className="text-sm text-muted-foreground">{t("authLead")}</p>
-            <fieldset className="grid gap-2">
-              <legend className="text-sm font-medium">{t("platform")}</legend>
-              <div className="grid grid-cols-2 gap-2">
-                {STORE_PLATFORMS.map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    className={`btn btn-ghost min-h-12 text-sm ${
-                      platform === id ? "border-primary text-primary" : ""
-                    }`}
-                    onClick={() => setPlatform(id)}
-                  >
-                    {t(`platforms.${id}`)}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
-            <label className="grid gap-1.5 text-sm font-medium">
-              {t("login")}
-              <input
-                className={`input-field ${fields.login ? "input-error" : ""}`}
-                value={login}
-                onChange={(e) => {
-                  setLogin(e.target.value);
-                  setFields({});
-                }}
-                autoComplete="username"
-              />
-              {fieldError("login") ? (
-                <span className="font-normal text-destructive">{fieldError("login")}</span>
-              ) : null}
-            </label>
-            <label className="grid gap-1.5 text-sm font-medium">
-              {t("password")}
-              <span className="relative block">
-                <input
-                  className={`input-field pr-12 ${fields.password ? "input-error" : ""}`}
-                  type={showPass ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setFields({});
-                  }}
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-1 grid w-11 place-items-center text-muted-foreground"
-                  onClick={() => setShowPass((v) => !v)}
-                  aria-label={showPass ? t("hidePass") : t("showPass")}
-                >
-                  <Icon icon={showPass ? EyeOff : Eye} className="h-4 w-4" />
-                </button>
-              </span>
-              {fieldError("password") ? (
-                <span className="font-normal text-destructive">{fieldError("password")}</span>
-              ) : (
-                <span className="font-normal text-xs text-muted-foreground">{t("passHint")}</span>
-              )}
-            </label>
-            <div className="flex flex-wrap gap-2">
-              <button type="button" className="btn btn-ghost" onClick={() => setStep(1)}>
-                {t("back")}
-              </button>
-              <button type="submit" className="btn btn-primary flex-1" disabled={busy}>
-                {busy ? t("connecting") : t("connect")}
-              </button>
-            </div>
           </form>
         ) : null}
 
-        {step === 3 ? (
+        {step === 2 ? (
           <div className="grid gap-4">
             <div className="flex items-start gap-3 rounded-2xl border border-primary/20 bg-primary-soft p-4">
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-card text-primary">
@@ -284,13 +187,13 @@ export function StoreConnectWizard({ webhook, onDone }: Props) {
               <Icon icon={Lock} className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               {t("secureNote")}
             </p>
-            <Link href="/store" className="btn btn-primary">
+            <Link href="/store" className="btn btn-primary min-h-12">
               {t("manage")}
             </Link>
           </div>
         ) : null}
       </GsapStep>
-      {step < 3 ? (
+      {step < 2 ? (
         <p className="mt-4 flex items-center gap-2 text-[11px] leading-relaxed text-muted-foreground">
           <Icon icon={Store} className="h-3.5 w-3.5 shrink-0" />
           {t("honest")}

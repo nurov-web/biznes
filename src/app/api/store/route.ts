@@ -48,8 +48,8 @@ export async function POST(request: Request) {
       .object({
         skip: z.boolean().optional(),
         storeUrl: z.string().max(300).optional(),
-        login: z.string().max(80).optional(),
-        password: z.string().max(200).optional(),
+        login: z.string().max(80).optional().default(""),
+        password: z.string().max(200).optional().default(""),
         platform: z.enum(STORE_PLATFORMS).optional(),
       })
       .safeParse(await request.json().catch(() => ({})));
