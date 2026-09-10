@@ -10,7 +10,7 @@ import { Link } from "@/i18n/navigation";
 
 type Me = {
   user: { firstName: string; lastName: string; email: string; phone: string; role: string };
-  business: { name: string; city: string; type?: string } | null;
+  business: { name: string; city: string; type?: string; typeNote?: string; goal?: string } | null;
 };
 
 export default function ProfilePage() {
@@ -71,7 +71,11 @@ export default function ProfilePage() {
       </Reveal>
 
       {me?.business ? (
-        <MarketScanCard city={me.business.city} type={me.business.type ?? "trade"} />
+        <MarketScanCard
+          city={me.business.city}
+          type={me.business.type ?? "trade"}
+          goal={me.business.goal || me.business.typeNote}
+        />
       ) : null}
     </PageShell>
   );

@@ -19,6 +19,8 @@ type Context = {
   city: string;
   type: string;
   name: string;
+  typeNote?: string;
+  goal?: string;
   competitors: string;
   audience: string;
   products: ProductSnap[];
@@ -208,6 +210,7 @@ export function buildAnalyzePrompt(ctx: Context): string {
         'Shape: { "priceAdvice":[{"level":"green"|"yellow"|"red","title":"","detail":"","action":""}], "inventoryAdvice":[...], "growthAdvice":[...], "risks":[...], "dailyTip":"", "summary":"" }. Each advice: short → TJS → one action.',
     }),
     `Business: ${ctx.name}, type ${ctx.type}, city ${ctx.city}.`,
+    `Owner direction: ${ctx.goal || ctx.typeNote || "not specified"}. Stay on this niche. Do not switch to phones unless they asked.`,
     `Competitors (owner text): ${ctx.competitors || "none"}. Audience: ${ctx.audience || "none"}.`,
     `Products: ${JSON.stringify(ctx.products).slice(0, 5000)}`,
   ].join("\n");

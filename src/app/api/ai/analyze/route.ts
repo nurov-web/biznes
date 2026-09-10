@@ -26,6 +26,8 @@ export async function POST(request: Request) {
       city: business.city,
       type: business.type,
       name: business.name,
+      typeNote: business.typeNote,
+      goal: business.goal,
       competitors: business.competitors,
       audience: business.audience,
       products: products.map((p) => ({
@@ -47,7 +49,8 @@ export async function POST(request: Request) {
         businessSystemPrompt({
           locale,
           jsonOnly: true,
-          format: "Practical advice with numbers. Never guarantee profit.",
+          ownerFocus: [business.goal, business.typeNote, business.name].filter(Boolean).join(" · "),
+          format: "Practical advice with numbers. Never guarantee profit. Stay on this owner's niche.",
         }),
         buildAnalyzePrompt(ctx),
       );

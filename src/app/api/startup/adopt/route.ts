@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { requireBusiness } from "@/lib/business";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { addAudit, addMemory } from "@/services/intelligence/persist";
+import { businessTypeForNiche, detectNiche } from "@/lib/niche";
 import { newId, nowIso, readDb, withDb } from "@/lib/store";
 
 const schema = z.object({
@@ -34,7 +35,9 @@ export async function POST(request: Request) {
       const row = db.businesses.find((b) => b.id === business.id);
       if (row) {
         row.name = option.name;
-        row.typeNote = option.why.slice(0, 500);
+        row.goal = plan.goal || row.goal;
+        row.typeNote = plan.goal || option.name;
+        row.type = businessTypeForNiche(detectNiche(plan.goal, option.name));
         row.updatedAt = now;
       }
       let n = 0;

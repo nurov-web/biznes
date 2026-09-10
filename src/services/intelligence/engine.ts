@@ -9,6 +9,7 @@ import type {
 
 import type { Locale } from "@/lib/locale-query";
 import { cityId } from "@/constants/city-market";
+import { detectNiche, nicheLabel, ownerFocusText } from "@/lib/niche";
 
 export type { Locale };
 
@@ -44,6 +45,8 @@ export type IntelligenceSnapshot = {
   businessName: string;
   city: string;
   businessType: string;
+  focus: string;
+  niche: string;
   currency: string;
   dataQuality: number;
   healthScore: number;
@@ -136,9 +139,11 @@ function monthFactor(d = new Date()): {
   return { factor: 1, nameTg: "Мавсими муқаррарӣ", nameRu: "Обычный сезон", nameEn: "Regular season" };
 }
 
-function typeBase(type: string): number {
+function typeBase(type: string, niche: string): number {
+  if (niche === "cars") return 280000;
+  if (niche === "phones") return 180000;
   if (type === "trade") return 420000;
-  if (type === "phones" || type === "it") return 180000;
+  if (type === "it") return 180000;
   if (type === "service") return 90000;
   if (type === "construction") return 250000;
   return 120000;
@@ -188,7 +193,14 @@ export function buildIntelligence(
   const competitors = db.competitors.filter((c) => c.businessId === business.id);
   const season = monthFactor();
   const cityK = CITY_K[cityId(business.city)];
-  const marketSize = Math.round(typeBase(business.type) * cityK * season.factor);
+  const focus = ownerFocusText({
+    goal: business.goal,
+    typeNote: business.typeNote,
+    name: business.name,
+  });
+  const niche = detectNiche(focus, business.type);
+  const marketSize = Math.round(typeBase(business.type, niche) * cityK * season.factor);
+  const nicheName = nicheLabel(niche, locale);
 
   const income = sumFinance(finance, "income") + sales.reduce((s, r) => s + r.revenue, 0);
   const expense = sumFinance(finance, "expense") + sales.reduce((s, r) => s + r.cost, 0);
@@ -232,6 +244,8 @@ export function buildIntelligence(
     businessName: business.name,
     city: business.city,
     businessType: business.type,
+    focus,
+    niche,
     currency: "TJS",
     dataQuality: Math.round(dataQuality * 100),
     healthScore,
@@ -251,9 +265,9 @@ export function buildIntelligence(
     market: {
       sizeNote: txt(
         locale,
-        `Оценка ёмкости «${business.type}» в ${business.city}: ~${marketSize.toLocaleString("ru-RU")} TJS/мес. Это модель, не перепись рынка.`,
-        `Ҳаҷми тахминии бозори «${business.type}» дар ${business.city}: ~${marketSize.toLocaleString("ru-RU")} TJS/моҳ. Ин модел аст, на барӯйхатгирии бозор.`,
-        `Capacity estimate for «${business.type}» in ${business.city}: ~${marketSize.toLocaleString("ru-RU")} TJS/month. Model, not a census.`,
+        `Оценка ёмкости «${nicheName}» в ${business.city}: ~${marketSize.toLocaleString("ru-RU")} TJS/мес. Это модель, не перепись рынка.`,
+        `Ҳаҷми тахминии бозори «${nicheName}» дар ${business.city}: ~${marketSize.toLocaleString("ru-RU")} TJS/моҳ. Ин модел аст, на барӯйхатгирии бозор.`,
+        `Capacity estimate for «${nicheName}» in ${business.city}: ~${marketSize.toLocaleString("ru-RU")} TJS/month. Model, not a census.`,
       ),
       demand: txt(
         locale,

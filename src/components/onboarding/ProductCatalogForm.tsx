@@ -1,11 +1,12 @@
 "use client";
 
-import { CATALOG_SUGGESTIONS, CATEGORY_HINTS, emptyProduct } from "@/constants/catalog";
+import { catalogFor, CATEGORY_HINTS, emptyProduct } from "@/constants/catalog";
 import type { BusinessType } from "@/constants";
 import type { ProductDraft } from "@/types";
 
 type Props = {
   type: BusinessType;
+  typeNote?: string;
   products: ProductDraft[];
   onChange: (next: ProductDraft[]) => void;
   labels: {
@@ -29,8 +30,8 @@ type Props = {
   };
 };
 
-export function ProductCatalogForm({ type, products, onChange, labels }: Props) {
-  const suggestions = CATALOG_SUGGESTIONS[type] ?? CATALOG_SUGGESTIONS.other;
+export function ProductCatalogForm({ type, typeNote, products, onChange, labels }: Props) {
+  const suggestions = catalogFor(type, typeNote);
 
   function update(index: number, patch: Partial<ProductDraft>) {
     onChange(products.map((p, i) => (i === index ? { ...p, ...patch } : p)));

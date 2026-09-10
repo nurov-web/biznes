@@ -11,14 +11,7 @@ import { parseLocale } from "@/lib/locale-query";
 import { suggestPlanOption } from "@/services/intelligence/advice";
 import type { PlanRow } from "@/lib/store";
 
-const GOAL_CHIPS = [
-  "Лавозимоти телефон",
-  "Таъмири телефон",
-  "Либос",
-  "Кофе / хӯрок",
-  "Фурӯши онлайн",
-  "Маводи сохтмонӣ",
-];
+const GOAL_CHIP_KEYS = ["cars", "phones", "clothes", "food", "online", "construction"] as const;
 
 function money(n: number): string {
   return `${Math.round(n).toLocaleString("ru-RU")} TJS`;
@@ -140,16 +133,19 @@ export function NewBusinessFlow({ onBack }: { onBack: () => void }) {
                 {t("goalChips")}
               </p>
               <div className="flex flex-wrap gap-2">
-                {GOAL_CHIPS.map((chip) => (
-                  <button
-                    key={chip}
-                    type="button"
-                    className="rounded-full border border-border bg-muted/60 px-3 py-1.5 text-sm transition-colors duration-200 hover:border-primary hover:bg-card"
-                    onClick={() => setGoal((g) => (g ? `${g}, ${chip}` : chip))}
-                  >
-                    {chip}
-                  </button>
-                ))}
+                {GOAL_CHIP_KEYS.map((key) => {
+                  const chip = t(`chips.${key}`);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      className="rounded-full border border-border bg-muted/60 px-3 py-1.5 text-sm transition-colors duration-200 hover:border-primary hover:bg-card"
+                      onClick={() => setGoal(chip)}
+                    >
+                      {chip}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <label className="grid gap-1.5 text-sm font-medium">

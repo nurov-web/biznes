@@ -21,7 +21,7 @@ export default function MarketPage() {
   ];
   return (
     <PageShell title={t("marketTitle")} lead={t("marketLead")}>
-      <MarketScanCard city={data.city} type={data.businessType || "trade"} />
+      <MarketScanCard city={data.city} type={data.businessType || "trade"} goal={data.focus} />
       <section className="mt-4 grid gap-3 md:grid-cols-2">
         {cards.map((c) => (
           <article key={c.k} className="card p-5">

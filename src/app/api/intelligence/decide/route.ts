@@ -44,10 +44,11 @@ export async function POST(request: Request) {
         system: businessSystemPrompt({
           locale,
           role: "You are the Decision Engine for this owner.",
+          ownerFocus: [business.goal, business.typeNote, business.name].filter(Boolean).join(" · "),
           format:
             "Use tools. Run at least one simulation before you recommend. Four short labeled paragraphs: Analyze → Explain → Simulate → Recommend.",
         }),
-        user: `Question: ${parsed.data.question || "What should I do this week?"}\nBusiness: ${snap.businessName}, ${snap.city}, stage ${business.stage}, budget ${business.budget} TJS.`,
+        user: `Question: ${parsed.data.question || "What should I do this week?"}\nBusiness: ${snap.businessName}, ${snap.city}, stage ${business.stage}, budget ${business.budget} TJS. Direction: ${business.goal || business.typeNote || "—"}.`,
         tools: BUSINESS_TOOLS,
         runTool: makeToolRunner(business, locale),
       });

@@ -34,9 +34,9 @@ const ROLE: Record<AgentId, { ru: string; tg: string; en: string }> = {
     en: "You are the Marketing agent. Channel, season, promotion without dumping the shelf price.",
   },
   sales: {
-    ru: "Вы Sales-агент. Скрипт продажи, upsell аксессуаров, конверсия.",
-    tg: "Шумо агенти Sales ҳастед. Скрипти фурӯш, upsell-и лавозимот, конверсия.",
-    en: "You are the Sales agent. Pitch, accessory upsell, conversion.",
+    ru: "Вы Sales-агент. Скрипт продажи, допродажа в нише владельца, конверсия.",
+    tg: "Шумо агенти Sales ҳастед. Скрипти фурӯш, фурӯши иловагӣ дар самти соҳибкор, конверсия.",
+    en: "You are the Sales agent. Pitch, related upsell in the owner's niche, conversion.",
   },
   inventory: {
     ru: "Вы Inventory-агент. Остатки, dead stock, reorder.",
@@ -77,10 +77,11 @@ export async function POST(request: Request) {
         system: businessSystemPrompt({
           locale,
           role,
+          ownerFocus: [business.goal, business.typeNote, business.name].filter(Boolean).join(" · "),
           format:
             "Call tools before any figure. Format: 1) fact from the data 2) risk or opportunity in TJS 3) one action.",
         }),
-        user: `Question: ${parsed.data.question}\nBusiness: ${snap.businessName}, ${snap.city}, stage ${business.stage}.`,
+        user: `Question: ${parsed.data.question}\nBusiness: ${snap.businessName}, ${snap.city}, stage ${business.stage}. Direction: ${business.goal || business.typeNote || "—"}.`,
         tools: BUSINESS_TOOLS,
         runTool: makeToolRunner(business, locale),
       });

@@ -27,6 +27,8 @@ export type IntelSnap = {
   businessName: string;
   city: string;
   businessType: string;
+  focus?: string;
+  niche?: string;
   currency: string;
   dataQuality: number;
   healthScore: number;

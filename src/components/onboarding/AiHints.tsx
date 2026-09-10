@@ -13,10 +13,11 @@ type Props = {
   name: string;
   products: ProductDraft[];
   step: number;
+  typeNote?: string;
 };
 
 /** Маслиҳати AI ҳангоми пур кардани анкета. Бе калид — маслиҳати маҳаллӣ. */
-export function AiHints({ type, city, name, products, step }: Props) {
+export function AiHints({ type, city, name, products, step, typeNote }: Props) {
   const t = useTranslations("start");
   const locale = useLocale();
   const [hints, setHints] = useState<string[]>([]);
@@ -35,6 +36,7 @@ export function AiHints({ type, city, name, products, step }: Props) {
           type,
           city,
           name,
+          typeNote,
           products: products.slice(0, 10).map((p) => ({
             category: p.category,
             brand: p.brand,
@@ -60,7 +62,7 @@ export function AiHints({ type, city, name, products, step }: Props) {
       window.clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, type, city, locale]);
+  }, [step, type, city, locale, typeNote]);
 
   if (!hints.length && !loading) return null;
 

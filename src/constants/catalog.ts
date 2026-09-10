@@ -1,5 +1,6 @@
 import type { BusinessType } from "@/constants";
 import type { ProductDraft } from "@/types";
+import { detectNiche, type NicheId } from "@/lib/niche";
 
 export type CatalogSuggestion = ProductDraft & { label: string };
 
@@ -155,6 +156,51 @@ export const CATALOG_SUGGESTIONS: Record<BusinessType, CatalogSuggestion[]> = {
   ],
 };
 
+const CAR_CATALOG: CatalogSuggestion[] = [
+  {
+    label: "Равғани мотор 4л",
+    category: "Мошин",
+    brand: "Lukoil",
+    model: "5W-40 4л",
+    buyPriceMin: 80,
+    buyPriceMax: 95,
+    sellPriceMin: 115,
+    sellPriceMax: 135,
+    quantity: 20,
+    condition: "new",
+  },
+  {
+    label: "Филтри ҳаво",
+    category: "Запчаст",
+    brand: "Маҳаллӣ",
+    model: "Филтри ҳаво",
+    buyPriceMin: 18,
+    buyPriceMax: 28,
+    sellPriceMin: 35,
+    sellPriceMax: 48,
+    quantity: 30,
+    condition: "new",
+  },
+  {
+    label: "Лавҳаи тормоз",
+    category: "Запчаст",
+    brand: "Маҳаллӣ",
+    model: "Лавҳаи тормоз",
+    buyPriceMin: 130,
+    buyPriceMax: 160,
+    sellPriceMin: 200,
+    sellPriceMax: 240,
+    quantity: 10,
+    condition: "new",
+  },
+];
+
+export function catalogFor(type: BusinessType, typeNote?: string): CatalogSuggestion[] {
+  const niche: NicheId = detectNiche(typeNote, type);
+  if (niche === "cars") return CAR_CATALOG;
+  return CATALOG_SUGGESTIONS[type] ?? CATALOG_SUGGESTIONS.other;
+}
+
 export function emptyProduct(): ProductDraft {
   return {
     category: "",
@@ -170,6 +216,8 @@ export function emptyProduct(): ProductDraft {
 }
 
 export const CATEGORY_HINTS = [
+  "Мошин",
+  "Запчаст",
   "Ноутбук",
   "Телефон",
   "Лавозимот",

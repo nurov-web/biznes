@@ -28,18 +28,19 @@ export async function POST(request: Request) {
       .slice(0, 20);
     const fallback =
       locale === "en"
-        ? "1) Raise the share of accessories with margin >25%. 2) Do not restock SKUs that did not move in 30 days. 3) Check 3 competitor prices this week. Forecast, not a guarantee."
+        ? "1) Raise the share of SKUs with margin >25% in your niche. 2) Do not restock SKUs that did not move in 30 days. 3) Check 3 competitor prices this week. Forecast, not a guarantee."
         : locale === "ru"
-          ? "1) Поднимите долю аксессуаров с маржой >25%. 2) Не докупайте SKU, которые не ушли за 30 дней. 3) Сверьте 3 цены конкурентов на этой неделе. Это прогноз, не гарантия."
-          : "1) Ҳиссаи лавозимоти маржаашон >25%-ро зиёд кунед. 2) SKU-е, ки 30 рӯз фурӯхта нашуд, нахаред. 3) Ин ҳафта 3 нархи рақибро санҷед. Ин пешгӯӣ аст, на кафолат.";
+          ? "1) Поднимите долю SKU с маржой >25% в вашем направлении. 2) Не докупайте SKU, которые не ушли за 30 дней. 3) Сверьте 3 цены конкурентов на этой неделе. Это прогноз, не гарантия."
+          : "1) Ҳиссаи SKU-ҳои маржаашон >25%-ро дар самти худ зиёд кунед. 2) SKU-е, ки 30 рӯз фурӯхта нашуд, нахаред. 3) Ин ҳафта 3 нархи рақибро санҷед. Ин пешгӯӣ аст, на кафолат.";
     try {
       const answer = await completeClaude(
         businessSystemPrompt({
           locale,
+          ownerFocus: [business.goal, business.typeNote, business.name].filter(Boolean).join(" · "),
           role: "You are the owner’s advisor for this week’s cash, price and stock.",
           format: "Format: one short fact → example with TJS → 3 numbered actions. No fluff.",
         }),
-        `Q: ${parsed.data.question}\nBusiness: ${business.name}, ${business.city}, ${business.type}\nProducts: ${JSON.stringify(products).slice(0, 4000)}`,
+        `Q: ${parsed.data.question}\nBusiness: ${business.name}, ${business.city}, ${business.type}\nDirection: ${business.goal || business.typeNote || "—"}\nProducts: ${JSON.stringify(products).slice(0, 4000)}`,
       );
       return NextResponse.json({ answer, usedAi: true });
     } catch {

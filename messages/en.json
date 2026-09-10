@@ -272,8 +272,16 @@
     "budgetHint": "All the money you can put into the start.",
     "city": "City",
     "goal": "What kind of business do you want?",
-    "goalHint": "For example: something with phones, or fast food near the university",
+    "goalHint": "For example: cars / parts, clothing, or fast food",
     "goalChips": "Suggestions",
+    "chips": {
+      "cars": "Cars / parts",
+      "phones": "Phones and accessories",
+      "clothes": "Clothing",
+      "food": "Coffee / food",
+      "online": "Online sales",
+      "construction": "Building materials"
+    },
     "experience": "Your experience",
     "experienceHint": "For example: 2 years as a shop assistant",
     "hours": "How many hours per week do you have?",

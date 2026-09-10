@@ -117,12 +117,16 @@ export function ExistingBusinessFlow({ onBack }: { onBack: () => void }) {
                   ))}
                 </select>
               </label>
-              {type === "other" ? (
-                <label className="grid gap-1.5 text-sm font-medium">
-                  {t("typeNote")}
-                  <input className="input-field" value={typeNote} onChange={(e) => setTypeNote(e.target.value)} />
-                </label>
-              ) : null}
+              <label className="grid gap-1.5 text-sm font-medium">
+                {ts("goal")}
+                <input
+                  className="input-field"
+                  value={typeNote}
+                  onChange={(e) => setTypeNote(e.target.value)}
+                  placeholder={ts("goalHint")}
+                  maxLength={500}
+                />
+              </label>
             </div>
           )}
           {step === 2 && (
@@ -168,6 +172,7 @@ export function ExistingBusinessFlow({ onBack }: { onBack: () => void }) {
           {step === 3 && (
             <ProductCatalogForm
               type={type}
+              typeNote={typeNote}
               products={products}
               onChange={setProducts}
               labels={{
@@ -232,11 +237,12 @@ export function ExistingBusinessFlow({ onBack }: { onBack: () => void }) {
             </div>
           )}
         </GsapStep>
-        <AiHints type={type} city={city} name={name} products={products} step={step} />
+        <AiHints type={type} city={city} name={name} products={products} step={step} typeNote={typeNote} />
         {step >= 2 ? (
           <MarketScanCard
             city={city}
             type={type}
+            goal={typeNote}
             products={products.map((p) => ({ category: p.category, brand: p.brand, model: p.model }))}
             onApply={(sku) => {
               setProducts((rows) => {

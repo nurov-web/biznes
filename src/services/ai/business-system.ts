@@ -29,10 +29,15 @@ export function businessSystemPrompt(options: {
   role?: string;
   format?: string;
   jsonOnly?: boolean;
+  ownerFocus?: string;
 }): string {
+  const focus = options.ownerFocus?.trim();
   const parts = [
     CANON,
     options.role?.trim() ?? "",
+    focus
+      ? `The owner's stated business is: «${focus}». Stay strictly on that niche. Do not talk about phones, laptops or electronics unless they asked for that. If they wrote cars / мошин, talk only about cars, parts, wash, taxi — never default to a phone shop.`
+      : "If the owner named a niche, follow it. Never default to phones just because the app category is «trade».",
     `Reply in ${llmLanguage(options.locale)}.`,
     options.format?.trim() ?? "",
     options.jsonOnly ? "Return valid JSON only. No markdown fences, no prose outside JSON." : "",

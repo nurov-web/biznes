@@ -16,6 +16,7 @@ const schema = z.object({
   type: z.string().trim().max(40).default("trade"),
   city: z.string().trim().max(80).default(""),
   name: z.string().trim().max(120).default(""),
+  typeNote: z.string().trim().max(500).default(""),
   products: z
     .array(
       z.object({
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
     if (!parsed.success) return jsonError("validation", 400);
     const data = parsed.data;
     const locale = parseLocale(data.locale);
-    const market = localMarketBrief(data.city || "Душанбе", data.type, locale);
+    const market = localMarketBrief(data.city || "Душанбе", data.type, locale, data.typeNote || data.name);
     const sku = market.prices.find((p) => p.verdict === "good") ?? market.prices[0];
     const fallback = sku
       ? [
@@ -74,11 +75,13 @@ export async function POST(request: Request) {
         businessSystemPrompt({
           locale,
           jsonOnly: true,
-          role: "You coach the owner while they fill onboarding.",
+          ownerFocus: data.typeNote || data.name,
+          role: "You coach the owner while they fill onboarding. Stay on their niche.",
           format: 'JSON: {"hints":["","",""]}. Exactly 3 hints, each under 160 characters, about their numbers.',
         }),
         JSON.stringify({
           businessType: data.type,
+          direction: data.typeNote,
           city: data.city,
           name: data.name,
           products: data.products,

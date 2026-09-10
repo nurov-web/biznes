@@ -4,6 +4,7 @@
  */
 import type { PlanOption } from "@/lib/store";
 import type { Locale } from "@/lib/locale-query";
+import { detectNiche, nicheLabel, type NicheId } from "@/lib/niche";
 import { completeClaude, extractJsonObject } from "@/services/ai/claude";
 import { businessSystemPrompt } from "@/services/ai/business-system";
 
@@ -24,6 +25,7 @@ export type StartupPlan = {
 
 type Template = {
   key: string;
+  niche: NicheId;
   name: Record<Locale, string>;
   minBudget: number;
   marginPct: number;
@@ -31,12 +33,81 @@ type Template = {
   fixedCostShare: number;
   risk: Record<Locale, string>;
   items: { name: string; supplier: string; buy: number; margin: number }[];
-  match: string[];
 };
 
 const TEMPLATES: Template[] = [
   {
+    key: "auto-parts",
+    niche: "cars",
+    name: {
+      tg: "Запчаст ва равғани мошин",
+      ru: "Автозапчасти и масло",
+      en: "Car parts and oil",
+    },
+    minBudget: 4000,
+    marginPct: 34,
+    turnsPerMonth: 1.4,
+    fixedCostShare: 0.16,
+    risk: {
+      tg: "Қалбакӣ зиёд. Бренди маълум гиред. Моли гарон (шинаи калон) пулро банд мекунад.",
+      ru: "Много подделок. Берите известный бренд. Дорогой сток (шины) замораживает деньги.",
+      en: "Fakes are common. Buy known brands. Expensive stock (tyres) freezes cash.",
+    },
+    items: [
+      { name: "Равғани мотор 4л", supplier: "Корвон / оптом", buy: 85, margin: 0.45 },
+      { name: "Филтри ҳаво", supplier: "Корвон / оптом", buy: 22, margin: 0.7 },
+      { name: "Лавҳаи тормоз", supplier: "Оптом, Душанбе", buy: 140, margin: 0.5 },
+      { name: "Лампа / предохранитель", supplier: "Корвон", buy: 8, margin: 0.9 },
+    ],
+  },
+  {
+    key: "car-wash",
+    niche: "cars",
+    name: {
+      tg: "Шустани мошин / детейлинг",
+      ru: "Мойка / детейлинг",
+      en: "Car wash / detailing",
+    },
+    minBudget: 6000,
+    marginPct: 55,
+    turnsPerMonth: 3,
+    fixedCostShare: 0.35,
+    risk: {
+      tg: "Ҷой ва об ҳама чизро ҳал мекунад. Иҷораи баланд фоидаро мехӯрад.",
+      ru: "Локация и вода решают всё. Дорогая аренда съедает прибыль.",
+      en: "Location and water decide everything. High rent eats profit.",
+    },
+    items: [
+      { name: "Шампуни мошин (л)", supplier: "Оптом", buy: 18, margin: 2.2 },
+      { name: "Муми / воск", supplier: "Оптом", buy: 35, margin: 1.4 },
+      { name: "Дастмол / микрофибра", supplier: "Корвон", buy: 12, margin: 1.1 },
+    ],
+  },
+  {
+    key: "used-cars",
+    niche: "cars",
+    name: {
+      tg: "Фурӯши мошинҳои коркардшуда",
+      ru: "Продажа подержанных машин",
+      en: "Used-car sales",
+    },
+    minBudget: 28000,
+    marginPct: 12,
+    turnsPerMonth: 0.4,
+    fixedCostShare: 0.2,
+    risk: {
+      tg: "Сармояи калон, ҳуҷҷат, таъмир ва фурӯши суст. Барои буҷаи хурд тавсия намешавад.",
+      ru: "Большой капитал, документы, ремонт и медленная продажа. Для малого бюджета не советуем.",
+      en: "Heavy capital, paperwork, repairs and slow sale. Not for a small budget.",
+    },
+    items: [
+      { name: "Як мошини коркардшуда (мисол)", supplier: "Бозор / шахс", buy: 22000, margin: 0.12 },
+      { name: "Таъмир / ҳуҷҷат", supplier: "Маҳаллӣ", buy: 2500, margin: 0 },
+    ],
+  },
+  {
     key: "accessories",
+    niche: "phones",
     name: {
       tg: "Лавозимоти телефон ва компютер",
       ru: "Аксессуары для телефонов и компьютеров",
@@ -57,10 +128,10 @@ const TEMPLATES: Template[] = [
       { name: "Наушники TWS", supplier: "Дӯкони яклухт", buy: 130, margin: 0.35 },
       { name: "Шишаи муҳофизатӣ", supplier: "Корвон / оптом", buy: 6, margin: 0.7 },
     ],
-    match: ["телефон", "аксессуар", "лавозимот", "phone", "accessor", "гаджет"],
   },
   {
     key: "repair",
+    niche: "repair",
     name: {
       tg: "Таъмири телефон ва ноутбук",
       ru: "Ремонт телефонов и ноутбуков",
@@ -80,10 +151,10 @@ const TEMPLATES: Template[] = [
       { name: "Батарея", supplier: "Оптом, Душанбе", buy: 90, margin: 0.65 },
       { name: "Асбоби таъмир", supplier: "Як маротиба", buy: 900, margin: 0 },
     ],
-    match: ["таъмир", "ремонт", "repair", "сервис", "service"],
   },
   {
     key: "clothes",
+    niche: "clothes",
     name: {
       tg: "Либос ва пойафзол",
       ru: "Одежда и обувь",
@@ -103,10 +174,10 @@ const TEMPLATES: Template[] = [
       { name: "Кроссовка", supplier: "Корвон", buy: 180, margin: 0.45 },
       { name: "Футболка", supplier: "Корвон", buy: 45, margin: 0.6 },
     ],
-    match: ["либос", "одежд", "cloth", "обув", "пойафзол", "shoe"],
   },
   {
     key: "food",
+    niche: "food",
     name: {
       tg: "Кофе / хӯроки тез (нуқтаи хурд)",
       ru: "Кофе / быстрая еда (малая точка)",
@@ -126,10 +197,10 @@ const TEMPLATES: Template[] = [
       { name: "Стакан + сарпӯш", supplier: "Оптом", buy: 1.2, margin: 2 },
       { name: "Шир (л)", supplier: "Маҳаллӣ", buy: 9, margin: 1.5 },
     ],
-    match: ["кофе", "қаҳва", "хӯрок", "еда", "food", "coffee", "кафе"],
   },
   {
     key: "online",
+    niche: "online",
     name: {
       tg: "Фурӯши онлайн (Instagram + расонидан)",
       ru: "Онлайн-продажи (Instagram + доставка)",
@@ -149,17 +220,20 @@ const TEMPLATES: Template[] = [
       { name: "Бастабандӣ", supplier: "Оптом", buy: 2, margin: 0 },
       { name: "Реклама (моҳона)", supplier: "Instagram", buy: 300, margin: 0 },
     ],
-    match: ["онлайн", "online", "инстаграм", "instagram", "доставк", "интернет"],
   },
 ];
 
 function pickTemplates(input: StartupInput): Template[] {
-  const goal = input.goal.toLowerCase();
-  const affordable = TEMPLATES.filter((t) => t.minBudget <= Math.max(input.budget, 1));
-  const pool = affordable.length ? affordable : [TEMPLATES[4], TEMPLATES[0]];
-  const matched = pool.filter((t) => t.match.some((m) => goal.includes(m)));
-  const rest = pool.filter((t) => !matched.includes(t));
-  return [...matched, ...rest].slice(0, 3);
+  const niche = detectNiche(input.goal);
+  const byNiche = TEMPLATES.filter((t) => t.niche === niche);
+  if (niche !== "general" && byNiche.length) {
+    const affordable = byNiche.filter((t) => t.minBudget <= Math.max(input.budget, 1));
+    return (affordable.length ? affordable : byNiche).slice(0, 3);
+  }
+  const affordable = TEMPLATES.filter(
+    (t) => t.niche !== "phones" && t.minBudget <= Math.max(input.budget, 1),
+  );
+  return (affordable.length ? affordable : TEMPLATES.filter((t) => t.niche === "online")).slice(0, 3);
 }
 
 function money(n: number): string {
@@ -231,12 +305,13 @@ function optionFrom(template: Template, input: StartupInput): PlanOption {
 export function planLocally(input: StartupInput): StartupPlan {
   const options = pickTemplates(input).map((t) => optionFrom(t, input));
   const locale = input.locale;
+  const label = nicheLabel(detectNiche(input.goal), locale);
   const summary =
     locale === "en"
-      ? `With ${money(input.budget)} in ${input.city} these three directions are realistic. Numbers are a model based on typical local margins, not measured market data.`
+      ? `You asked for «${input.goal || label}». With ${money(input.budget)} in ${input.city} these options stay in that niche. Numbers are a model, not measured market data.`
       : locale === "ru"
-        ? `С ${money(input.budget)} в ${input.city} реалистичны эти три направления. Цифры — модель по типичной местной марже, не замеры рынка.`
-        : `Бо ${money(input.budget)} дар ${input.city} ин се самт воқеӣ аст. Рақамҳо модел аз рӯи маржаи маъмулии маҳаллӣ мебошанд, на ченкунии бозор.`;
+        ? `Вы написали «${input.goal || label}». С ${money(input.budget)} в ${input.city} варианты в этом направлении. Цифры — модель, не замеры рынка.`
+        : `Шумо «${input.goal || label}» навиштед. Бо ${money(input.budget)} дар ${input.city} вариантҳо ҳамин самтанд. Рақамҳо модел аст, на ченкунии бозор.`;
   const warnings =
     locale === "en"
       ? [
@@ -259,9 +334,14 @@ export function planLocally(input: StartupInput): StartupPlan {
 }
 
 function buildPrompt(input: StartupInput): string {
+  const niche = detectNiche(input.goal);
   return [
     `Budget: ${input.budget} TJS. City: ${input.city}, Tajikistan.`,
-    `What the person wants: ${input.goal || "not specified"}.`,
+    `What the person wants (follow exactly): ${input.goal || "not specified"}.`,
+    `Detected niche: ${niche}. All 3 options MUST stay in this niche.`,
+    niche !== "phones"
+      ? "Do not propose a phone, laptop or gadget shop unless the owner asked for that."
+      : "",
     `Experience: ${input.experience || "none"}. Time available: ${input.hoursPerWeek} hours/week.`,
     "Return JSON only, no prose outside JSON.",
     'Shape: {"summary":"","warnings":["",""],"options":[{"name":"","why":"","startupCost":0,"monthlyRevenue":0,"monthlyProfit":0,"breakEvenMonths":0,"risk":"","firstSteps":["",""],"products":[{"name":"","supplier":"","buyPrice":0,"sellPrice":0,"quantity":0}]}]}',
@@ -269,7 +349,9 @@ function buildPrompt(input: StartupInput): string {
     "Suppliers must be realistic for Tajikistan (Korvon market, Sultoni Kabir, local wholesale, China/Turkey import, Kyrgyz Dordoi).",
     "Be conservative: subtract rent, transport, spoilage and tax from monthlyProfit.",
     "Never promise guaranteed profit. No motivational filler. Numbers and steps only.",
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function toOption(raw: unknown, fallback: PlanOption): PlanOption {
@@ -313,9 +395,10 @@ export async function planStartup(
       businessSystemPrompt({
         locale: input.locale,
         jsonOnly: true,
-        role: "You plan a first shop or stall for someone who may have no business yet.",
+        ownerFocus: input.goal,
+        role: "You plan a first shop or stall for someone who may have no business yet. Follow their written niche only.",
         format:
-          "Conservative. startupCost must fit the budget. Subtract rent, transport, spoilage and a tax buffer from monthlyProfit. Exactly 3 options.",
+          "Conservative. startupCost must fit the budget. Subtract rent, transport, spoilage and a tax buffer from monthlyProfit. Exactly 3 options in the owner's niche.",
       }),
       buildPrompt(input),
     );

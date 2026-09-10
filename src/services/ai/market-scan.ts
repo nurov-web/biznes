@@ -4,6 +4,7 @@
  */
 import { citySearchLocation, localMarketBrief } from "@/constants/city-market";
 import { llmLanguage, type Locale } from "@/lib/locale-query";
+import { detectNiche, nicheLabel, skuFitsNiche, type NicheId } from "@/lib/niche";
 import {
   completeClaude,
   completeClaudeWeb,
@@ -47,7 +48,13 @@ function asList(value: unknown, fallback: string[]): string[] {
   return rows.length ? rows : fallback;
 }
 
-function mergeBrief(base: MarketBrief, raw: unknown, usedAi: boolean, usedWeb: boolean): MarketBrief {
+function mergeBrief(
+  base: MarketBrief,
+  raw: unknown,
+  usedAi: boolean,
+  usedWeb: boolean,
+  niche: NicheId,
+): MarketBrief {
   if (!raw || typeof raw !== "object") {
     return { ...base, usedAi, usedWeb };
   }
@@ -58,6 +65,7 @@ function mergeBrief(base: MarketBrief, raw: unknown, usedAi: boolean, usedWeb: b
   const prices = (pricesRaw.length ? pricesRaw : base.prices)
     .map((item, i) => asSku(item, base.prices[i]))
     .filter((item): item is MarketSkuHint => Boolean(item))
+    .filter((item) => skuFitsNiche(item.name, item.category, niche))
     .slice(0, 6);
   const mergedPrices = prices.length ? prices : base.prices;
   return {
@@ -67,7 +75,10 @@ function mergeBrief(base: MarketBrief, raw: unknown, usedAi: boolean, usedWeb: b
     summary: String(o.summary ?? base.summary).slice(0, 600),
     demand: String(o.demand ?? base.demand).slice(0, 400),
     prices: mergedPrices,
-    products: asList(o.products, mergedPrices.filter((p) => p.verdict !== "avoid").map((p) => p.name)),
+    products: asList(
+      o.products,
+      mergedPrices.filter((p) => p.verdict !== "avoid").map((p) => p.name),
+    ),
     risks: asList(o.risks, base.risks),
     opportunities: asList(o.opportunities, base.opportunities),
     usedAi,
@@ -79,16 +90,25 @@ function mergeBrief(base: MarketBrief, raw: unknown, usedAi: boolean, usedWeb: b
 export async function scanCityMarket(input: MarketScanInput): Promise<MarketBrief> {
   const city = input.city.trim() || "Душанбе";
   const type = input.type.trim() || "trade";
-  const base = localMarketBrief(city, type, input.locale);
+  const goal = input.goal?.trim() || "";
+  const productBlob = (input.products ?? [])
+    .map((p) => `${p.category} ${p.brand} ${p.model}`)
+    .join(" ");
+  const niche = detectNiche(goal, productBlob, type);
+  const base = localMarketBrief(city, type, input.locale, goal || productBlob);
+  const label = nicheLabel(niche, input.locale);
   const prompt = [
-    `Research the small-business climate in ${city}, Tajikistan for a ${type} business.`,
-    input.goal ? `Owner goal: ${input.goal}` : "",
+    `Research the small-business climate in ${city}, Tajikistan for: ${label}.`,
+    goal ? `Owner wrote this exact direction: «${goal}». Stay on it.` : "",
     input.products?.length ? `Owner already sells: ${JSON.stringify(input.products).slice(0, 800)}` : "",
+    niche !== "phones"
+      ? "Do NOT mention phones, laptops or gadget accessories unless the owner asked for that."
+      : "",
     "Search the public web for demand, typical retail categories, rent/competition, and indicative TJS price ranges.",
     "Do NOT claim you scraped somon.tj or olx.tj listings. If you saw a forum/news/wiki number, treat it as an orienter.",
     `Reply in ${llmLanguage(input.locale)} as JSON only:`,
     `{"climate":"good"|"mixed"|"hard","summary":"","demand":"","prices":[{"name":"","category":"","typicalBuy":0,"typicalSell":0,"verdict":"good"|"watch"|"avoid","why":""}],"products":[],"risks":[],"opportunities":[],"disclaimer":""}`,
-    "3–5 SKUs max. typicalBuy/typicalSell in TJS integers. Always say this is a forecast, not guaranteed profit.",
+    "3–5 SKUs max, all in this niche. typicalBuy/typicalSell in TJS integers. Always say this is a forecast, not guaranteed profit.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -96,7 +116,8 @@ export async function scanCityMarket(input: MarketScanInput): Promise<MarketBrie
   const system = businessSystemPrompt({
     locale: input.locale,
     jsonOnly: true,
-    role: "You estimate city climate for a small shop. Label every figure as an orienter, not a listing scrape.",
+    ownerFocus: goal || label,
+    role: "You estimate city climate for this owner's niche only. Label every figure as an orienter, not a listing scrape.",
   });
 
   try {
@@ -106,14 +127,14 @@ export async function scanCityMarket(input: MarketScanInput): Promise<MarketBrie
       city: citySearchLocation(city).city,
       maxUses: 2,
     });
-    return mergeBrief(base, extractJsonObject(web.text), true, web.usedWeb);
+    return mergeBrief(base, extractJsonObject(web.text), true, web.usedWeb, niche);
   } catch (error) {
     console.warn("[market-scan] web fallback", error);
   }
 
   try {
     const text = await completeClaude(system, prompt);
-    return mergeBrief(base, extractJsonObject(text), true, false);
+    return mergeBrief(base, extractJsonObject(text), true, false, niche);
   } catch (error) {
     console.warn("[market-scan] local fallback", error);
     return { ...base, usedAi: false, usedWeb: false };
