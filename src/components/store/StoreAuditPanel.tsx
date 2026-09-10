@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Clock, RefreshCw, Wallet } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
@@ -38,7 +38,7 @@ function money(n: number): string {
   return `${Math.round(n).toLocaleString("ru-RU")} TJS`;
 }
 
-export function StoreAuditPanel({ autoRun }: { autoRun: boolean }) {
+export function StoreAuditPanel({ autoRun = false }: { autoRun?: boolean }) {
   const t = useTranslations("store");
   const locale = useLocale();
   const [audit, setAudit] = useState<StoreAuditView | null>(null);
@@ -47,26 +47,38 @@ export function StoreAuditPanel({ autoRun }: { autoRun: boolean }) {
   const [error, setError] = useState("");
   const [imported, setImported] = useState(0);
   const [ready, setReady] = useState(false);
+  const busyRef = useRef(false);
+  const autoTried = useRef(false);
 
   const load = useCallback(async () => {
-    const response = await fetch("/api/store/audit");
-    if (!response.ok) {
+    try {
+      const response = await fetch("/api/store/audit", { cache: "no-store" });
+      if (!response.ok) {
+        setReady(true);
+        return;
+      }
+      const json = (await response.json()) as { audit: StoreAuditView | null };
+      setAudit(json.audit);
+    } catch {
+      setError(t("auditFail"));
+    } finally {
       setReady(true);
-      return;
     }
-    const json = (await response.json()) as { audit: StoreAuditView | null };
-    setAudit(json.audit);
-    setReady(true);
-  }, []);
+  }, [t]);
 
   const run = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
     setError("");
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 20000);
     try {
       const response = await fetch("/api/store/audit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ locale }),
+        signal: controller.signal,
       });
       const json = (await response.json()) as { audit?: StoreAuditView; error?: string };
       if (!response.ok || !json.audit) {
@@ -74,9 +86,15 @@ export function StoreAuditPanel({ autoRun }: { autoRun: boolean }) {
         return;
       }
       setAudit(json.audit);
-    } catch {
-      setError(t("auditFail"));
+    } catch (caught) {
+      const aborted =
+        caught instanceof DOMException
+          ? caught.name === "AbortError"
+          : caught instanceof Error && caught.name === "AbortError";
+      setError(aborted ? t("auditAiTimeout") : t("auditFail"));
     } finally {
+      window.clearTimeout(timer);
+      busyRef.current = false;
       setBusy(false);
     }
   }, [locale, t]);
@@ -86,9 +104,10 @@ export function StoreAuditPanel({ autoRun }: { autoRun: boolean }) {
   }, [load]);
 
   useEffect(() => {
-    if (!autoRun || !ready || audit || busy) return;
+    if (!autoRun || !ready || audit || autoTried.current) return;
+    autoTried.current = true;
     void run();
-  }, [autoRun, ready, audit, busy, run]);
+  }, [autoRun, ready, audit, run]);
 
   async function importNow() {
     setImporting(true);

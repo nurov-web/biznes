@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/Slider";
 import { RecommendedNote } from "@/components/ui/Recommended";
 import { SalesChart } from "@/components/SalesChart";
 import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
+import { SellCoachCard } from "@/components/dashboard/SellCoachCard";
 import { StoreGapBanner } from "@/components/dashboard/StoreGapBanner";
 import { EphemeralStoreBanner } from "@/components/dashboard/EphemeralStoreBanner";
 import { healthTone, money, useIntelligence } from "@/hooks/useIntelligence";
@@ -89,8 +90,9 @@ export default function DashboardPage() {
 
   return (
     <PageShell
+      eyebrow={`${data.businessName} · ${data.city}`}
       title={t("dashTitle")}
-      lead={`${data.businessName} · ${data.city}`}
+      lead={t("dashLead")}
       action={
         <button type="button" className="btn btn-primary" onClick={() => void decide()} disabled={busy}>
           <ClipboardCheck className="h-4 w-4" strokeWidth={1.75} aria-hidden />
@@ -100,6 +102,17 @@ export default function DashboardPage() {
     >
       <EphemeralStoreBanner show={ephemeral} />
       <StoreGapBanner salesCount={data.salesCount} />
+
+      <SellCoachCard
+        locale={locale}
+        storedNiche={data.niche}
+        focus={data.focus}
+        prices={data.prices}
+        inventory={data.inventory}
+        salesCount={data.salesCount}
+        revenue={data.revenue}
+        profit={data.profit}
+      />
 
       <RecommendedNote suggestion={nextMove} />
 

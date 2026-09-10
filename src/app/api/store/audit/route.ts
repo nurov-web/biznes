@@ -20,6 +20,8 @@ import {
   saveStoreAudit,
 } from "@/services/store/audit";
 
+export const maxDuration = 20;
+
 export async function GET() {
   try {
     const user = await requireUser();

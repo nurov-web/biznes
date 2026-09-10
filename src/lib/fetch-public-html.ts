@@ -8,7 +8,12 @@ import { isBlockedHost, isPrivateIp, normalizeStoreUrl } from "@/lib/store-url";
 async function hostResolvesPublic(hostname: string): Promise<boolean> {
   if (isBlockedHost(hostname)) return false;
   try {
-    const rows = await lookup(hostname, { all: true, verbatim: true });
+    const rows = await Promise.race([
+      lookup(hostname, { all: true, verbatim: true }),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error("DNS_TIMEOUT")), 4000);
+      }),
+    ]);
     if (!rows.length) return false;
     return rows.every((row) => !isPrivateIp(row.address));
   } catch {
@@ -87,7 +92,10 @@ async function getPage(url: string): Promise<string> {
   }
 }
 
-export async function fetchPublicShopText(storeUrl: string): Promise<{
+export async function fetchPublicShopText(
+  storeUrl: string,
+  options?: { maxExtraPages?: number },
+): Promise<{
   text: string;
   pagesRead: number;
   ok: boolean;
@@ -99,8 +107,13 @@ export async function fetchPublicShopText(storeUrl: string): Promise<{
     return { text: "", pagesRead: 0, ok: false };
   }
 
+  const extraLimit = Math.max(0, options?.maxExtraPages ?? 2);
   const home = await getPage(normalized);
   const pages = [home];
+  if (extraLimit === 0) {
+    const text = stripHtml(home).slice(0, 7000);
+    return { text, pagesRead: home ? 1 : 0, ok: text.length > 80 };
+  }
   const extras: string[] = [];
   for (const path of EXTRA) {
     const href = sameOrigin(base, path);
@@ -109,7 +122,7 @@ export async function fetchPublicShopText(storeUrl: string): Promise<{
   const linkMatches = [...home.matchAll(/href=["']([^"']+)["']/gi)]
     .map((m) => sameOrigin(base, m[1] ?? ""))
     .filter((href): href is string => Boolean(href && EXTRA.some((p) => href.includes(p))));
-  const targets = [...new Set([...extras, ...linkMatches])].slice(0, 2);
+  const targets = [...new Set([...extras, ...linkMatches])].slice(0, extraLimit);
   for (const url of targets) {
     const html = await getPage(url);
     if (html) pages.push(html);

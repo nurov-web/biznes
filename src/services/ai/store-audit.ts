@@ -11,7 +11,6 @@ import {
   aiConfigured,
   classifyClaudeError,
   completeClaude,
-  completeClaudeWeb,
   extractJsonObject,
   type ClaudeFail,
 } from "@/services/ai/claude";
@@ -120,12 +119,36 @@ function fromModel(raw: unknown, pagesRead: number, usedAi: boolean, usedWeb: bo
   };
 }
 
+const AUDIT_BUDGET_MS = 16000;
+
 export async function auditStoreSite(input: {
   storeUrl: string;
   locale: Locale;
   focus?: string;
 }): Promise<StoreAuditResult> {
-  const shop = await fetchPublicShopText(input.storeUrl);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      readShopOnce(input),
+      new Promise<StoreAuditResult>((resolve) => {
+        timer = setTimeout(() => resolve(emptyAudit(input.locale, 0, "timeout")), AUDIT_BUDGET_MS);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+async function readShopOnce(input: {
+  storeUrl: string;
+  locale: Locale;
+  focus?: string;
+}): Promise<StoreAuditResult> {
+  const shop = await fetchPublicShopText(input.storeUrl, { maxExtraPages: 0 });
+  if (!aiConfigured()) {
+    return emptyAudit(input.locale, shop.pagesRead, "no_key");
+  }
+
   const system = businessSystemPrompt({
     locale: input.locale,
     jsonOnly: true,
@@ -144,26 +167,14 @@ export async function auditStoreSite(input: {
     "If the page is Instagram or blocked, say so and give a cautious empty-or-thin estimate.",
   ].join("\n\n");
 
-  if (aiConfigured()) {
-    if (!shop.ok) {
-      try {
-        const web = await completeClaudeWeb({ system, user: ask, maxUses: 2 });
-        return fromModel(extractJsonObject(web.text), shop.pagesRead, true, web.usedWeb);
-      } catch (error) {
-        console.warn("[store-audit] web fallback", error);
-      }
-    }
-    try {
-      const text = await completeClaude(system, ask, {
-        timeoutMs: 22000,
-        userLimit: 12000,
-      });
-      return fromModel(extractJsonObject(text), shop.pagesRead, true, false);
-    } catch (error) {
-      console.warn("[store-audit] claude fallback", error);
-      return emptyAudit(input.locale, shop.pagesRead, classifyClaudeError(error));
-    }
+  try {
+    const text = await completeClaude(system, ask, {
+      timeoutMs: 12000,
+      userLimit: 8000,
+    });
+    return fromModel(extractJsonObject(text), shop.pagesRead, true, false);
+  } catch (error) {
+    console.warn("[store-audit] claude fallback", error);
+    return emptyAudit(input.locale, shop.pagesRead, classifyClaudeError(error));
   }
-
-  return emptyAudit(input.locale, shop.pagesRead, "no_key");
 }

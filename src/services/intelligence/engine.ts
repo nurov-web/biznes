@@ -198,7 +198,10 @@ export function buildIntelligence(
     typeNote: business.typeNote,
     name: business.name,
   });
-  const niche = detectNiche(focus, business.type);
+  const catalogText = products
+    .map((p) => `${p.category} ${p.brand} ${p.model}`)
+    .join(" ");
+  const niche = detectNiche(focus, business.type, catalogText);
   const marketSize = Math.round(typeBase(business.type, niche) * cityK * season.factor);
   const nicheName = nicheLabel(niche, locale);
 

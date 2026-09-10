@@ -22,7 +22,7 @@ export default function StorePage() {
     <PageShell title={t("manageTitle")} lead={t("manageLead")}>
       <StoreConnectCard hideManage onStatus={onStatus} />
       {ready && connected ? <StoreLedgerPanel /> : null}
-      {ready && connected ? <StoreAuditPanel autoRun /> : null}
+      {ready && connected ? <StoreAuditPanel /> : null}
       {ready && !connected ? (
         <p className="text-sm text-muted-foreground">
           {t("auditNoStore")}{" "}
