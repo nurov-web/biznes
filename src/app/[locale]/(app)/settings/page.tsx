@@ -25,7 +25,7 @@ export default function SettingsPage() {
   }
 
   useEffect(() => {
-    fetch("/api/auth/me")
+    fetch("/api/auth/me", { credentials: "include" })
       .then((r) => r.json())
       .then((d: { user?: { firstName: string; lastName: string; email: string; phone: string; role?: string } }) => {
         if (d.user) {

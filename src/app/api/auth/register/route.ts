@@ -4,11 +4,20 @@
  */
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { assertAuthConfigured, hashPassword, JWT_NOT_CONFIGURED, setSessionCookie } from "@/lib/auth";
+import {
+  assertAuthConfigured,
+  findUserByLogin,
+  hashPassword,
+  JWT_NOT_CONFIGURED,
+  readAuthPayload,
+  restoreAccountFromPayload,
+  stampAuthCookies,
+  verifyPassword,
+} from "@/lib/auth";
 import { jsonError } from "@/lib/api-error";
 import { originForbidden } from "@/lib/origin";
 import { normalizePhone } from "@/lib/phone";
-import { newId, nowIso, readDb, StoreWriteError, withDb } from "@/lib/store";
+import { newId, nowIso, readDb, StoreWriteError, withDb, type UserRow } from "@/lib/store";
 
 const schema = z.object({
   firstName: z.string().trim().min(1).max(80),
@@ -33,6 +42,17 @@ function registerFail(error: unknown): ReturnType<typeof jsonError> {
   return jsonError("server", 500);
 }
 
+async function signedIn(user: UserRow): Promise<NextResponse> {
+  const res = NextResponse.json({ ok: true });
+  const db = await readDb();
+  const business =
+    db.businesses
+      .filter((b) => b.ownerId === user.id)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
+  await stampAuthCookies(res, user, business);
+  return res;
+}
+
 export async function POST(request: Request) {
   if (originForbidden(request)) return jsonError("forbidden", 403);
   let json: unknown;
@@ -53,17 +73,41 @@ export async function POST(request: Request) {
   const data = parsed.data;
   const email = data.email.toLowerCase();
   const phone = data.phone;
-  const db = await readDb();
-  const existing = db.users.find(
-    (u) => u.email === email || normalizePhone(u.phone) === phone,
-  );
-  if (existing) {
-    return jsonError("user_exists", 409);
-  }
+
   try {
     assertAuthConfigured();
+    const saved = await readAuthPayload();
+    if (saved && (saved.email === email || saved.phone === phone)) {
+      if (saved.ph && (await verifyPassword(data.password, saved.ph))) {
+        const user = (await restoreAccountFromPayload(saved)) ?? {
+          id: saved.sub,
+          firstName: saved.firstName || data.firstName,
+          lastName: saved.lastName || data.lastName,
+          email,
+          phone,
+          passwordHash: saved.ph,
+          phoneVerified: false,
+          offerAccepted: true,
+          role: saved.role,
+          createdAt: nowIso(),
+          updatedAt: nowIso(),
+        };
+        return signedIn(user);
+      }
+      return jsonError("user_exists", 409);
+    }
+
+    const db = await readDb();
+    const existing = findUserByLogin(db.users, email, phone);
+    if (existing) {
+      if (await verifyPassword(data.password, existing.passwordHash)) {
+        return signedIn(existing);
+      }
+      return jsonError("user_exists", 409);
+    }
+
     const now = nowIso();
-    const user = {
+    const user: UserRow = {
       id: newId(),
       firstName: data.firstName,
       lastName: data.lastName,
@@ -76,19 +120,18 @@ export async function POST(request: Request) {
       createdAt: now,
       updatedAt: now,
     };
-    await withDb((db) => {
-      db.users.push(user);
+    await withDb((state) => {
+      const again = findUserByLogin(state.users, email, phone);
+      if (again) {
+        throw new Error("USER_EXISTS");
+      }
+      state.users.push(user);
     });
-    await setSessionCookie(user.id, "owner", {
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phone: user.phone,
-    });
-    return NextResponse.json({
-      ok: true,
-    });
+    return signedIn(user);
   } catch (error) {
+    if (error instanceof Error && error.message === "USER_EXISTS") {
+      return jsonError("user_exists", 409);
+    }
     console.error("[register]", error);
     return registerFail(error);
   }

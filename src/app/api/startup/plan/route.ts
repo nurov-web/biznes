@@ -4,7 +4,7 @@
  */
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireUser, stampAuthCookiesByUserId } from "@/lib/auth";
 import { getOwnedBusiness, requireBusiness } from "@/lib/business";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { parseLocale } from "@/lib/locale-query";
@@ -116,7 +116,9 @@ export async function POST(request: Request) {
     });
 
     await addAudit(businessId, user.id, "startup.plan");
-    return NextResponse.json({ plan, usedAi: generated.usedAi });
+    const res = NextResponse.json({ plan, usedAi: generated.usedAi });
+    await stampAuthCookiesByUserId(res, user.id);
+    return res;
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
     console.error("[startup.plan]", error);

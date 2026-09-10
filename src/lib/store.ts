@@ -483,12 +483,79 @@ function writeLocalFile(db: Database): void {
   writeFileSync(file, JSON.stringify(db, null, 2), "utf8");
 }
 
+function rowTime(row: { updatedAt?: string; createdAt?: string }): string {
+  return row.updatedAt || row.createdAt || "";
+}
+
+function mergeRows<T extends { id: string; updatedAt?: string; createdAt?: string }>(
+  local: T[],
+  remote: T[],
+): T[] {
+  const map = new Map<string, T>();
+  for (const row of remote) map.set(row.id, row);
+  for (const row of local) {
+    const prev = map.get(row.id);
+    if (!prev || rowTime(row) >= rowTime(prev)) map.set(row.id, row);
+  }
+  return [...map.values()];
+}
+
+function mergeUsers(local: UserRow[], remote: UserRow[]): UserRow[] {
+  const byId = mergeRows(local, remote);
+  const byEmail = new Map<string, UserRow>();
+  const noEmail: UserRow[] = [];
+  for (const user of byId) {
+    const email = user.email.trim().toLowerCase();
+    if (!email) {
+      noEmail.push(user);
+      continue;
+    }
+    const prev = byEmail.get(email);
+    if (!prev || rowTime(user) >= rowTime(prev)) byEmail.set(email, user);
+  }
+  return [...byEmail.values(), ...noEmail];
+}
+
+/** Ду инстанс якҷоя навишта натавонанд ҳисобро пок кунанд. */
+function mergeSnapshots(local: Database, remote: Database): Database {
+  return {
+    ...local,
+    users: mergeUsers(local.users, remote.users),
+    businesses: mergeRows(local.businesses, remote.businesses),
+    products: mergeRows(local.products, remote.products),
+    customers: mergeRows(local.customers, remote.customers),
+    deals: mergeRows(local.deals, remote.deals),
+    financeEntries: mergeRows(local.financeEntries, remote.financeEntries),
+    salesLines: mergeRows(local.salesLines, remote.salesLines),
+    movements: mergeRows(local.movements, remote.movements),
+    tasks: mergeRows(local.tasks, remote.tasks),
+    competitors: mergeRows(local.competitors, remote.competitors),
+    memory: mergeRows(local.memory, remote.memory),
+    actions: mergeRows(local.actions, remote.actions),
+    alerts: mergeRows(local.alerts, remote.alerts),
+    auditLogs: mergeRows(local.auditLogs, remote.auditLogs),
+    plans: mergeRows(local.plans, remote.plans),
+    apiKeys: mergeRows(local.apiKeys, remote.apiKeys),
+    storeConnections: mergeRows(local.storeConnections, remote.storeConnections),
+    learnProgress: mergeRows(local.learnProgress, remote.learnProgress),
+    storeAudits: mergeRows(local.storeAudits, remote.storeAudits),
+    aiReports: mergeRows(local.aiReports, remote.aiReports),
+    smsCodes: mergeRows(local.smsCodes, remote.smsCodes),
+  };
+}
+
 async function save(db: Database): Promise<void> {
   const g = storeMemory();
   g.__bpDb = db;
 
   if (isPostgresConfigured() && prisma) {
     try {
+      const snap = await prisma.appSnapshot.findUnique({ where: { id: "global" } });
+      if (snap?.payload) {
+        const merged = mergeSnapshots(db, hydrate(snap.payload as unknown as Partial<Database>));
+        Object.assign(db, merged);
+        g.__bpDb = db;
+      }
       await prisma.appSnapshot.upsert({
         where: { id: "global" },
         create: {

@@ -3,7 +3,7 @@
  */
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireUser, stampAuthCookiesByUserId } from "@/lib/auth";
 import { BUSINESS_TYPES, CHANNELS } from "@/constants";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { originForbidden } from "@/lib/origin";
@@ -121,7 +121,9 @@ export async function POST(request: Request) {
         });
       }
     });
-    return NextResponse.json({ ok: true, businessId });
+    const res = NextResponse.json({ ok: true, businessId });
+    await stampAuthCookiesByUserId(res, user.id);
+    return res;
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
     console.error("[onboarding]", error);

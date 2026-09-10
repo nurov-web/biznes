@@ -1,8 +1,8 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useTranslations } from "next-intl";
-import { Link, useRouter } from "@/i18n/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { FormErrorSummary } from "@/components/FormErrorSummary";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { EntryVeil } from "@/components/motion/EntryVeil";
@@ -11,7 +11,7 @@ export default function LoginPage() {
   const t = useTranslations("auth");
   const tn = useTranslations("nav");
   const tl = useTranslations("landing");
-  const router = useRouter();
+  const locale = useLocale();
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{ login?: string; password?: string }>({});
@@ -37,6 +37,7 @@ export default function LoginPage() {
     setBusy(true);
     const response = await fetch("/api/auth/login", {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ login, password }),
     });
@@ -49,7 +50,7 @@ export default function LoginPage() {
       return;
     }
     setLeaving(true);
-    router.push("/dashboard");
+    window.location.assign(`/${locale}/dashboard`);
   }
 
   return (

@@ -17,6 +17,15 @@ export type SessionPayload = {
   lastName?: string;
   email?: string;
   phone?: string;
+  /** bcrypt-и парол — барои барқарор кардани ҳисоб дар инстанси холӣ */
+  ph?: string;
+  bid?: string;
+  bname?: string;
+  bcity?: string;
+  bdone?: boolean;
+  btype?: string;
+  bnote?: string;
+  bgoal?: string;
 };
 
 export type SessionProfile = {

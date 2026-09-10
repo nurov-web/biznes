@@ -20,7 +20,7 @@ export default function ProfilePage() {
   const [me, setMe] = useState<Me | null>(null);
 
   useEffect(() => {
-    fetch("/api/auth/me")
+    fetch("/api/auth/me", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data: Me | null) => setMe(data))
       .catch(() => undefined);

@@ -1,8 +1,8 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useTranslations } from "next-intl";
-import { Link, useRouter } from "@/i18n/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { FormErrorSummary } from "@/components/FormErrorSummary";
 import { AuthShell } from "@/components/auth/AuthShell";
 
@@ -10,7 +10,7 @@ export default function RegisterPage() {
   const t = useTranslations("auth");
   const tn = useTranslations("nav");
   const tl = useTranslations("landing");
-  const router = useRouter();
+  const locale = useLocale();
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -66,6 +66,7 @@ export default function RegisterPage() {
     try {
       response = await fetch("/api/auth/register", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, offerAccepted: true }),
       });
@@ -115,7 +116,7 @@ export default function RegisterPage() {
       requestAnimationFrame(() => document.getElementById("form-errors")?.focus());
       return;
     }
-    router.push("/onboarding");
+    window.location.assign(`/${locale}/onboarding`);
   }
 
   return (

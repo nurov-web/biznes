@@ -4,6 +4,8 @@
 export const APP_NAME = "BusinessPilot AI";
 
 export const SESSION_COOKIE = "bp_session";
+/** Почта/ҳисоб дар браузер мемонад — logout сессияро мебандад, ҳисобро не. */
+export const ACCOUNT_COOKIE = "bp_account";
 
 /** Як маротиба дар ҷаласа: интро пас аз вуруд. */
 export const SPLASH_SESSION_KEY = "bp_entry_splash";
