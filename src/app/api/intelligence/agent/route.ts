@@ -10,6 +10,7 @@ import { businessSystemPrompt } from "@/services/ai/business-system";
 import { BUSINESS_TOOLS, makeToolRunner } from "@/services/ai/tools";
 import { addAudit, addMemory } from "@/services/intelligence/persist";
 import { readDb } from "@/lib/store";
+import { ownerReplyScript, wrapOwnerMessage } from "@/lib/tajik-text";
 
 const schema = z.object({
   locale: z.enum(["tg", "ru", "en"]).optional(),
@@ -65,12 +66,15 @@ export async function POST(request: Request) {
     const db = await readDb();
     const snap = buildIntelligence(db, business, locale);
     const role = ROLE[parsed.data.agent][locale];
+    const latinTg = ownerReplyScript(parsed.data.question, locale) === "latin";
     const fallback =
-      locale === "en"
+      locale === "en" && !latinTg
         ? `${role} ${snap.shouldDo} Health ${snap.healthScore}/100. Forecast, not a guarantee.`
-        : locale === "ru"
+        : locale === "ru" && !latinTg
           ? `${role} ${snap.shouldDo} Health ${snap.healthScore}/100. Это прогноз, не гарантия.`
-          : `${role} ${snap.shouldDo} Health ${snap.healthScore}/100. Ин пешгӯӣ аст, на кафолат.`;
+          : latinTg
+            ? `${snap.shouldDo} Health ${snap.healthScore}/100. In peshgui ast, na kafolat.`
+            : `${role} ${snap.shouldDo} Health ${snap.healthScore}/100. Ин пешгӯӣ аст, на кафолат.`;
     let answer = fallback;
     let toolsUsed: string[] = [];
     try {
@@ -83,7 +87,7 @@ export async function POST(request: Request) {
           format:
             "Call tools before any figure. Format: 1) fact from the data 2) risk or opportunity in TJS 3) one action.",
         }),
-        user: `Question: ${parsed.data.question}\nBusiness: ${snap.businessName}, ${snap.city}, stage ${business.stage}. Direction: ${business.goal || business.typeNote || "—"}.`,
+        user: `${wrapOwnerMessage(parsed.data.question)}\nBusiness: ${snap.businessName}, ${snap.city}, stage ${business.stage}. Direction: ${business.goal || business.typeNote || "—"}.`,
         tools: BUSINESS_TOOLS,
         runTool: makeToolRunner(business, locale),
       });

@@ -3,6 +3,7 @@
  */
 import { MIND_QUESTIONS } from "@/constants/mind-quiz";
 import { llmLanguage, type Locale } from "@/lib/locale-query";
+import { wrapOwnerMessage } from "@/lib/tajik-text";
 import type { LearnDiagnosis } from "@/lib/store";
 import { nowIso } from "@/lib/store";
 import { businessSystemPrompt } from "@/services/ai/business-system";
@@ -133,12 +134,13 @@ export async function diagnoseMind(input: {
     role: "You diagnose a small-business owner's decision mindset from 10 answers. No praise fluff. Do not decide instead of them. Recommend 2 course unit ids from: asos, furush, narx, raqib, hafta.",
   });
   const ask = [
+    input.focus ? wrapOwnerMessage(input.focus) : "",
     `Answers:\n${lines}`,
     `Reply in ${llmLanguage(input.locale)} as JSON only:`,
     `{"profile":"raqam|narxjang|his","title":"","summary":"","strengths":["",""],"gaps":["",""],"focusUnitIds":["asos","furush"],"firstAdvice":"","courseLead":""}`,
     "courseLead is 1–2 sentences that open the course path for this person.",
     "firstAdvice is one concrete action in TJS or a record to write today.",
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 
   try {
     const raw = extractJsonObject(

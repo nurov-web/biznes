@@ -5,6 +5,7 @@
 import type { PlanOption } from "@/lib/store";
 import type { Locale } from "@/lib/locale-query";
 import { detectNiche, nicheLabel, type NicheId } from "@/lib/niche";
+import { wrapOwnerMessage } from "@/lib/tajik-text";
 import { completeClaude, extractJsonObject } from "@/services/ai/claude";
 import { businessSystemPrompt } from "@/services/ai/business-system";
 
@@ -340,7 +341,7 @@ function buildPrompt(input: StartupInput): string {
   const niche = detectNiche(input.goal);
   return [
     `Budget: ${input.budget} TJS. City: ${input.city}, Tajikistan.`,
-    `What the person wants (follow exactly): ${input.goal || "not specified"}.`,
+    wrapOwnerMessage(input.goal || "not specified"),
     `Detected niche: ${niche}. All 3 options MUST stay in this niche.`,
     niche !== "phones"
       ? "Do not propose a phone, laptop or gadget shop unless the owner asked for that."

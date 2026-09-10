@@ -2,6 +2,7 @@ import { LOW_STOCK_THRESHOLD } from "@/constants";
 import type { AdviceCard, AiAnalysisPayload } from "@/types";
 import type { Locale } from "@/lib/locale-query";
 import { businessSystemPrompt } from "@/services/ai/business-system";
+import { wrapOwnerMessage } from "@/lib/tajik-text";
 
 type ProductSnap = {
   category: string;
@@ -210,7 +211,8 @@ export function buildAnalyzePrompt(ctx: Context): string {
         'Shape: { "priceAdvice":[{"level":"green"|"yellow"|"red","title":"","detail":"","action":""}], "inventoryAdvice":[...], "growthAdvice":[...], "risks":[...], "dailyTip":"", "summary":"" }. Each advice: short → TJS → one action.',
     }),
     `Business: ${ctx.name}, type ${ctx.type}, city ${ctx.city}.`,
-    `Owner direction: ${ctx.goal || ctx.typeNote || "not specified"}. Stay on this niche. Do not switch to phones unless they asked.`,
+    wrapOwnerMessage(ctx.goal || ctx.typeNote || "not specified"),
+    "Stay on this niche. Do not switch to phones unless they asked.",
     `Competitors (owner text): ${ctx.competitors || "none"}. Audience: ${ctx.audience || "none"}.`,
     `Products: ${JSON.stringify(ctx.products).slice(0, 5000)}`,
   ].join("\n");

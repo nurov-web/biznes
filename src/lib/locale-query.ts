@@ -15,5 +15,5 @@ export function localeFromRequest(request: Request): Locale {
 export function llmLanguage(locale: Locale): string {
   if (locale === "en") return "English";
   if (locale === "ru") return "Russian";
-  return "Tajik (Cyrillic or Latin — match the script of the owner's last message)";
+  return "Tajik — Cyrillic or Latin letters (tojiki). Latin Tajik is Tajik, not English.";
 }

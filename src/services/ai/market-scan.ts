@@ -4,6 +4,7 @@
  */
 import { localMarketBrief } from "@/constants/city-market";
 import { llmLanguage, type Locale } from "@/lib/locale-query";
+import { wrapOwnerMessage } from "@/lib/tajik-text";
 import { detectNiche, nicheLabel, skuFitsNiche, type NicheId } from "@/lib/niche";
 import { completeClaude, extractJsonObject } from "@/services/ai/claude";
 import { businessSystemPrompt } from "@/services/ai/business-system";
@@ -95,7 +96,7 @@ export async function scanCityMarket(input: MarketScanInput): Promise<MarketBrie
   const label = nicheLabel(niche, input.locale);
   const prompt = [
     `Research the small-business climate in ${city}, Tajikistan for: ${label}.`,
-    goal ? `Owner wrote this exact direction: «${goal}». Stay on it.` : "",
+    goal ? wrapOwnerMessage(goal) : "",
     input.products?.length ? `Owner already sells: ${JSON.stringify(input.products).slice(0, 800)}` : "",
     niche !== "phones"
       ? "Do NOT mention phones, laptops or gadget accessories unless the owner asked for that."

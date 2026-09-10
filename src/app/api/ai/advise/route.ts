@@ -9,7 +9,7 @@ import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { completeClaude } from "@/services/ai/claude";
 import { businessSystemPrompt } from "@/services/ai/business-system";
 import { readDb } from "@/lib/store";
-import { tajikReplyScript } from "@/lib/tajik-text";
+import { ownerReplyScript, wrapOwnerMessage } from "@/lib/tajik-text";
 import type { AppLocale } from "@/i18n/routing";
 
 const schema = z.object({
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     const products = db.products
       .filter((p) => p.businessId === business.id && !p.archived)
       .slice(0, 20);
-    const latinTg = tajikReplyScript(parsed.data.question) === "latin";
+    const latinTg = ownerReplyScript(parsed.data.question, locale) === "latin";
     const fallback =
       locale === "en"
         ? "1) Raise the share of SKUs with margin >25% in your niche. 2) Do not restock SKUs that did not move in 30 days. 3) Check 3 competitor prices this week. Forecast, not a guarantee."
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
           role: "You are the owner’s advisor for this week’s cash, price and stock.",
           format: "Format: one short fact → example with TJS → 3 numbered actions. No fluff.",
         }),
-        `Q: ${parsed.data.question}\nBusiness: ${business.name}, ${business.city}, ${business.type}\nDirection: ${business.goal || business.typeNote || "—"}\nProducts: ${JSON.stringify(products).slice(0, 4000)}`,
+        `${wrapOwnerMessage(parsed.data.question)}\nBusiness: ${business.name}, ${business.city}, ${business.type}\nDirection: ${business.goal || business.typeNote || "—"}\nProducts: ${JSON.stringify(products).slice(0, 4000)}`,
       );
       return NextResponse.json({ answer, usedAi: true });
     } catch {

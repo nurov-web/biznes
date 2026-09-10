@@ -1,5 +1,10 @@
 import { llmLanguage, type Locale } from "@/lib/locale-query";
-import { tajikReplyScript } from "@/lib/tajik-text";
+import {
+  LATIN_TAJIK_LLM_RULE,
+  looksLikeLatinTajik,
+  ownerReplyScript,
+  wrapOwnerMessage,
+} from "@/lib/tajik-text";
 
 /**
  * Системаи ягонаи ИИ: ҳамаи зангҳои Claude аз ҳамин дониш мегузаранд.
@@ -23,8 +28,19 @@ const CANON = [
   "Do not give legal/tax rulings. You may say «check with an accountant»; do not quote a fake НДС/патент rate.",
   "No jokes, no motivation, no filler. Short → number in TJS → one next step.",
   "If tools are available, call them before any figure. If a tool returns empty, say the fact is missing.",
-  "Tajik may arrive in Cyrillic (тоҷикӣ) or Latin letters (tojiki, moshin, anbor, faida). Both are Tajik — understand them. If the latest owner message is Latin Tajik, reply in Latin Tajik. If Cyrillic, reply Cyrillic.",
+  LATIN_TAJIK_LLM_RULE,
 ].join("\n");
+
+function scriptRule(locale: Locale, ownerText: string): string {
+  const script = ownerReplyScript(ownerText, locale);
+  if (script === "latin" || looksLikeLatinTajik(ownerText)) {
+    return "The owner wrote Tajik in Latin/English letters. Understand it as Tajik. Reply ONLY in Latin Tajik. Do not use Cyrillic. Do not reply in English.";
+  }
+  if (script === "cyrillic") {
+    return "The owner wrote Tajik in Cyrillic. Reply in Tajik Cyrillic, not Latin, not English.";
+  }
+  return `Reply in ${llmLanguage(locale)}.`;
+}
 
 export function businessSystemPrompt(options: {
   locale: Locale;
@@ -35,22 +51,15 @@ export function businessSystemPrompt(options: {
   ownerMessage?: string;
 }): string {
   const focus = options.ownerFocus?.trim();
-  const script = tajikReplyScript(options.ownerMessage ?? options.ownerFocus ?? "");
-  const scriptRule =
-    options.locale !== "tg"
-      ? `Reply in ${llmLanguage(options.locale)}.`
-      : script === "latin"
-        ? "The owner wrote Tajik in Latin letters (tojiki, moshin, anbor). Reply ONLY in Latin Tajik. Do not use Cyrillic letters."
-        : script === "cyrillic"
-          ? "The owner wrote Tajik in Cyrillic. Reply in Tajik Cyrillic, not Latin."
-          : `Reply in ${llmLanguage(options.locale)}.`;
+  const ownerText = [options.ownerMessage, options.ownerFocus].filter(Boolean).join("\n");
   const parts = [
     CANON,
     options.role?.trim() ?? "",
     focus
       ? `The owner's stated business is: «${focus}». Stay strictly on that niche. Do not talk about phones, laptops or electronics unless they asked for that. If they wrote cars / мошин / moshin, talk only about cars, parts, wash, taxi — never default to a phone shop.`
       : "If the owner named a niche, follow it. Never default to phones just because the app category is «trade».",
-    scriptRule,
+    scriptRule(options.locale, ownerText),
+    options.ownerMessage?.trim() ? wrapOwnerMessage(options.ownerMessage) : "",
     options.format?.trim() ?? "",
     options.jsonOnly ? "Return valid JSON only. No markdown fences, no prose outside JSON." : "",
   ];

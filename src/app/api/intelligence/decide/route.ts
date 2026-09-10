@@ -14,6 +14,7 @@ import { businessSystemPrompt } from "@/services/ai/business-system";
 import { BUSINESS_TOOLS, makeToolRunner } from "@/services/ai/tools";
 import { addAction, addAudit, addMemory } from "@/services/intelligence/persist";
 import { readDb } from "@/lib/store";
+import { ownerReplyScript, wrapOwnerMessage } from "@/lib/tajik-text";
 
 const schema = z.object({
   locale: z.enum(["tg", "ru", "en"]).optional(),
@@ -31,12 +32,15 @@ export async function POST(request: Request) {
     const snap = buildIntelligence(db, business, locale);
     const simInput = recommendedSim(snap);
     const sim = simulate(snap, simInput, locale);
+    const latinTg = ownerReplyScript(parsed.data.question ?? "", locale) === "latin";
     const explain =
-      locale === "en"
+      locale === "en" && !latinTg
         ? `Analyze: ${snap.happened} Why: ${snap.why} Simulation of the recommended step (price ${simInput.priceDeltaPct}%, volume ${simInput.volumeDeltaPct}%): ${sim.note} Recommend: ${snap.shouldDo}`
-        : locale === "ru"
+        : locale === "ru" && !latinTg
           ? `Анализ: ${snap.happened} Почему: ${snap.why} Симуляция рекомендуемого шага (цена ${simInput.priceDeltaPct}%, объём ${simInput.volumeDeltaPct}%): ${sim.note} Рекомендация: ${snap.shouldDo}`
-          : `Таҳлил: ${snap.happened} Чаро: ${snap.why} Симуляцияи қадами тавсияшуда (нарх ${simInput.priceDeltaPct}%, ҳаҷм ${simInput.volumeDeltaPct}%): ${sim.note} Тавсия: ${snap.shouldDo}`;
+          : latinTg
+            ? `Tahlil: ${snap.happened} Charo: ${snap.why} Simulyatsiyai qadami tavsiyashuda (narx ${simInput.priceDeltaPct}%, hajm ${simInput.volumeDeltaPct}%): ${sim.note} Tavsiya: ${snap.shouldDo}`
+            : `Таҳлил: ${snap.happened} Чаро: ${snap.why} Симуляцияи қадами тавсияшуда (нарх ${simInput.priceDeltaPct}%, ҳаҷм ${simInput.volumeDeltaPct}%): ${sim.note} Тавсия: ${snap.shouldDo}`;
     let narrative = explain;
     let usedAi = false;
     try {
@@ -49,7 +53,7 @@ export async function POST(request: Request) {
           format:
             "Use tools. Run at least one simulation before you recommend. Four short labeled paragraphs: Analyze → Explain → Simulate → Recommend.",
         }),
-        user: `Question: ${parsed.data.question || "What should I do this week?"}\nBusiness: ${snap.businessName}, ${snap.city}, stage ${business.stage}, budget ${business.budget} TJS. Direction: ${business.goal || business.typeNote || "—"}.`,
+        user: `${wrapOwnerMessage(parsed.data.question || "In hafta chi kunam?")}\nBusiness: ${snap.businessName}, ${snap.city}, stage ${business.stage}, budget ${business.budget} TJS. Direction: ${business.goal || business.typeNote || "—"}.`,
         tools: BUSINESS_TOOLS,
         runTool: makeToolRunner(business, locale),
       });

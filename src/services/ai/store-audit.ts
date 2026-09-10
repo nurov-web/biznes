@@ -4,6 +4,7 @@
  */
 import { fetchPublicShopText } from "@/lib/fetch-public-html";
 import { llmLanguage, type Locale } from "@/lib/locale-query";
+import { wrapOwnerMessage } from "@/lib/tajik-text";
 import type { StoreAuditSku } from "@/lib/store";
 import { businessSystemPrompt } from "@/services/ai/business-system";
 import {
@@ -135,6 +136,7 @@ export async function auditStoreSite(input: {
   const schema = `{"summary":"","products":[{"name":"","category":"","sellPrice":0,"estimatedBuy":0,"monthlyQty":0,"hoursPerWeek":0,"marginPct":0,"note":""}],"revenueMonthly":0,"costMonthly":0,"profitMonthly":0,"hoursMonthly":0,"risks":[],"actions":[],"disclaimer":""}`;
   const ask = [
     `Public store URL: ${input.storeUrl}`,
+    input.focus ? wrapOwnerMessage(input.focus) : "",
     shop.ok ? `Public page text (truncated):\n${shop.text}` : "Public HTML was empty or blocked.",
     `Reply in ${llmLanguage(input.locale)} as JSON only: ${schema}`,
     "Prices in TJS integers. estimatedBuy is true-cost guess if the page only shows shelf price.",
