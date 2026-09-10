@@ -61,13 +61,13 @@ export function ProfileMenu({ firstName, lastName, businessName, onLogout }: Pro
     <div ref={root} className="relative">
       <button
         type="button"
-        className="flex min-h-11 max-w-full items-center gap-2 px-1.5 py-1 text-left hover:bg-muted"
+        className="flex min-h-11 max-w-full items-center gap-2 rounded-xl px-1.5 py-1 text-left hover:bg-muted"
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={tp("openMenu")}
         onClick={() => setOpen((value) => !value)}
       >
-        <span className="grid h-8 w-8 shrink-0 place-items-center bg-ink text-[11px] font-semibold text-white">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-xs font-semibold text-primary">
           {initials(firstName, lastName)}
         </span>
         <span className="hidden min-w-0 sm:grid">
@@ -87,7 +87,7 @@ export function ProfileMenu({ firstName, lastName, businessName, onLogout }: Pro
         <div
           ref={panel}
           role="menu"
-          className="absolute right-0 z-40 mt-2 w-64 max-w-[calc(100vw-1.5rem)] overflow-hidden border border-border bg-background py-1.5 shadow-[var(--shadow-md)]"
+          className="absolute right-0 z-40 mt-2 w-64 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-border bg-background py-1.5 shadow-[var(--shadow-lg)]"
         >
           <Link
             href="/profile"

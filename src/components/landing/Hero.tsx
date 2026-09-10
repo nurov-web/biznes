@@ -35,10 +35,10 @@ export function Hero() {
   }, []);
 
   return (
-    <section ref={root} className="relative border-b border-border bg-background">
+    <section ref={root} className="hero-wash relative border-b border-border">
       <div className="gutter-x relative mx-auto grid w-full min-w-0 max-w-6xl grid-cols-1 items-center gap-10 py-14 sm:py-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16 lg:py-24">
         <div className="min-w-0 max-w-full">
-          <p data-hero className="text-sm font-medium text-muted-foreground">
+          <p data-hero className="chip border-primary/20 bg-primary-soft font-medium text-primary">
             {t("kicker")}
           </p>
           <h1 data-hero className="display-1 mt-4 w-full max-w-xl text-ink">

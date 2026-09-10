@@ -21,7 +21,7 @@ export function IconWell({
 }) {
   return (
     <span
-      className={`grid h-9 w-9 place-items-center rounded-[4px] border border-border bg-muted text-foreground ${className ?? ""}`}
+      className={`grid h-11 w-11 place-items-center rounded-2xl bg-primary-soft text-primary ${className ?? ""}`}
     >
       <Icon icon={icon} className="h-5 w-5" />
     </span>

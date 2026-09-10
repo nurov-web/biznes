@@ -61,12 +61,12 @@ export function ProductGrid({ products, selectedProductId, onSelectProduct }: Pr
               type="button"
               disabled={isOutOfStock}
               onClick={() => onSelectProduct(product)}
-              className={`group relative flex min-h-[72px] w-full min-w-0 flex-col justify-between border p-4 text-left ${
+              className={`group relative flex min-h-[72px] w-full min-w-0 flex-col justify-between rounded-2xl border p-4 text-left ${
                 isSelected
-                  ? "border-ink bg-muted"
+                  ? "border-primary bg-primary-soft"
                   : isOutOfStock
                     ? "cursor-not-allowed border-border bg-muted/40 opacity-60"
-                    : "border-border bg-card hover:border-border-strong"
+                    : "border-border bg-card hover:border-primary/40 hover:shadow-[var(--shadow-sm)]"
               }`}
             >
               <div className="flex items-start justify-between gap-2">
@@ -81,7 +81,7 @@ export function ProductGrid({ products, selectedProductId, onSelectProduct }: Pr
                   </p>
                 </div>
                 {isSelected && (
-                  <span className="grid h-5 w-5 shrink-0 place-items-center bg-ink text-white">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-on-primary">
                     <Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
                   </span>
                 )}

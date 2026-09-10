@@ -125,8 +125,9 @@ export function WelcomeSplash({ onDone }: Props) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="splash-title"
-      className="section-dark fixed inset-0 z-[200] flex flex-col"
+      className="section-dark relative fixed inset-0 z-[200] flex flex-col"
     >
+      <div className="pointer-events-none absolute inset-0 glow-primary" />
       <div className="relative flex justify-end px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))]">
         <button
           ref={skipRef}
@@ -140,7 +141,7 @@ export function WelcomeSplash({ onDone }: Props) {
 
       <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center px-6 pb-16">
         <div ref={mark}>
-          <BrandMark size={40} />
+          <BrandMark size={48} />
         </div>
         <p
           id="splash-title"

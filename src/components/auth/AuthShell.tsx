@@ -53,7 +53,7 @@ export function AuthShell({ title, lead, children, footer, points }: Props) {
       <div className="gutter-x flex min-w-0 flex-col py-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/" className="flex min-w-0 items-center gap-2 text-[0.9375rem] font-semibold tracking-tight">
-            <BrandMark size={28} />
+            <BrandMark size={32} />
             <span className="truncate">{APP_NAME}</span>
           </Link>
           <LanguageSwitch />
@@ -70,16 +70,17 @@ export function AuthShell({ title, lead, children, footer, points }: Props) {
       </div>
 
       <aside className="section-dark relative hidden overflow-hidden lg:block">
+        <div className="pointer-events-none absolute inset-0 glow-primary" />
         <div
           data-auth-panel
           className="relative flex h-full flex-col justify-center gap-6 px-12 py-16"
         >
-          <p className="eyebrow text-dark-muted">{t("honestEyebrow")}</p>
+          <p className="eyebrow text-dark-accent">{t("honestEyebrow")}</p>
           <p className="display-2 max-w-md text-balance text-white">{t("ctaTitle")}</p>
           <ul className="mt-2 space-y-4">
             {points.map((point, i) => (
               <li key={point} className="flex gap-3.5">
-                <span className="num grid h-7 w-7 shrink-0 place-items-center border border-dark-border text-[11px] font-semibold text-dark-muted">
+                <span className="num grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-white/10 text-[12px] font-semibold text-dark-accent">
                   {i + 1}
                 </span>
                 <span className="max-w-sm text-sm leading-relaxed text-dark-muted">{point}</span>

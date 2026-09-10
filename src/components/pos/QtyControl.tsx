@@ -58,7 +58,7 @@ export function QtyControl({
           type="button"
           onClick={handleDecrease}
           disabled={!canDecrease}
-          className="grid h-12 w-12 min-h-12 min-w-12 shrink-0 place-items-center border border-border bg-card text-foreground hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
+          className="grid h-12 w-12 min-h-12 min-w-12 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
           aria-label={t("qtyMinus")}
         >
           <Minus className="h-5 w-5" strokeWidth={2} aria-hidden />
@@ -79,7 +79,7 @@ export function QtyControl({
           type="button"
           onClick={handleIncrease}
           disabled={!canIncrease}
-          className="grid h-12 w-12 min-h-12 min-w-12 shrink-0 place-items-center border border-border bg-card text-foreground hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
+          className="grid h-12 w-12 min-h-12 min-w-12 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
           aria-label={t("qtyPlus")}
         >
           <Plus className="h-5 w-5" strokeWidth={2} aria-hidden />

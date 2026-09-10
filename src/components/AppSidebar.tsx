@@ -75,15 +75,15 @@ function NavLink({ item, pathname, nested }: { item: Item; pathname: string; nes
     <Link
       href={item.href}
       aria-current={active ? "page" : undefined}
-      className={`group flex min-h-11 items-center gap-2.5 border-l-2 px-3 text-sm ${
+      className={`group flex min-h-11 items-center gap-2.5 rounded-xl px-3 text-sm ${
         nested ? "pl-3" : ""
       } ${
         active
-          ? "border-ink bg-muted font-medium text-foreground"
-          : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+          ? "bg-primary-soft font-medium text-primary"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
       }`}
     >
-      <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden />
+      <item.icon className="h-5 w-5 shrink-0" strokeWidth={1.75} aria-hidden />
       {t(item.key as "dashboard")}
     </Link>
   );
@@ -105,7 +105,7 @@ export function AppSidebar() {
         href="/dashboard"
         className="flex items-center gap-2.5 px-4 py-4 text-sm font-semibold tracking-tight"
       >
-        <BrandMark size={28} />
+        <BrandMark size={32} />
         {APP_NAME}
       </Link>
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3">
@@ -116,7 +116,7 @@ export function AppSidebar() {
         <div className="mt-2 border-t border-border pt-2">
           <button
             type="button"
-            className="flex min-h-11 w-full items-center justify-between px-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
           >
@@ -145,13 +145,13 @@ export function AppSidebar() {
       </nav>
       <Link
         href="/profile"
-        className={`mx-3 mb-4 flex min-h-11 items-center gap-2.5 border-l-2 px-3 text-sm ${
+        className={`mx-3 mb-4 flex min-h-11 items-center gap-2.5 rounded-xl px-3 text-sm ${
           isActive(pathname, "/profile")
-            ? "border-ink bg-muted font-medium text-foreground"
-            : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+            ? "bg-primary-soft font-medium text-primary"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
         }`}
       >
-        <UserRound className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+        <UserRound className="h-5 w-5" strokeWidth={1.75} aria-hidden />
         {t("profile")}
       </Link>
     </aside>
@@ -188,7 +188,7 @@ export function MobileNav() {
                     active ? "text-primary" : "text-muted-foreground"
                   }`}
                 >
-                  <item.icon className="h-[18px] w-[18px]" strokeWidth={1.75} aria-hidden />
+                  <item.icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />
                   <span className="max-w-full truncate px-0.5 text-center">{t(item.key as "dashboard")}</span>
                 </Link>
               </li>

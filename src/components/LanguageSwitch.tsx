@@ -33,7 +33,7 @@ export function LanguageSwitch({ className }: { className?: string }) {
       aria-label={t("language")}
     >
       <span
-        className="pointer-events-none absolute inset-y-0 left-0 bg-ink transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        className="pointer-events-none absolute inset-y-0 left-0 rounded-[0.7rem] bg-primary transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
         style={{
           width: `${100 / LOCALES.length}%`,
           transform: `translateX(${active * 100}%)`,

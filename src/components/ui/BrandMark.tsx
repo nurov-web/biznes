@@ -1,14 +1,31 @@
-/** Аломати бренд — ҳарф, на нишонаи бозӣ. */
+/** Аломати бренд: дафтар + хати болорав — на ҳарфи BP. */
 export function BrandMark({ size = 32 }: { size?: number }) {
-  const px = `${size}px`;
-  const text = size >= 32 ? "text-[11px]" : "text-[10px]";
   return (
-    <span
-      className={`grid shrink-0 place-items-center bg-ink font-semibold tracking-tight text-white ${text}`}
-      style={{ width: px, height: px, borderRadius: 4 }}
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      className="shrink-0"
       aria-hidden
     >
-      BP
-    </span>
+      <rect width="32" height="32" rx="9" fill="#1565c0" />
+      <path
+        d="M8.5 21.5 13.2 16.2 17.1 19.1 23.5 11"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="23.5" cy="11" r="1.7" fill="#fff" />
+      <path
+        d="M8.5 24.2h15"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        opacity="0.45"
+      />
+    </svg>
   );
 }

@@ -15,7 +15,7 @@ export function MarketingFooter() {
         <div className="flex flex-wrap items-start justify-between gap-8">
           <div>
             <p className="flex items-center gap-2.5 font-semibold tracking-tight">
-              <BrandMark size={28} />
+              <BrandMark size={32} />
               {APP_NAME}
             </p>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">

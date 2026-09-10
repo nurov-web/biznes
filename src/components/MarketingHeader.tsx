@@ -58,8 +58,8 @@ export function MarketingHeader() {
 
   return (
     <header
-      className={`sticky top-0 z-30 w-full min-w-0 border-b bg-background pt-[env(safe-area-inset-top,0px)] ${
-        scrolled ? "border-border" : "border-transparent"
+      className={`sticky top-0 z-30 w-full min-w-0 border-b bg-background/80 pt-[env(safe-area-inset-top,0px)] backdrop-blur-xl ${
+        scrolled ? "border-border shadow-[var(--shadow-xs)]" : "border-transparent"
       }`}
     >
       <div
@@ -71,7 +71,7 @@ export function MarketingHeader() {
           href="/"
           className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-[0.9375rem] font-semibold tracking-tight"
         >
-          <BrandMark size={28} />
+          <BrandMark size={36} />
           <span className="truncate">{APP_NAME}</span>
         </MotionLink>
 
@@ -92,7 +92,7 @@ export function MarketingHeader() {
         <button
           type="button"
           data-nav="toggle"
-          className="grid h-12 w-12 shrink-0 place-items-center border border-border-strong text-foreground md:hidden"
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-border bg-white text-ink shadow-[var(--shadow-xs)] md:hidden"
           aria-label={open ? t("closeMenu") : t("menu")}
           aria-expanded={open}
           aria-controls="mobile-site-menu"

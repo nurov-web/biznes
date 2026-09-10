@@ -20,7 +20,7 @@ export function StartChoice({ onPick }: { onPick: (path: "running" | "idea") => 
             key={card.id}
             type="button"
             onClick={() => onPick(card.id)}
-            className="card p-6 text-left hover:border-border-strong"
+            className="card hover-lift p-6 text-left"
           >
             <IconWell icon={card.icon} />
             <h2 className="mt-4 text-lg font-semibold">{card.title}</h2>
