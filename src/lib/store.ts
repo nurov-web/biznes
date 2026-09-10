@@ -1,6 +1,17 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
+/** Навиштан ба диск нашуд (дар Vercel лоиҳа read-only аст). */
+export class StoreWriteError extends Error {
+  constructor(cause?: unknown) {
+    super("STORE_WRITE_FAILED");
+    this.name = "StoreWriteError";
+    if (cause instanceof Error) {
+      this.cause = cause;
+    }
+  }
+}
+
 export type UserRow = {
   id: string;
   firstName: string;
@@ -274,7 +285,19 @@ const EMPTY: Database = {
   apiKeys: [],
 };
 
-const FILE = join(process.cwd(), "data", "app.json");
+type StoreMemory = { __bpDb?: Database };
+
+function dataFile(): string {
+  const fromEnv = process.env.BP_DATA_FILE?.trim();
+  if (fromEnv) return fromEnv;
+  // Vercel: process.cwd() навишта намешавад — танҳо /tmp.
+  if (process.env.VERCEL) return join("/tmp", "businesspilot-app.json");
+  return join(process.cwd(), "data", "app.json");
+}
+
+function storeMemory(): StoreMemory {
+  return globalThis as typeof globalThis & StoreMemory;
+}
 
 export function newId(): string {
   return `id_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -284,45 +307,64 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
+function hydrate(raw: Partial<Database>): Database {
+  return {
+    ...EMPTY,
+    ...raw,
+    users: raw.users ?? [],
+    smsCodes: raw.smsCodes ?? [],
+    products: raw.products ?? [],
+    movements: raw.movements ?? [],
+    customers: raw.customers ?? [],
+    deals: raw.deals ?? [],
+    financeEntries: raw.financeEntries ?? [],
+    tasks: raw.tasks ?? [],
+    aiReports: raw.aiReports ?? [],
+    competitors: raw.competitors ?? [],
+    salesLines: raw.salesLines ?? [],
+    memory: raw.memory ?? [],
+    actions: raw.actions ?? [],
+    alerts: raw.alerts ?? [],
+    auditLogs: raw.auditLogs ?? [],
+    plans: raw.plans ?? [],
+    apiKeys: raw.apiKeys ?? [],
+    businesses: (raw.businesses ?? []).map((b) => ({
+      ...b,
+      stage: b.stage === "idea" ? "idea" : "running",
+      budget: typeof b.budget === "number" ? b.budget : 0,
+      goal: b.goal ?? "",
+      experience: b.experience ?? "",
+    })),
+  };
+}
+
 function load(): Database {
+  const g = storeMemory();
+  if (process.env.VERCEL && g.__bpDb) return g.__bpDb;
   try {
-    const raw = JSON.parse(readFileSync(FILE, "utf8")) as Partial<Database>;
-    return {
-      ...EMPTY,
-      ...raw,
-      users: raw.users ?? [],
-      smsCodes: raw.smsCodes ?? [],
-      products: raw.products ?? [],
-      movements: raw.movements ?? [],
-      customers: raw.customers ?? [],
-      deals: raw.deals ?? [],
-      financeEntries: raw.financeEntries ?? [],
-      tasks: raw.tasks ?? [],
-      aiReports: raw.aiReports ?? [],
-      competitors: raw.competitors ?? [],
-      salesLines: raw.salesLines ?? [],
-      memory: raw.memory ?? [],
-      actions: raw.actions ?? [],
-      alerts: raw.alerts ?? [],
-      auditLogs: raw.auditLogs ?? [],
-      plans: raw.plans ?? [],
-      apiKeys: raw.apiKeys ?? [],
-      businesses: (raw.businesses ?? []).map((b) => ({
-        ...b,
-        stage: b.stage === "idea" ? "idea" : "running",
-        budget: typeof b.budget === "number" ? b.budget : 0,
-        goal: b.goal ?? "",
-        experience: b.experience ?? "",
-      })),
-    };
+    const raw = JSON.parse(readFileSync(dataFile(), "utf8")) as Partial<Database>;
+    const db = hydrate(raw);
+    if (process.env.VERCEL) g.__bpDb = db;
+    return db;
   } catch {
-    return structuredClone(EMPTY);
+    const empty = structuredClone(EMPTY);
+    if (process.env.VERCEL) g.__bpDb = empty;
+    return empty;
   }
 }
 
 function save(db: Database): void {
-  mkdirSync(dirname(FILE), { recursive: true });
-  writeFileSync(FILE, JSON.stringify(db, null, 2), "utf8");
+  if (process.env.VERCEL) storeMemory().__bpDb = db;
+  const file = dataFile();
+  try {
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify(db, null, 2), "utf8");
+  } catch (error) {
+    console.error("[store] навишта нашуд", file, error);
+    // Vercel: диск read-only — ҳисоб дар хотира /tmp мемонад, 500 намедиҳем.
+    if (process.env.VERCEL) return;
+    throw new StoreWriteError(error);
+  }
 }
 
 export function withDb<T>(fn: (db: Database) => T): T {

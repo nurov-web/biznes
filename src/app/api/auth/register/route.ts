@@ -4,18 +4,33 @@
  */
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { hashPassword, setSessionCookie } from "@/lib/auth";
+import { assertAuthConfigured, hashPassword, JWT_NOT_CONFIGURED, setSessionCookie } from "@/lib/auth";
 import { jsonError } from "@/lib/api-error";
-import { newId, nowIso, readDb, withDb } from "@/lib/store";
+import { normalizePhone } from "@/lib/phone";
+import { newId, nowIso, readDb, StoreWriteError, withDb } from "@/lib/store";
 
 const schema = z.object({
   firstName: z.string().trim().min(1).max(80),
   lastName: z.string().trim().min(1).max(80),
-  phone: z.string().trim().min(9).max(20),
+  phone: z
+    .string()
+    .trim()
+    .min(9)
+    .max(20)
+    .transform(normalizePhone)
+    .pipe(z.string().min(10).max(20)),
   email: z.string().trim().email().max(120),
   password: z.string().min(8).max(100),
   offerAccepted: z.literal(true),
 });
+
+function registerFail(error: unknown): ReturnType<typeof jsonError> {
+  if (error instanceof StoreWriteError) return jsonError("storage", 503);
+  if (error instanceof Error && error.message === JWT_NOT_CONFIGURED) {
+    return jsonError("config", 503);
+  }
+  return jsonError("server", 500);
+}
 
 export async function POST(request: Request) {
   let json: unknown;
@@ -35,18 +50,22 @@ export async function POST(request: Request) {
   }
   const data = parsed.data;
   const email = data.email.toLowerCase();
-  const existing = readDb().users.find((u) => u.email === email || u.phone === data.phone);
+  const phone = data.phone;
+  const existing = readDb().users.find(
+    (u) => u.email === email || normalizePhone(u.phone) === phone,
+  );
   if (existing) {
     return jsonError("user_exists", 409);
   }
   try {
+    assertAuthConfigured();
     const now = nowIso();
     const user = {
       id: newId(),
       firstName: data.firstName,
       lastName: data.lastName,
       email,
-      phone: data.phone,
+      phone,
       passwordHash: await hashPassword(data.password),
       phoneVerified: true,
       offerAccepted: true,
@@ -54,15 +73,24 @@ export async function POST(request: Request) {
       createdAt: now,
       updatedAt: now,
     };
-    withDb((db) => {
-      db.users.push(user);
+    try {
+      withDb((db) => {
+        db.users.push(user);
+      });
+    } catch (error) {
+      if (!(error instanceof StoreWriteError)) throw error;
+    }
+    await setSessionCookie(user.id, "owner", {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
     });
-    await setSessionCookie(user.id, "owner");
     return NextResponse.json({
       ok: true,
     });
   } catch (error) {
     console.error("[register]", error);
-    return jsonError("server", 500);
+    return registerFail(error);
   }
 }

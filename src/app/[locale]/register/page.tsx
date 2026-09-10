@@ -62,17 +62,56 @@ export default function RegisterPage() {
       return;
     }
     setBusy(true);
-    const response = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, offerAccepted: true }),
-    });
-    const data = (await response.json()) as { error?: string };
+    let response: Response;
+    try {
+      response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, offerAccepted: true }),
+      });
+    } catch {
+      setBusy(false);
+      const message = t("server");
+      setErrors([{ id: "register-form", message }]);
+      setField({});
+      requestAnimationFrame(() => document.getElementById("form-errors")?.focus());
+      return;
+    }
+    let data: { error?: string; fields?: Record<string, string> } = {};
+    try {
+      data = (await response.json()) as { error?: string; fields?: Record<string, string> };
+    } catch {
+      data = { error: "server" };
+    }
     setBusy(false);
     if (!response.ok) {
-      const message = data.error === "user_exists" ? t("userExists") : t("server");
-      setErrors([{ id: "email", message }]);
-      setField({ email: message });
+      if (data.error === "user_exists") {
+        const message = t("userExists");
+        setErrors([{ id: "email", message }]);
+        setField({ email: message, phone: message });
+      } else if (data.error === "config" || data.error === "storage") {
+        const message = t("serverSetup");
+        setErrors([{ id: "register-form", message }]);
+        setField({});
+      } else if (data.error === "validation") {
+        const next: Record<string, string> = {};
+        const items: { id: string; message: string }[] = [];
+        const fields = data.fields ?? {};
+        for (const key of Object.keys(fields)) {
+          const message = key === "email" ? t("emailInvalid") : key === "phone" ? t("phoneInvalid") : t("required");
+          next[key] = message;
+          items.push({ id: key, message });
+        }
+        if (items.length === 0) {
+          items.push({ id: "register-form", message: t("errorSummary") });
+        }
+        setField(next);
+        setErrors(items);
+      } else {
+        const message = t("server");
+        setErrors([{ id: "register-form", message }]);
+        setField({});
+      }
       requestAnimationFrame(() => document.getElementById("form-errors")?.focus());
       return;
     }
@@ -93,7 +132,7 @@ export default function RegisterPage() {
         </p>
       }
     >
-      <form onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
+      <form id="register-form" onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
         <FormErrorSummary title={t("errorSummary")} items={errors} />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="grid gap-1.5 text-sm font-medium" htmlFor="firstName">

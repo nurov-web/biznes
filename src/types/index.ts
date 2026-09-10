@@ -13,6 +13,17 @@ export type SessionUser = {
 export type SessionPayload = {
   sub: string;
   role: Role;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+};
+
+export type SessionProfile = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
 };
 
 export type OnboardingPayload = {

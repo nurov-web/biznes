@@ -195,7 +195,8 @@
     "required": "Fill in this field.",
     "pleaseWait": "Please wait…",
     "badCode": "The code is wrong or has expired.",
-    "server": "Something went wrong. Try again in a minute."
+    "server": "Something went wrong. Try again in a minute.",
+    "serverSetup": "The account was not saved: registration is not configured. Set JWT_SECRET in Vercel."
   },
   "onboarding": {
     "title": "Your business",

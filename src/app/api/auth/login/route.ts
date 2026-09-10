@@ -3,8 +3,14 @@
  */
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { setSessionCookie, verifyPassword } from "@/lib/auth";
+import {
+  assertAuthConfigured,
+  JWT_NOT_CONFIGURED,
+  setSessionCookie,
+  verifyPassword,
+} from "@/lib/auth";
 import { jsonError } from "@/lib/api-error";
+import { normalizePhone } from "@/lib/phone";
 import { readDb } from "@/lib/store";
 import type { Role } from "@/constants";
 
@@ -22,14 +28,30 @@ export async function POST(request: Request) {
   }
   const parsed = schema.safeParse(json);
   if (!parsed.success) return jsonError("validation", 400);
-  const login = parsed.data.login.toLowerCase();
+  const raw = parsed.data.login.trim();
+  const email = raw.toLowerCase();
+  const phone = normalizePhone(raw);
   const user = readDb().users.find(
-    (u) => u.email === login || u.phone === parsed.data.login,
+    (u) => u.email === email || (phone.length >= 10 && normalizePhone(u.phone) === phone),
   );
   if (!user) return jsonError("invalid_credentials", 401);
   const ok = await verifyPassword(parsed.data.password, user.passwordHash);
   if (!ok) return jsonError("invalid_credentials", 401);
-  await setSessionCookie(user.id, user.role as Role);
+  try {
+    assertAuthConfigured();
+    await setSessionCookie(user.id, user.role as Role, {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
+    });
+  } catch (error) {
+    console.error("[login]", error);
+    if (error instanceof Error && error.message === JWT_NOT_CONFIGURED) {
+      return jsonError("config", 503);
+    }
+    return jsonError("server", 500);
+  }
   return NextResponse.json({
     ok: true,
     phoneVerified: user.phoneVerified,

@@ -2,20 +2,28 @@ import { compare, hash } from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, type Role } from "@/constants";
-import { readDb } from "@/lib/store";
-import type { SessionPayload, SessionUser } from "@/types";
+import { GENERATED_SESSION_SECRET } from "@/lib/generated-session-secret";
+import { nowIso, readDb, withDb } from "@/lib/store";
+import type { SessionPayload, SessionProfile, SessionUser } from "@/types";
 
 const SALT_ROUNDS = 12;
 
+export const JWT_NOT_CONFIGURED = "JWT_SECRET is not configured";
+
 function jwtSecret(): Uint8Array {
-  const raw = process.env.JWT_SECRET?.trim();
+  const raw = process.env.JWT_SECRET?.trim() || GENERATED_SESSION_SECRET.trim();
   if (!raw) {
     if (process.env.NODE_ENV === "production") {
-      throw new Error("JWT_SECRET is not configured");
+      throw new Error(JWT_NOT_CONFIGURED);
     }
     return new TextEncoder().encode("dev-only-not-for-production");
   }
   return new TextEncoder().encode(raw);
+}
+
+/** Пеш аз сабти ҳисоб — то ятим намонад. */
+export function assertAuthConfigured(): void {
+  jwtSecret();
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -29,8 +37,18 @@ export async function verifyPassword(
   return compare(password, passwordHash);
 }
 
+function claimString(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
 export async function signSession(payload: SessionPayload): Promise<string> {
-  return new SignJWT({ role: payload.role })
+  return new SignJWT({
+    role: payload.role,
+    firstName: payload.firstName ?? "",
+    lastName: payload.lastName ?? "",
+    email: payload.email ?? "",
+    phone: payload.phone ?? "",
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
     .setIssuedAt()
@@ -48,14 +66,32 @@ export async function readSessionToken(
     if (!sub || (role !== "owner" && role !== "manager" && role !== "cashier")) {
       return null;
     }
-    return { sub, role };
+    return {
+      sub,
+      role,
+      firstName: claimString(payload.firstName),
+      lastName: claimString(payload.lastName),
+      email: claimString(payload.email),
+      phone: claimString(payload.phone),
+    };
   } catch {
     return null;
   }
 }
 
-export async function setSessionCookie(userId: string, role: Role): Promise<void> {
-  const token = await signSession({ sub: userId, role });
+export async function setSessionCookie(
+  userId: string,
+  role: Role,
+  profile?: SessionProfile,
+): Promise<void> {
+  const token = await signSession({
+    sub: userId,
+    role,
+    firstName: profile?.firstName,
+    lastName: profile?.lastName,
+    email: profile?.email,
+    phone: profile?.phone,
+  });
   const store = await cookies();
   store.set(SESSION_COOKIE, token, {
     httpOnly: true,
@@ -77,7 +113,33 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   if (!token) return null;
   const payload = await readSessionToken(token);
   if (!payload) return null;
-  const user = readDb().users.find((u) => u.id === payload.sub);
+  let user = readDb().users.find((u) => u.id === payload.sub);
+  if (!user && payload.email) {
+    const now = nowIso();
+    const row = {
+      id: payload.sub,
+      firstName: payload.firstName || "User",
+      lastName: payload.lastName || "",
+      email: payload.email,
+      phone: payload.phone || "",
+      passwordHash: "",
+      phoneVerified: true,
+      offerAccepted: true,
+      role: payload.role,
+      createdAt: now,
+      updatedAt: now,
+    };
+    try {
+      withDb((db) => {
+        if (!db.users.some((u) => u.id === row.id || u.email === row.email)) {
+          db.users.push(row);
+        }
+      });
+    } catch {
+      // Vercel: cookie кофӣ аст, диск навишта нашавад ҳам.
+    }
+    user = readDb().users.find((u) => u.id === payload.sub) ?? row;
+  }
   if (!user) return null;
   return {
     id: user.id,
