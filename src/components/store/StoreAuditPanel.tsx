@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Clock, RefreshCw, Wallet } from "lucide-react";
 import { Icon } from "@/components/ui/Icon";
+import { Link } from "@/i18n/navigation";
 
 export type StoreAuditView = {
   id: string;
@@ -86,6 +87,9 @@ export function StoreAuditPanel({ autoRun = false }: { autoRun?: boolean }) {
         return;
       }
       setAudit(json.audit);
+      if (json.audit.products.length === 0) {
+        setError(t("auditFail"));
+      }
     } catch (caught) {
       const aborted =
         caught instanceof DOMException
@@ -138,13 +142,25 @@ export function StoreAuditPanel({ autoRun = false }: { autoRun?: boolean }) {
 
       {error ? (
         <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
-          {error}
+          {error}{" "}
+          <Link href="/dashboard" className="font-medium underline">
+            {t("auditToDash")}
+          </Link>
         </p>
       ) : null}
 
       {busy && !audit ? <p className="text-sm text-muted-foreground">{t("auditRunning")}</p> : null}
 
-      {audit ? (
+      {audit && audit.products.length === 0 ? (
+        <article className="card-raised p-4 sm:p-6">
+          <p className="text-sm leading-relaxed">{audit.summary}</p>
+          <Link href="/dashboard" className="btn btn-primary mt-4 min-h-12 inline-flex">
+            {t("auditToDash")}
+          </Link>
+        </article>
+      ) : null}
+
+      {audit && audit.products.length > 0 ? (
         <>
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <article className="card-raised p-4">

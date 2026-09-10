@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { Prisma } from "@prisma/client";
 import type { StorePlatform } from "@/constants/store";
+import type { ChannelKind } from "@/constants/channels";
 import { isPostgresConfigured, prisma } from "@/lib/prisma";
 
 export { STORE_PLATFORMS, type StorePlatform } from "@/constants/store";
@@ -325,6 +326,16 @@ export type AuditRow = {
   createdAt: string;
 };
 
+export { CHANNEL_KINDS, type ChannelKind } from "@/constants/channels";
+
+export type ChannelLinkRow = {
+  id: string;
+  businessId: string;
+  kind: ChannelKind;
+  url: string;
+  createdAt: string;
+};
+
 export type Database = {
   users: UserRow[];
   smsCodes: SmsRow[];
@@ -347,6 +358,7 @@ export type Database = {
   storeConnections: StoreConnectionRow[];
   learnProgress: LearnProgressRow[];
   storeAudits: StoreAuditRow[];
+  channelLinks: ChannelLinkRow[];
 };
 
 const EMPTY: Database = {
@@ -371,6 +383,7 @@ const EMPTY: Database = {
   storeConnections: [],
   learnProgress: [],
   storeAudits: [],
+  channelLinks: [],
 };
 
 type StoreMemory = { __bpDb?: Database };
@@ -429,6 +442,7 @@ function hydrate(raw: Partial<Database>): Database {
       ...row,
       aiError: row.aiError ?? null,
     })),
+    channelLinks: raw.channelLinks ?? [],
     businesses: (raw.businesses ?? []).map((b) => ({
       ...b,
       stage: b.stage === "idea" ? "idea" : "running",
@@ -539,6 +553,7 @@ function mergeSnapshots(local: Database, remote: Database): Database {
     storeConnections: mergeRows(local.storeConnections, remote.storeConnections),
     learnProgress: mergeRows(local.learnProgress, remote.learnProgress),
     storeAudits: mergeRows(local.storeAudits, remote.storeAudits),
+    channelLinks: mergeRows(local.channelLinks, remote.channelLinks),
     aiReports: mergeRows(local.aiReports, remote.aiReports),
     smsCodes: mergeRows(local.smsCodes, remote.smsCodes),
   };

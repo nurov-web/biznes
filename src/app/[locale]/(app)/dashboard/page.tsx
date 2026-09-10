@@ -11,6 +11,9 @@ import { SalesChart } from "@/components/SalesChart";
 import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
 import { SellCoachCard } from "@/components/dashboard/SellCoachCard";
 import { PurposeMap } from "@/components/dashboard/PurposeMap";
+import { RescueBoard } from "@/components/dashboard/RescueBoard";
+import { ChannelHub } from "@/components/dashboard/ChannelHub";
+import { StockCountBoard } from "@/components/dashboard/StockCountBoard";
 import { StoreGapBanner } from "@/components/dashboard/StoreGapBanner";
 import { EphemeralStoreBanner } from "@/components/dashboard/EphemeralStoreBanner";
 import { healthTone, money, useIntelligence } from "@/hooks/useIntelligence";
@@ -102,6 +105,15 @@ export default function DashboardPage() {
       }
     >
       <EphemeralStoreBanner show={ephemeral} />
+      <RescueBoard
+        prices={data.prices}
+        inventory={data.inventory}
+        salesCount={data.salesCount}
+        profit={data.profit}
+        marginPct={data.marginPct}
+      />
+      <ChannelHub />
+      <StockCountBoard prices={data.prices} inventory={data.inventory} />
       <PurposeMap salesCount={data.salesCount} />
       <StoreGapBanner salesCount={data.salesCount} />
 

@@ -64,3 +64,32 @@ export function detectStorePlatform(url: string): StorePlatform {
 export function isStorePlatform(value: string): value is StorePlatform {
   return (STORE_PLATFORMS as readonly string[]).includes(value);
 }
+
+const WALLED_HOSTS = [
+  "instagram.com",
+  "instagr.am",
+  "t.me",
+  "telegram.me",
+  "telegram.org",
+  "somon.tj",
+  "olx.tj",
+  "olx.com",
+  "facebook.com",
+  "fb.com",
+  "tiktok.com",
+] as const;
+
+/** Instagram, Telegram, Somon — саҳифа баста, AI намехонад. */
+export function isLoginWalledHost(host: string): boolean {
+  const h = host.toLowerCase().replace(/\.$/, "");
+  return WALLED_HOSTS.some((domain) => h === domain || h.endsWith(`.${domain}`));
+}
+
+export function isLoginWalledUrl(raw: string): boolean {
+  try {
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    return isLoginWalledHost(url.hostname);
+  } catch {
+    return false;
+  }
+}

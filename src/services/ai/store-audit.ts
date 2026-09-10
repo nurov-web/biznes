@@ -3,6 +3,7 @@
  * Пешгӯӣ аст, на кафолат. Ба админ ворид намешавем.
  */
 import { fetchPublicShopText } from "@/lib/fetch-public-html";
+import { isLoginWalledUrl } from "@/lib/store-url";
 import { llmLanguage, type Locale } from "@/lib/locale-query";
 import { wrapOwnerMessage } from "@/lib/tajik-text";
 import type { StoreAuditSku } from "@/lib/store";
@@ -59,21 +60,44 @@ function asSku(raw: unknown): StoreAuditSku | null {
   };
 }
 
-function emptyAudit(locale: Locale, pagesRead: number, aiError: ClaudeFail | null = "no_key"): StoreAuditResult {
-  const pack = {
-    tg: {
-      summary: "Саҳифаи кушода хонда нашуд ё молҳо равшан набуданд. Силкаро санҷед.",
-      disclaimer: "Ин ҳисоб аз саҳифаи кушода аст, на аз панели админ. Пешгӯӣ, на кафолат.",
-    },
-    ru: {
-      summary: "Открытая страница не прочиталась или товары неясны. Проверьте ссылку.",
-      disclaimer: "Расчёт с витрины, не из админки. Прогноз, не гарантия.",
-    },
-    en: {
-      summary: "The public page could not be read or products were unclear. Check the URL.",
-      disclaimer: "This is from the public shop, not admin. A forecast, not a guarantee.",
-    },
-  }[locale];
+function emptyAudit(
+  locale: Locale,
+  pagesRead: number,
+  aiError: ClaudeFail | null = "no_key",
+  walled = false,
+): StoreAuditResult {
+  const pack = walled
+    ? {
+        tg: {
+          summary:
+            "Ин сайт (Instagram, Telegram ё бозор) баста аст — AI саҳифаро намехонад. Ташхиси мол дар Панел аз анбор ва касса аст.",
+          disclaimer: "Силка сабт шуд. Фармоиш худ намеояд. Ҳисоб аз молҳои шумост.",
+        },
+        ru: {
+          summary:
+            "Этот сайт (Instagram, Telegram или маркетплейс) закрыт — ИИ страницу не читает. Диагноз товара на Панели — со склада и кассы.",
+          disclaimer: "Ссылка сохранена. Заказы сами не приходят. Счёт — по вашему товару.",
+        },
+        en: {
+          summary:
+            "This site (Instagram, Telegram or a marketplace) is locked — AI cannot read it. Diagnose goods on the Dashboard from stock and the till.",
+          disclaimer: "The link is saved. Orders do not arrive by themselves. The books come from your goods.",
+        },
+      }[locale]
+    : {
+        tg: {
+          summary: "Саҳифаи кушода хонда нашуд ё молҳо равшан набуданд. Силкаро санҷед.",
+          disclaimer: "Ин ҳисоб аз саҳифаи кушода аст, на аз панели админ. Пешгӯӣ, на кафолат.",
+        },
+        ru: {
+          summary: "Открытая страница не прочиталась или товары неясны. Проверьте ссылку.",
+          disclaimer: "Расчёт с витрины, не из админки. Прогноз, не гарантия.",
+        },
+        en: {
+          summary: "The public page could not be read or products were unclear. Check the URL.",
+          disclaimer: "This is from the public shop, not admin. A forecast, not a guarantee.",
+        },
+      }[locale];
   return {
     summary: pack.summary,
     products: [],
@@ -144,6 +168,9 @@ async function readShopOnce(input: {
   locale: Locale;
   focus?: string;
 }): Promise<StoreAuditResult> {
+  if (isLoginWalledUrl(input.storeUrl)) {
+    return emptyAudit(input.locale, 0, "fail", true);
+  }
   const shop = await fetchPublicShopText(input.storeUrl, { maxExtraPages: 0 });
   if (!aiConfigured()) {
     return emptyAudit(input.locale, shop.pagesRead, "no_key");
