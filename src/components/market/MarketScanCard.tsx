@@ -26,41 +26,76 @@ export function MarketScanCard({ city, type, goal, products, onApply }: Props) {
   const [loading, setLoading] = useState(false);
   const [applied, setApplied] = useState<string | null>(null);
 
-  function load() {
+  useEffect(() => {
     if (!city.trim()) return;
     if (typeof goal === "string" && !goal.trim()) {
       setBrief(null);
       setLoading(false);
       return;
     }
-    setLoading(true);
-    const payload = {
-      locale,
-      city,
-      type,
-      goal,
-      products: products?.slice(0, 8),
+    let cancelled = false;
+    let watchdog = 0;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      watchdog = window.setTimeout(() => controller.abort(), 10000);
+      fetch("/api/market/scan", {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          locale,
+          city,
+          type,
+          goal,
+          products: products?.slice(0, 8),
+        }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: { brief?: MarketBrief } | null) => {
+          if (cancelled) return;
+          if (data?.brief) setBrief(data.brief);
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          window.clearTimeout(watchdog);
+          if (!cancelled) setLoading(false);
+        });
+    }, 500);
+    return () => {
+      cancelled = true;
+      controller.abort();
+      window.clearTimeout(timer);
+      window.clearTimeout(watchdog);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [city, type, locale, goal]);
+
+  function load() {
+    if (!city.trim()) return;
+    setLoading(true);
     fetch("/api/market/scan", {
       method: "POST",
+      credentials: "include",
+      cache: "no-store",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        locale,
+        city,
+        type,
+        goal,
+        products: products?.slice(0, 8),
+      }),
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { brief?: MarketBrief } | null) => {
-        if (data?.brief) {
-          setBrief(data.brief);
-        }
+        if (data?.brief) setBrief(data.brief);
       })
       .catch(() => undefined)
       .finally(() => setLoading(false));
   }
-
-  useEffect(() => {
-    const timer = window.setTimeout(load, 450);
-    return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [city, type, locale, goal]);
 
   const climateLabel =
     brief?.climate === "good" ? t("climateGood") : brief?.climate === "hard" ? t("climateHard") : t("climateMixed");

@@ -1,15 +1,11 @@
 /**
- * Скани бозор: модели шаҳр + Claude + ҷустуҷӯи веб.
+ * Скани бозор: модели шаҳр + Claude. Ҷустуҷӯи веб инҷо нест — дархост намемонад.
  * Нархҳои зиндаи Somon/OLX кашида намешаванд — ин пешгӯӣ аст.
  */
-import { citySearchLocation, localMarketBrief } from "@/constants/city-market";
+import { localMarketBrief } from "@/constants/city-market";
 import { llmLanguage, type Locale } from "@/lib/locale-query";
 import { detectNiche, nicheLabel, skuFitsNiche, type NicheId } from "@/lib/niche";
-import {
-  completeClaude,
-  completeClaudeWeb,
-  extractJsonObject,
-} from "@/services/ai/claude";
+import { completeClaude, extractJsonObject } from "@/services/ai/claude";
 import { businessSystemPrompt } from "@/services/ai/business-system";
 import type { MarketBrief, MarketSkuHint, MarketVerdict } from "@/types";
 
@@ -104,7 +100,7 @@ export async function scanCityMarket(input: MarketScanInput): Promise<MarketBrie
     niche !== "phones"
       ? "Do NOT mention phones, laptops or gadget accessories unless the owner asked for that."
       : "",
-    "Search the public web for demand, typical retail categories, rent/competition, and indicative TJS price ranges.",
+    "Use typical TJS ranges for this city and niche as a forecast, not a listing scrape.",
     "Do NOT claim you scraped somon.tj or olx.tj listings. If you saw a forum/news/wiki number, treat it as an orienter.",
     `Reply in ${llmLanguage(input.locale)} as JSON only:`,
     `{"climate":"good"|"mixed"|"hard","summary":"","demand":"","prices":[{"name":"","category":"","typicalBuy":0,"typicalSell":0,"verdict":"good"|"watch"|"avoid","why":""}],"products":[],"risks":[],"opportunities":[],"disclaimer":""}`,
@@ -122,22 +118,8 @@ export async function scanCityMarket(input: MarketScanInput): Promise<MarketBrie
   });
 
   try {
-    const web = await completeClaudeWeb({
-      system,
-      user: prompt,
-      city: citySearchLocation(city).city,
-      maxUses: 2,
-    });
-    const merged = mergeBrief(base, extractJsonObject(web.text), true, web.usedWeb, niche);
-    return merged;
-  } catch (error) {
-    console.warn("[market-scan] web fallback", error);
-  }
-
-  try {
-    const text = await completeClaude(system, prompt);
-    const merged = mergeBrief(base, extractJsonObject(text), true, false, niche);
-    return merged;
+    const text = await completeClaude(system, prompt, { timeoutMs: 8000, maxTokens: 1200 });
+    return mergeBrief(base, extractJsonObject(text), true, false, niche);
   } catch (error) {
     console.warn("[market-scan] local fallback", error);
     return { ...base, usedAi: false, usedWeb: false };
