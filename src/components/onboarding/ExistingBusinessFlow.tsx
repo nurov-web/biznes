@@ -6,6 +6,7 @@ import { BUSINESS_TYPES, CITIES_TJ, CHANNELS } from "@/constants";
 import { emptyProduct } from "@/constants/catalog";
 import { GsapStep } from "@/components/motion/GsapStep";
 import { ProductCatalogForm } from "@/components/onboarding/ProductCatalogForm";
+import { Select } from "@/components/ui/Select";
 import { AiHints } from "@/components/onboarding/AiHints";
 import type { ProductDraft } from "@/types";
 
@@ -117,13 +118,14 @@ export function ExistingBusinessFlow({ onBack }: { onBack: () => void }) {
             <div className="grid gap-4">
               <label className="grid gap-1.5 text-sm font-medium">
                 {t("type")}
-                <select className="input-field" value={type} onChange={(e) => setType(e.target.value as typeof type)}>
-                  {BUSINESS_TYPES.map((id) => (
-                    <option key={id} value={id}>
-                      {t(`types.${id}`)}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  value={type}
+                  onChange={(next) => setType(next as typeof type)}
+                  options={BUSINESS_TYPES.map((id) => ({
+                    value: id,
+                    label: t(`types.${id}`),
+                  }))}
+                />
               </label>
               <label className="grid gap-1.5 text-sm font-medium">
                 {ts("goal")}
@@ -145,13 +147,11 @@ export function ExistingBusinessFlow({ onBack }: { onBack: () => void }) {
               </label>
               <label className="grid gap-1.5 text-sm font-medium">
                 {t("city")}
-                <select className="input-field" value={city} onChange={(e) => setCity(e.target.value)}>
-                  {CITIES_TJ.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  value={city}
+                  onChange={setCity}
+                  options={CITIES_TJ.map((c) => ({ value: c, label: c }))}
+                />
               </label>
               <label className="grid gap-1.5 text-sm font-medium">
                 {t("region")}
@@ -167,13 +167,11 @@ export function ExistingBusinessFlow({ onBack }: { onBack: () => void }) {
               </label>
               <label className="grid gap-1.5 text-sm font-medium md:col-span-2">
                 {t("channel")}
-                <select className="input-field" value={channel} onChange={(e) => setChannel(e.target.value as typeof channel)}>
-                  {CHANNELS.map((c) => (
-                    <option key={c} value={c}>
-                      {t(c)}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  value={channel}
+                  onChange={(next) => setChannel(next as typeof channel)}
+                  options={CHANNELS.map((c) => ({ value: c, label: t(c) }))}
+                />
               </label>
             </div>
           )}

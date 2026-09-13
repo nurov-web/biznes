@@ -689,6 +689,104 @@ svg {
   box-shadow: 0 0 0 3px rgb(217 45 32 / 0.15);
 }
 
+.app-select {
+  min-width: 0;
+}
+
+.app-select-trigger {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.9rem;
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--foreground);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+@media (min-width: 640px) {
+  .app-select-trigger {
+    font-size: 0.9375rem;
+  }
+}
+
+.app-select-trigger:hover {
+  border-color: #b9c2ce;
+}
+
+.app-select-trigger:focus-visible,
+.app-select-trigger[aria-expanded="true"] {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(21 101 192 / 0.15);
+}
+
+.app-select-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.app-select-placeholder {
+  color: #9aa5b4;
+}
+
+.app-select-panel {
+  overflow: auto;
+  padding: 0.35rem;
+  border-radius: 0.9rem;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  box-shadow: var(--shadow-md);
+  scrollbar-width: thin;
+  -ms-overflow-style: auto;
+}
+
+.app-select-panel::-webkit-scrollbar {
+  display: block;
+  width: 6px;
+  height: 6px;
+}
+
+.app-select-panel::-webkit-scrollbar-thumb {
+  background: rgb(18 20 26 / 0.18);
+  border-radius: 99px;
+}
+
+.app-select-option {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.app-select-option:hover,
+.app-select-option[data-active="true"] {
+  background: var(--primary-soft);
+}
+
+.app-select-option[aria-selected="true"] {
+  color: var(--primary);
+  font-weight: 600;
+}
+
 /* ── Ҷадвалҳо ────────────────────────────────────────── */
 
 .table-intel {

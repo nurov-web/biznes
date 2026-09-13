@@ -1,5 +1,5 @@
 import { NotFoundScreen } from "@/components/NotFoundScreen";
 
-export default function LocaleNotFound() {
+export default function RootNotFound() {
   return <NotFoundScreen />;
 }

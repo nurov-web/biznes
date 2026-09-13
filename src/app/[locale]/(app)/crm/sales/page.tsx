@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { CrmTabs } from "@/components/crm/CrmTabs";
+import { Select } from "@/components/ui/Select";
 import { DEAL_STAGES, type DealStage } from "@/constants";
 import { productSellPrice } from "@/services/pos/price";
 
@@ -131,11 +132,10 @@ export default function SalesPage() {
       <form onSubmit={onSubmit} className="card-raised flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-end sm:p-5">
         <label className="grid min-w-0 w-full flex-1 gap-1.5 text-sm font-medium sm:min-w-56">
           {t("product")}
-          <select
-            className="input-field min-h-12"
+          <Select
             value={productId}
-            onChange={(e) => {
-              const id = e.target.value;
+            placeholder={t("noProduct")}
+            onChange={(id) => {
               setProductId(id);
               const p = products.find((row) => row.id === id);
               if (!p) return;
@@ -143,14 +143,14 @@ export default function SalesPage() {
               setTitle(sku);
               if (!amount) setAmount(String(productSellPrice(p)));
             }}
-          >
-            <option value="">{t("noProduct")}</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {`${p.brand} ${p.model}`.trim()} · {p.quantity}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: "", label: t("noProduct") },
+              ...products.map((p) => ({
+                value: p.id,
+                label: `${`${p.brand} ${p.model}`.trim()} · ${p.quantity}`,
+              })),
+            ]}
+          />
         </label>
         <label className="grid min-w-0 w-full flex-1 gap-1.5 text-sm font-medium sm:min-w-56">
           {t("dealTitle")}
@@ -163,18 +163,15 @@ export default function SalesPage() {
         </label>
         <label className="grid w-full gap-1.5 text-sm font-medium sm:w-40">
           {t("client")}
-          <select
-            className="input-field min-h-12"
+          <Select
             value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-          >
-            <option value="">{t("noClient")}</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            placeholder={t("noClient")}
+            onChange={setCustomerId}
+            options={[
+              { value: "", label: t("noClient") },
+              ...customers.map((c) => ({ value: c.id, label: c.name })),
+            ]}
+          />
         </label>
         <label className="grid w-full gap-1.5 text-sm font-medium sm:w-36">
           {t("amount")}

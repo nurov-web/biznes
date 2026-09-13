@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { PilotFormShell, StepBar } from "@/components/pilot/PilotFormShell";
+import { Select } from "@/components/ui/Select";
 import {
   PILOT_AGRI_SUB,
   PILOT_CATEGORIES,
@@ -108,40 +109,28 @@ export default function HasBusinessPage() {
           <h1 className="display-2">{t("stepOf", { current: 1, total: 3 })} — {t("bizTitle")}</h1>
           <label className="grid gap-1.5 text-sm font-medium">
             {t("category")}
-            <select
-              className="input-field min-h-12"
+            <Select
               value={form.category}
-              onChange={(e) =>
+              placeholder={t("pick")}
+              onChange={(next) =>
                 setForm({
                   ...form,
-                  category: e.target.value as FormState["category"],
+                  category: next as FormState["category"],
                   subcategory: "",
                 })
               }
-            >
-              <option value="">{t("pick")}</option>
-              {PILOT_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {t(`cats.${c}`)}
-                </option>
-              ))}
-            </select>
+              options={PILOT_CATEGORIES.map((c) => ({ value: c, label: t(`cats.${c}`) }))}
+            />
           </label>
           {form.category === "agriculture" ? (
             <label className="grid gap-1.5 text-sm font-medium">
               {t("sub")}
-              <select
-                className="input-field min-h-12"
+              <Select
                 value={form.subcategory}
-                onChange={(e) => setForm({ ...form, subcategory: e.target.value })}
-              >
-                <option value="">{t("sub")}</option>
-                {PILOT_AGRI_SUB.map((s) => (
-                  <option key={s} value={s}>
-                    {t(`agri.${s}`)}
-                  </option>
-                ))}
-              </select>
+                placeholder={t("sub")}
+                onChange={(next) => setForm({ ...form, subcategory: next })}
+                options={PILOT_AGRI_SUB.map((s) => ({ value: s, label: t(`agri.${s}`) }))}
+              />
             </label>
           ) : null}
           <label className="grid gap-1.5 text-sm font-medium">
@@ -187,19 +176,15 @@ export default function HasBusinessPage() {
                 placeholder={t("volumePh")}
                 onChange={(e) => setForm({ ...form, volume: e.target.value })}
               />
-              <select
-                className="input-field min-h-12 w-28"
-                value={form.volumeUnit}
-                onChange={(e) =>
-                  setForm({ ...form, volumeUnit: e.target.value as FormState["volumeUnit"] })
-                }
-              >
-                {PILOT_UNITS.map((u) => (
-                  <option key={u} value={u}>
-                    {t(`units.${u}`)}
-                  </option>
-                ))}
-              </select>
+              <div className="w-28 shrink-0">
+                <Select
+                  value={form.volumeUnit}
+                  onChange={(next) =>
+                    setForm({ ...form, volumeUnit: next as FormState["volumeUnit"] })
+                  }
+                  options={PILOT_UNITS.map((u) => ({ value: u, label: t(`units.${u}`) }))}
+                />
+              </div>
             </div>
           </label>
           <label className="grid gap-1.5 text-sm font-medium">

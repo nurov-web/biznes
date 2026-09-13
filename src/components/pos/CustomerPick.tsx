@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Select } from "@/components/ui/Select";
 
 export type PosCustomer = { id: string; name: string; phone: string };
 
@@ -31,19 +32,19 @@ export function CustomerPick({
     <div className="card-raised grid gap-3 p-4 sm:grid-cols-2">
       <label className="grid gap-1.5 text-sm font-medium">
         {t("customer")}
-        <select
-          className="input-field min-h-12"
+        <Select
           value={customerId}
-          onChange={(e) => onCustomerId(e.target.value)}
-        >
-          <option value="">{t("walkIn")}</option>
-          {customers.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.phone ? `${c.name} · ${c.phone}` : c.name}
-            </option>
-          ))}
-          <option value="new">{t("newCustomer")}</option>
-        </select>
+          placeholder={t("walkIn")}
+          onChange={onCustomerId}
+          options={[
+            { value: "", label: t("walkIn") },
+            ...customers.map((c) => ({
+              value: c.id,
+              label: c.phone ? `${c.name} · ${c.phone}` : c.name,
+            })),
+            { value: "new", label: t("newCustomer") },
+          ]}
+        />
       </label>
       {isNew ? (
         <>

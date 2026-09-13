@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useTranslations } from "next-intl";
 import { PageShell } from "@/components/PageShell";
+import { Select } from "@/components/ui/Select";
 import { money, useIntelligence } from "@/hooks/useIntelligence";
 
 const SAMPLE = `date,sku,quantity,revenue,cost
@@ -53,15 +54,16 @@ export default function DataPage() {
       <form className="card space-y-3 p-5" onSubmit={(e) => void onImport(e)}>
         <label className="block text-sm font-medium">
           {t("csvKind")}
-          <select
-            className="input-field mt-1"
+          <Select
+            className="mt-1"
             value={kind}
-            onChange={(e) => setKind(e.target.value as typeof kind)}
-          >
-            <option value="sales">{t("kindSales")}</option>
-            <option value="inventory">{t("kindStock")}</option>
-            <option value="competitors">{t("kindComp")}</option>
-          </select>
+            onChange={(next) => setKind(next as typeof kind)}
+            options={[
+              { value: "sales", label: t("kindSales") },
+              { value: "inventory", label: t("kindStock") },
+              { value: "competitors", label: t("kindComp") },
+            ]}
+          />
         </label>
         <label className="block text-sm font-medium">
           CSV

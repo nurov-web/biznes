@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 export function HonestBit() {
   const t = useTranslations("landing");
   const does = [t("is1"), t("is2"), t("is3")] as const;
-  const nots = [t("not1"), t("not4")] as const;
+  const nots = [t("not1"), t("not3"), t("not4")] as const;
   return (
     <section className="gutter-x mx-auto w-full max-w-3xl py-12 sm:py-16">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("honestEyebrow")}</p>

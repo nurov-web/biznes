@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { ModuleEmpty } from "@/components/ops/ModuleEmpty";
+import { Select } from "@/components/ui/Select";
 import { FINANCE_CATEGORIES } from "@/constants";
 
 type Entry = {
@@ -100,14 +101,14 @@ export default function FinancePage() {
       <form onSubmit={onSubmit} className="card-raised grid gap-3 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-4">
         <label className="grid gap-1.5 text-sm font-medium">
           {t("type")}
-          <select
-            className="input-field min-h-12"
+          <Select
             value={form.type}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-          >
-            <option value="income">{t("income")}</option>
-            <option value="expense">{t("expense")}</option>
-          </select>
+            onChange={(next) => setForm({ ...form, type: next })}
+            options={[
+              { value: "income", label: t("income") },
+              { value: "expense", label: t("expense") },
+            ]}
+          />
         </label>
         <label className="grid gap-1.5 text-sm font-medium">
           {t("amount")}
@@ -122,17 +123,14 @@ export default function FinancePage() {
         </label>
         <label className="grid gap-1.5 text-sm font-medium">
           {t("category")}
-          <select
-            className="input-field min-h-12"
+          <Select
             value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
-          >
-            {FINANCE_CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {t(`cats.${cat}`)}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => setForm({ ...form, category: next })}
+            options={FINANCE_CATEGORIES.map((cat) => ({
+              value: cat,
+              label: t(`cats.${cat}`),
+            }))}
+          />
         </label>
         <label className="grid gap-1.5 text-sm font-medium sm:col-span-2 lg:col-span-4">
           {t("note")}

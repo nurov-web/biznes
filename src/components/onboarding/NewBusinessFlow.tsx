@@ -6,6 +6,7 @@ import { CITIES_TJ } from "@/constants";
 import { useRouter } from "@/i18n/navigation";
 import { GsapStep } from "@/components/motion/GsapStep";
 import { RecommendedBadge, RecommendedNote } from "@/components/ui/Recommended";
+import { Select } from "@/components/ui/Select";
 import { parseLocale } from "@/lib/locale-query";
 import { suggestPlanOption } from "@/services/intelligence/advice";
 import type { PlanRow } from "@/lib/store";
@@ -109,13 +110,11 @@ export function NewBusinessFlow({ onBack }: { onBack: () => void }) {
             </label>
             <label className="grid gap-1.5 text-sm font-medium">
               {t("city")}
-              <select className="input-field" value={city} onChange={(e) => setCity(e.target.value)}>
-                {CITIES_TJ.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+              <Select
+                value={city}
+                onChange={setCity}
+                options={CITIES_TJ.map((c) => ({ value: c, label: c }))}
+              />
             </label>
             <label className="grid gap-1.5 text-sm font-medium md:col-span-2">
               {t("goal")}

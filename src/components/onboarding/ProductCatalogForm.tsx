@@ -1,6 +1,7 @@
 "use client";
 
 import { catalogFor, CATEGORY_HINTS, emptyProduct } from "@/constants/catalog";
+import { Select } from "@/components/ui/Select";
 import type { BusinessType } from "@/constants";
 import type { ProductDraft } from "@/types";
 
@@ -152,14 +153,14 @@ export function ProductCatalogForm({ type, typeNote, products, onChange, labels 
           </label>
           <label className="grid gap-1 text-sm font-medium">
             {labels.condition}
-            <select
-              className="input-field"
+            <Select
               value={p.condition}
-              onChange={(e) => update(i, { condition: e.target.value as "new" | "used" })}
-            >
-              <option value="new">{labels.new}</option>
-              <option value="used">{labels.used}</option>
-            </select>
+              onChange={(next) => update(i, { condition: next as "new" | "used" })}
+              options={[
+                { value: "new", label: labels.new },
+                { value: "used", label: labels.used },
+              ]}
+            />
           </label>
           <div className="md:col-span-2">
             <button

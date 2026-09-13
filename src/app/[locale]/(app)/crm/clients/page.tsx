@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Archive, Plus, Search, X } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { CrmTabs } from "@/components/crm/CrmTabs";
+import { Select } from "@/components/ui/Select";
 import { CUSTOMER_TAGS } from "@/constants";
 import { tajikIncludes } from "@/lib/tajik-text";
 
@@ -134,17 +135,14 @@ export default function ClientsPage() {
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
             {t("segment")}
-            <select
-              className="input-field min-h-12"
+            <Select
               value={form.tags}
-              onChange={(e) => setForm({ ...form, tags: e.target.value })}
-            >
-              {CUSTOMER_TAGS.map((tag) => (
-                <option key={tag} value={tag}>
-                  {t(`tagNames.${tag}`)}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => setForm({ ...form, tags: next })}
+              options={CUSTOMER_TAGS.map((tag) => ({
+                value: tag,
+                label: t(`tagNames.${tag}`),
+              }))}
+            />
           </label>
           <label className="grid gap-1.5 text-sm font-medium md:col-span-2">
             {t("notes")}

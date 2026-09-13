@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Globe, Plug, Table2, Users } from "lucide-react";
 import { StoreAuditPanel } from "@/components/store/StoreAuditPanel";
+import { Select } from "@/components/ui/Select";
 import { Link } from "@/i18n/navigation";
 import { detectStorePlatform, isLoginWalledUrl, normalizeStoreUrl } from "@/lib/store-url";
 
@@ -168,14 +169,14 @@ export function ImportHub({ onImported }: Props) {
           </p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("csvHint")}</p>
           <div className="mt-3 grid gap-2">
-            <select
-              className="input-field min-h-12"
+            <Select
               value={kind}
-              onChange={(e) => setKind(e.target.value as Kind)}
-            >
-              <option value="inventory">{t("kindStock")}</option>
-              <option value="sales">{t("kindSales")}</option>
-            </select>
+              onChange={(next) => setKind(next as Kind)}
+              options={[
+                { value: "inventory", label: t("kindStock") },
+                { value: "sales", label: t("kindSales") },
+              ]}
+            />
             <label className="btn btn-primary min-h-12 cursor-pointer">
               {t("csvCta")}
               <input

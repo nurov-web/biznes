@@ -14,7 +14,7 @@ export function HowItWorks() {
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("howEyebrow")}</p>
       <h2 className="display-2 mt-2">{t("howTitle")}</h2>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">{t("howLead")}</p>
-      <ol className="mt-8 grid gap-3">
+      <ol className="mt-8 grid list-none gap-3 p-0">
         {steps.map((step, i) => (
           <li key={step.title} className="flex min-h-12 gap-4 rounded-xl border border-border px-4 py-4">
             <span className="num mt-0.5 w-6 shrink-0 text-sm font-semibold text-primary">{i + 1}</span>
