@@ -12,6 +12,7 @@ import { LOW_STOCK_THRESHOLD } from "@/constants";
 import { parseLocale } from "@/lib/locale-query";
 import { tajikIncludes } from "@/lib/tajik-text";
 import { suggestReorder } from "@/services/intelligence/advice";
+import { productBuyCost, productSellPrice } from "@/services/pos/price";
 
 type Product = {
   id: string;
@@ -23,6 +24,7 @@ type Product = {
   sellPriceMin: number;
   sellPriceMax: number;
   quantity: number;
+  sold?: number;
   condition: string;
 };
 
@@ -238,7 +240,7 @@ export default function InventoryPage() {
       ) : null}
 
       {products.length === 0 && !open ? (
-        <ModuleEmpty title={t("empty")} lead={t("emptyLead")} href="/store" cta={t("emptyCta")} />
+        <ModuleEmpty title={t("empty")} lead={t("emptyLead")} cta={t("emptyCta")} onCta={() => setOpen(true)} />
       ) : (
         <>
           <label className="relative block min-w-0">
@@ -261,13 +263,16 @@ export default function InventoryPage() {
                 <tr>
                   <th>{t("sku")}</th>
                   <th>{t("qty")}</th>
+                  <th>{t("sold")}</th>
+                  <th>{t("buy")}</th>
+                  <th>{t("sell")}</th>
                   <th />
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="text-sm text-muted-foreground">
+                    <td colSpan={6} className="text-sm text-muted-foreground">
                       {t("noMatch")}
                     </td>
                   </tr>
@@ -286,6 +291,11 @@ export default function InventoryPage() {
                           <div className="text-xs text-muted-foreground">{p.category}</div>
                         </td>
                         <td className={`num ${low ? "font-semibold text-destructive" : ""}`}>{p.quantity}</td>
+                        <td className="num text-muted-foreground">{p.sold ?? 0}</td>
+                        <td className="num text-muted-foreground">
+                          {Math.round(productBuyCost(p)).toLocaleString("ru-RU")}
+                        </td>
+                        <td className="num">{productSellPrice(p).toLocaleString("ru-RU")}</td>
                         <td>
                           <div className="flex flex-wrap gap-2">
                             <button type="button" className="btn btn-sm btn-ghost min-h-12" onClick={() => void move(p.id, "in")}>

@@ -6,17 +6,23 @@ export function ModuleEmpty({
   lead,
   href,
   cta,
+  onCta,
 }: {
   title: string;
   lead: string;
   href?: string;
   cta?: string;
+  onCta?: () => void;
 }) {
   return (
     <article className="card-raised p-6">
       <h2 className="display-3">{title}</h2>
       <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{lead}</p>
-      {href && cta ? (
+      {onCta && cta ? (
+        <button type="button" className="btn btn-primary mt-4 min-h-12" onClick={onCta}>
+          {cta}
+        </button>
+      ) : href && cta ? (
         <Link href={href} className="btn btn-primary mt-4 min-h-12">
           {cta}
         </Link>

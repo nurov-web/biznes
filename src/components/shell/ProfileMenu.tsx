@@ -11,13 +11,14 @@ type Props = {
   lastName: string;
   businessName: string;
   onLogout: () => void;
+  onDark?: boolean;
 };
 
 function initials(first: string, last: string): string {
   return `${first.slice(0, 1)}${last.slice(0, 1)}`.toUpperCase();
 }
 
-export function ProfileMenu({ firstName, lastName, businessName, onLogout }: Props) {
+export function ProfileMenu({ firstName, lastName, businessName, onLogout, onDark }: Props) {
   const t = useTranslations("nav");
   const th = useTranslations("navHints");
   const tp = useTranslations("profilePage");
@@ -62,23 +63,35 @@ export function ProfileMenu({ firstName, lastName, businessName, onLogout }: Pro
     <div ref={root} className="relative">
       <button
         type="button"
-        className="flex min-h-11 max-w-full items-center gap-2 rounded-xl px-1.5 py-1 text-left hover:bg-muted"
+        className={`flex min-h-11 max-w-full items-center gap-2 rounded-lg px-1.5 py-1 text-left ${
+          onDark ? "hover:bg-white/5" : "hover:bg-muted"
+        }`}
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={tp("openMenu")}
         onClick={() => setOpen((value) => !value)}
       >
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-xs font-semibold text-primary">
+        <span
+          className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg text-xs font-semibold ${
+            onDark ? "bg-white/10 text-white" : "bg-ink text-white"
+          }`}
+        >
           {initials(firstName, lastName)}
         </span>
         <span className="hidden min-w-0 sm:grid">
-          <span className="truncate text-sm font-medium leading-tight">
+          <span
+            className={`truncate text-sm font-medium leading-tight ${onDark ? "text-white" : ""}`}
+          >
             {firstName} {lastName}
           </span>
-          <span className="truncate text-[11px] text-muted-foreground">{businessName}</span>
+          <span className={`truncate text-[11px] ${onDark ? "text-dark-muted" : "text-muted-foreground"}`}>
+            {businessName}
+          </span>
         </span>
         <ChevronDown
-          className={`hidden h-4 w-4 shrink-0 text-muted-foreground sm:block ${open ? "rotate-180" : ""}`}
+          className={`hidden h-4 w-4 shrink-0 sm:block ${onDark ? "text-dark-muted" : "text-muted-foreground"} ${
+            open ? "rotate-180" : ""
+          }`}
           strokeWidth={1.75}
           aria-hidden
         />
@@ -88,7 +101,7 @@ export function ProfileMenu({ firstName, lastName, businessName, onLogout }: Pro
         <div
           ref={panel}
           role="menu"
-          className="absolute right-0 z-40 mt-2 w-64 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-border bg-background py-1.5 shadow-[var(--shadow-lg)]"
+          className="absolute right-0 z-40 mt-2 w-64 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl border border-border bg-card py-1.5 shadow-[var(--shadow-md)]"
         >
           <Link
             href="/profile"

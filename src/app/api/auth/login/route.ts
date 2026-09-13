@@ -19,6 +19,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { normalizePhone } from "@/lib/phone";
 import { nowIso, readDb, type UserRow } from "@/lib/store";
 import type { Role } from "@/constants";
+import { getPilotProfile } from "@/services/pilot";
 
 export const dynamic = "force-dynamic";
 
@@ -33,9 +34,11 @@ async function signedIn(user: UserRow): Promise<NextResponse> {
     db.businesses
       .filter((b) => b.ownerId === user.id)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
+  const pilot = await getPilotProfile(user.id);
   const res = NextResponse.json({
     ok: true,
     phoneVerified: user.phoneVerified,
+    hasPilotProfile: Boolean(pilot),
   });
   await stampAuthCookies(res, user, business);
   return res;

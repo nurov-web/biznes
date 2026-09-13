@@ -7,10 +7,21 @@ import { LocaleTransition } from "@/components/motion/LocaleTransition";
 import { DocumentLang } from "@/components/motion/DocumentLang";
 import { I18nClientProvider } from "@/components/i18n/I18nClientProvider";
 
-export const metadata: Metadata = {
-  title: "BusinessPilot AI",
-  description: "AI + CRM + inventory for Tajikistan entrepreneurs",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const safe = hasLocale(routing.locales, locale) ? locale : routing.defaultLocale;
+  const messages = (await import(`../../../messages/${safe}.json`)).default as {
+    meta: { title: string; description: string };
+  };
+  return {
+    title: messages.meta.title,
+    description: messages.meta.description,
+  };
+}
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));

@@ -1,12 +1,49 @@
 import type { DealStage } from "@/constants";
 import { newId, nowIso, readDb, withDb } from "@/lib/store";
-import type { CustomerRow, DealRow } from "@/lib/store";
+import type { CustomerRow, DealRow, SalesLineRow } from "@/lib/store";
 import { matchProduct } from "@/services/inventory/match";
+import { productBuyCost } from "@/services/pos/price";
 
-export async function listCustomers(businessId: string): Promise<CustomerRow[]> {
-  return (await readDb())
-    .customers.filter((c) => c.businessId === businessId && !c.archived)
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+export type CustomerStats = {
+  purchases: number;
+  spent: number;
+  lastSku: string;
+};
+
+export type CustomerWithStats = CustomerRow & CustomerStats;
+
+function uniqueSales(rows: SalesLineRow[]): SalesLineRow[] {
+  return [...new Map(rows.map((row) => [row.id, row])).values()];
+}
+
+function statsForCustomer(
+  customerId: string,
+  sales: SalesLineRow[],
+  deals: DealRow[],
+): CustomerStats {
+  const wonDealIds = new Set(
+    deals.filter((d) => d.customerId === customerId && d.stage === "won").map((d) => d.id),
+  );
+  const lines = uniqueSales(
+    sales.filter(
+      (s) => s.customerId === customerId || (s.dealId !== null && wonDealIds.has(s.dealId)),
+    ),
+  ).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return {
+    purchases: lines.reduce((sum, line) => sum + line.quantity, 0),
+    spent: lines.reduce((sum, line) => sum + line.revenue, 0),
+    lastSku: lines[0]?.sku ?? "",
+  };
+}
+
+export async function listCustomers(businessId: string): Promise<CustomerWithStats[]> {
+  const db = await readDb();
+  const sales = db.salesLines.filter((s) => s.businessId === businessId);
+  const deals = db.deals.filter((d) => d.businessId === businessId && !d.archived);
+  return db.customers
+    .filter((c) => c.businessId === businessId && !c.archived)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .map((c) => ({ ...c, ...statsForCustomer(c.id, sales, deals) }));
 }
 
 export async function createCustomer(
@@ -46,13 +83,14 @@ export async function listDeals(businessId: string): Promise<DealRow[]> {
 
 export async function createDeal(
   businessId: string,
-  data: { title: string; amount: number; customerId?: string | null },
+  data: { title: string; amount: number; customerId?: string | null; productId?: string | null },
 ): Promise<DealRow> {
   const now = nowIso();
   const deal: DealRow = {
     id: newId(),
     businessId,
     customerId: data.customerId || null,
+    productId: data.productId || null,
     title: data.title,
     stage: "lead",
     amount: data.amount,
@@ -86,10 +124,15 @@ export async function updateDealStage(
         const activeProducts = db.products.filter(
           (p) => p.businessId === businessId && !p.archived,
         );
-        const product = matchProduct(activeProducts, row.title);
-        const cost = product ? (product.buyPriceMin + product.buyPriceMax) / 2 : 0;
+        const product = row.productId
+          ? activeProducts.find((p) => p.id === row.productId) ?? matchProduct(activeProducts, row.title)
+          : matchProduct(activeProducts, row.title);
+        const cost = product ? productBuyCost(product) : 0;
 
-        if (product && product.quantity >= 1) {
+        if (product) {
+          if (product.quantity < 1) {
+            throw new Error("NEGATIVE_STOCK");
+          }
           product.quantity -= 1;
           product.updatedAt = nowIso();
           db.movements.push({
@@ -106,11 +149,12 @@ export async function updateDealStage(
           id: newId(),
           businessId,
           date: nowIso().slice(0, 10),
-          sku: row.title,
+          sku: product ? `${product.brand} ${product.model}`.trim() : row.title,
           quantity: 1,
           revenue: row.amount,
           cost,
           dealId: row.id,
+          customerId: row.customerId,
           createdAt: nowIso(),
         });
       }

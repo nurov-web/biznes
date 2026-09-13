@@ -181,6 +181,20 @@ export function extractJsonObject(text: string): unknown {
   return JSON.parse(cleaned.slice(start, end + 1));
 }
 
+export function extractJsonArray(text: string): unknown[] {
+  const cleaned = text.replace(/```json/gi, "```").replace(/```/g, "").trim();
+  const start = cleaned.indexOf("[");
+  const end = cleaned.lastIndexOf("]");
+  if (start < 0 || end <= start) {
+    throw new Error("Model did not return JSON array");
+  }
+  const parsed: unknown = JSON.parse(cleaned.slice(start, end + 1));
+  if (!Array.isArray(parsed)) {
+    throw new Error("Model did not return JSON array");
+  }
+  return parsed;
+}
+
 export type ClaudeFail = "no_key" | "invalid_prefix" | "bad_key" | "timeout" | "fail";
 
 export function classifyClaudeError(error: unknown): ClaudeFail {

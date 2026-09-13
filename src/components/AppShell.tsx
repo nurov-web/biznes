@@ -6,7 +6,7 @@ import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { AppSidebar, MobileNav } from "@/components/AppSidebar";
 import { ProfileMenu } from "@/components/shell/ProfileMenu";
 import { EntryVeil } from "@/components/motion/EntryVeil";
-import { useRouter } from "@/i18n/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { clearEntrySplash, markLoggedOut } from "@/lib/splash";
 import { saveRememberedLogin } from "@/lib/remember-login";
 import { LOGOUT_FLAG } from "@/constants";
@@ -14,16 +14,24 @@ import { LOGOUT_FLAG } from "@/constants";
 type Me = {
   user: { firstName: string; lastName: string; email: string; phoneVerified: boolean };
   business: { onboardingDone: boolean; name: string; city: string } | null;
+  hasPilotProfile?: boolean;
+  pilot?: { product: string; region: string } | null;
 };
 
 const ME_KEY = "bp_me_cache";
 
+function isPilotPath(pathname: string): boolean {
+  return pathname === "/dashboard" || pathname.startsWith("/dashboard/course");
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const locale = useLocale();
   const routerRef = useRef(router);
   routerRef.current = router;
   const [me, setMe] = useState<Me | null>(null);
+  const pilot = isPilotPath(pathname);
 
   useEffect(() => {
     let cancelled = false;
@@ -34,7 +42,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         const raw = sessionStorage.getItem(ME_KEY);
         if (raw) {
           const cached = JSON.parse(raw) as Me;
-          if (cached?.user) setMe(cached);
+          if (cached?.user) {
+            if (pilot && !cached.hasPilotProfile) {
+              routerRef.current.replace("/has-business");
+            } else if (!pilot && !cached.business?.onboardingDone && !cached.hasPilotProfile) {
+              routerRef.current.replace("/has-business");
+            } else {
+              setMe(cached);
+            }
+          }
         }
       }
     } catch {
@@ -57,6 +73,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       if (!response.ok) return;
       const data = (await response.json()) as Me;
       if (cancelled || !data?.user) return;
+      if (pilot && !data.hasPilotProfile) {
+        sessionStorage.removeItem(ME_KEY);
+        routerRef.current.replace("/has-business");
+        return;
+      }
       sessionStorage.setItem(ME_KEY, JSON.stringify(data));
       setMe(data);
       saveRememberedLogin(data.user.email || "");
@@ -67,7 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pilot]);
 
   async function logout() {
     clearEntrySplash();
@@ -81,22 +102,53 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return <EntryVeil />;
   }
 
+  if (pilot) {
+    return (
+      <div data-app className="flex min-h-screen w-full min-w-0 flex-col bg-surface">
+        <header className="sticky top-0 z-20 w-full border-b border-white/10 bg-[color:var(--dark-bg)]/90 pt-[max(0.625rem,env(safe-area-inset-top))] text-white backdrop-blur-xl">
+          <div className="gutter-x flex w-full items-center justify-between gap-2 py-2.5">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold tracking-tight text-white">
+                {me.pilot?.product || me.business?.name}
+              </p>
+              <p className="truncate text-xs text-dark-muted">
+                {me.pilot?.region || me.business?.city}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <LanguageSwitch className="seg-on-dark" />
+              <ProfileMenu
+                firstName={me.user.firstName}
+                lastName={me.user.lastName}
+                businessName={me.pilot?.product ?? me.business?.name ?? ""}
+                onDark
+                onLogout={() => void logout()}
+              />
+            </div>
+          </div>
+        </header>
+        <div className="min-w-0 flex-1">{children}</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen w-full min-w-0 bg-surface">
+    <div data-app className="flex min-h-screen w-full min-w-0 bg-surface">
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 w-full min-w-0 border-b border-border bg-background/80 pt-[max(0.625rem,env(safe-area-inset-top))] backdrop-blur-xl">
+        <header className="sticky top-0 z-20 w-full min-w-0 border-b border-white/10 bg-[color:var(--dark-bg)]/90 pt-[max(0.625rem,env(safe-area-inset-top))] text-white backdrop-blur-xl">
           <div className="gutter-x flex w-full min-w-0 flex-wrap items-center justify-between gap-2 py-2.5">
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{me.business?.name}</p>
-              <p className="truncate text-xs text-muted-foreground">{me.business?.city}</p>
+              <p className="truncate text-sm font-semibold tracking-tight text-white">{me.business?.name}</p>
+              <p className="truncate text-xs text-dark-muted">{me.business?.city}</p>
             </div>
             <div className="flex w-max max-w-full flex-none items-center justify-end gap-1.5 sm:gap-2">
-              <LanguageSwitch />
+              <LanguageSwitch className="seg-on-dark" />
               <ProfileMenu
                 firstName={me.user.firstName}
                 lastName={me.user.lastName}
                 businessName={me.business?.name ?? ""}
+                onDark
                 onLogout={() => void logout()}
               />
             </div>

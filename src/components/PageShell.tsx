@@ -1,5 +1,13 @@
 import type { ReactNode } from "react";
 
+export function PageBody({ children }: { children: ReactNode }) {
+  return (
+    <div className="gutter-x mx-auto w-full min-w-0 max-w-6xl space-y-5 overflow-x-clip py-5 md:py-7">
+      {children}
+    </div>
+  );
+}
+
 export function PageShell({
   title,
   lead,
@@ -14,7 +22,7 @@ export function PageShell({
   children: ReactNode;
 }) {
   return (
-    <div className="gutter-x mx-auto w-full min-w-0 max-w-6xl space-y-6 overflow-x-clip py-4 md:py-8">
+    <PageBody>
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           {eyebrow ? <p className="eyebrow text-primary">{eyebrow}</p> : null}
@@ -26,7 +34,7 @@ export function PageShell({
         {action ? <div className="w-full shrink-0 sm:w-auto [&>.btn]:w-full sm:[&>.btn]:w-auto">{action}</div> : null}
       </header>
       {children}
-    </div>
+    </PageBody>
   );
 }
 

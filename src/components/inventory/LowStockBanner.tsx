@@ -16,7 +16,7 @@ export function LowStockBanner({
   if (names.length === 0) return null;
   return (
     <article className="card-raised flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:p-5" role="status">
-      <IconWell icon={PackageMinus} />
+      <IconWell icon={PackageMinus} tone="ink" />
       <div className="min-w-0 flex-1">
         <h2 className="display-3">{title}</h2>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{lead}</p>

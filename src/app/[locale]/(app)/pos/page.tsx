@@ -12,13 +12,18 @@ import { Link } from "@/i18n/navigation";
 import { ProductGrid } from "@/components/pos/ProductGrid";
 import { ConfirmBar } from "@/components/pos/ConfirmBar";
 import { PosEmptyState } from "@/components/pos/PosEmptyState";
+import { CustomerPick, type PosCustomer } from "@/components/pos/CustomerPick";
 import type { ProductRow } from "@/lib/store";
 
 export default function PosPage() {
   const t = useTranslations("pos");
   const [products, setProducts] = useState<ProductRow[]>([]);
+  const [customers, setCustomers] = useState<PosCustomer[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<ProductRow | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
+  const [customerId, setCustomerId] = useState("");
+  const [walkInName, setWalkInName] = useState("");
+  const [walkInPhone, setWalkInPhone] = useState("");
   const [loading, setLoading] = useState<boolean>(true);
   const [busy, setBusy] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,8 +37,9 @@ export default function PosPage() {
       if (!res.ok) {
         throw new Error("FETCH_FAILED");
       }
-      const data = (await res.json()) as { products?: ProductRow[] };
+      const data = (await res.json()) as { products?: ProductRow[]; customers?: PosCustomer[] };
       setProducts(data.products ?? []);
+      setCustomers(data.customers ?? []);
     } catch {
       setError(t("saveFailed"));
     } finally {
@@ -60,6 +66,11 @@ export default function PosPage() {
   async function handleConfirmSale() {
     if (!selectedProduct || quantity <= 0) return;
 
+    if (customerId === "new" && !walkInName.trim()) {
+      setError(t("customerRequired"));
+      return;
+    }
+
     setBusy(true);
     setError(null);
     setSuccessMsg(null);
@@ -71,12 +82,17 @@ export default function PosPage() {
         body: JSON.stringify({
           productId: selectedProduct.id,
           quantity,
+          customerId: customerId && customerId !== "new" ? customerId : null,
+          customerName: customerId === "new" ? walkInName.trim() : undefined,
+          customerPhone: customerId === "new" ? walkInPhone.trim() : undefined,
         }),
       });
 
       const data = (await res.json().catch(() => ({}))) as {
         success?: boolean;
         error?: string;
+        remaining?: number;
+        customerName?: string | null;
       };
 
       if (!res.ok || !data.success) {
@@ -96,25 +112,31 @@ export default function PosPage() {
       const productName = `${selectedProduct.brand} ${selectedProduct.model}`.trim();
       const soldQty = quantity;
 
+      const remaining = data.remaining ?? Math.max(0, selectedProduct.quantity - soldQty);
       setProducts((prev) =>
         prev.map((p) => {
           if (p.id === selectedProduct.id) {
-            return { ...p, quantity: Math.max(0, p.quantity - soldQty) };
+            return { ...p, quantity: remaining };
           }
           return p;
         }),
       );
 
-      // Паёми муваффақият
-      setSuccessMsg(t("saleSuccess", { qty: soldQty, name: productName }));
+      const who = data.customerName ? t("saleTo", { name: data.customerName }) : "";
+      setSuccessMsg(`${t("saleSuccess", { qty: soldQty, name: productName })}${who ? ` · ${who}` : ""}`);
 
-      // Агар остаток 0 шуд, интихобро холӣ мекунем, вагарна 1 мемонем
-      const nextStock = selectedProduct.quantity - soldQty;
-      if (nextStock <= 0) {
+      if (customerId === "new") {
+        setWalkInName("");
+        setWalkInPhone("");
+        setCustomerId("");
+        void loadProducts();
+      }
+
+      if (remaining <= 0) {
         setSelectedProduct(null);
         setQuantity(1);
       } else {
-        setSelectedProduct((prev) => (prev ? { ...prev, quantity: nextStock } : null));
+        setSelectedProduct((prev) => (prev ? { ...prev, quantity: remaining } : null));
         setQuantity(1);
       }
     } catch {
@@ -173,11 +195,29 @@ export default function PosPage() {
                 <p className="mt-1 font-normal text-muted-foreground">{t("saleWhere")}</p>
               </div>
             </div>
-            <Link href="/dashboard" className="btn btn-primary min-h-12 shrink-0">
-              {t("toDash")}
-            </Link>
+            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+              <Link href="/crm" className="btn btn-ghost min-h-12">
+                {t("toCrm")}
+              </Link>
+              <Link href="/inventory" className="btn btn-ghost min-h-12">
+                {t("toStock")}
+              </Link>
+              <Link href="/dashboard" className="btn btn-primary min-h-12">
+                {t("toDash")}
+              </Link>
+            </div>
           </div>
         )}
+
+        <CustomerPick
+          customers={customers}
+          customerId={customerId}
+          walkInName={walkInName}
+          walkInPhone={walkInPhone}
+          onCustomerId={setCustomerId}
+          onWalkInName={setWalkInName}
+          onWalkInPhone={setWalkInPhone}
+        />
 
         {/* Сеткаи молҳо */}
         <ProductGrid

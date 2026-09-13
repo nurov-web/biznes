@@ -118,14 +118,14 @@ export default function RegisterPage() {
       return;
     }
     saveRememberedLogin(form.email);
-    window.location.assign(`/${locale}/onboarding`);
+    window.location.assign(`/${locale}/has-business`);
   }
 
   return (
     <AuthShell
       title={t("registerTitle")}
       lead={t("registerLead")}
-      points={[tl("q1a"), tl("is2"), tl("not3")]}
+        points={[tl("what1"), tl("what2"), tl("what3")]}
       footer={
         <p className="mt-6 text-sm text-muted-foreground">
           {t("haveAccount")}{" "}

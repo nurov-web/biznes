@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser, readAuthPayload } from "@/lib/auth";
 import { getOwnedBusiness } from "@/lib/business";
 import { jsonError } from "@/lib/api-error";
+import { getPilotProfile } from "@/services/pilot";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,7 @@ export async function GET() {
   if (!user) return jsonError("unauthorized", 401);
   const stored = await getOwnedBusiness(user.id);
   const saved = stored ? null : await readAuthPayload();
+  const pilot = await getPilotProfile(user.id);
   const business = stored
     ? {
         id: stored.id,
@@ -35,7 +37,14 @@ export async function GET() {
         }
       : null;
   return NextResponse.json(
-    { user, business },
+    {
+      user,
+      business,
+      hasPilotProfile: Boolean(pilot),
+      pilot: pilot
+        ? { product: pilot.product, region: pilot.region, kind: pilot.kind }
+        : null,
+    },
     { headers: { "Cache-Control": "no-store, private" } },
   );
 }

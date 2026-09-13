@@ -27,10 +27,11 @@ export default function LoginPage() {
     if (consumeLoggedOut()) return;
     let cancelled = false;
     fetch("/api/auth/me", { credentials: "include", cache: "no-store" })
-      .then((r) => {
+      .then(async (r) => {
         if (!cancelled && r.ok) {
           setLeaving(true);
-          window.location.assign(`/${locale}/dashboard`);
+          const data = (await r.json()) as { hasPilotProfile?: boolean };
+          window.location.assign(`/${locale}/${data.hasPilotProfile ? "dashboard" : "has-business"}`);
         }
       })
       .catch(() => undefined);
@@ -71,7 +72,8 @@ export default function LoginPage() {
     }
     setLeaving(true);
     saveRememberedLogin(login);
-    window.location.assign(`/${locale}/dashboard`);
+    const data = (await response.json().catch(() => ({}))) as { hasPilotProfile?: boolean };
+    window.location.assign(`/${locale}/${data.hasPilotProfile ? "dashboard" : "has-business"}`);
   }
 
   return (
@@ -80,7 +82,7 @@ export default function LoginPage() {
       <AuthShell
         title={t("loginTitle")}
         lead={t("loginLead")}
-        points={[tl("p1d"), tl("p3d"), tl("p4d")]}
+        points={[tl("what1"), tl("what2"), tl("what3")]}
         footer={
           <p className="mt-6 text-sm text-muted-foreground">
             {t("noAccount")}{" "}

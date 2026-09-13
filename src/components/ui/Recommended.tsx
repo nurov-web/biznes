@@ -20,7 +20,7 @@ export function RecommendedNote({ suggestion }: { suggestion: Suggestion | null 
   const t = useTranslations("advice");
   if (!suggestion) return null;
   return (
-    <aside className="border border-border bg-card p-4">
+    <aside className="card-raised tone-edge border-l-primary p-4 sm:p-5">
       <p className="text-sm font-semibold">{t("title")}</p>
       <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{suggestion.reason}</p>
       {suggestion.timing ? (

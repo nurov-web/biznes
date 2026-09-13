@@ -14,7 +14,7 @@ export function StoreGapBanner({ salesCount }: { salesCount: number }) {
   return (
     <GsapStep step={0}>
       <article className="card-raised flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-6">
-        <IconWell icon={PackagePlus} />
+        <IconWell icon={PackagePlus} tone="ink" />
         <div className="min-w-0 flex-1">
           <h2 className="display-3">{t("gapZero")}</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t("gapZeroLead")}</p>

@@ -18,24 +18,22 @@ type Props = {
 export function RescueBoard({ prices, inventory, salesCount, profit, marginPct }: Props) {
   const t = useTranslations("rescue");
   const view = buildRescue({ prices, inventory, salesCount, profit, marginPct });
-  const toneClass =
+  const toneEdge =
     view.tone === "danger"
-      ? "border-destructive/30 bg-destructive/5"
-      : view.tone === "quiet"
-        ? "border-warning/40 bg-warning/10"
-        : view.tone === "empty"
-          ? "border-primary/25 bg-primary-soft/40"
-          : "border-success/30 bg-[#e7f6ee]/50";
+      ? "tone-edge border-l-destructive"
+      : view.tone === "ok"
+        ? "tone-edge border-l-primary"
+        : "tone-edge border-l-warning";
 
   return (
-    <section className={`card-raised overflow-hidden ${toneClass}`}>
+    <section className={`card-raised overflow-hidden ${toneEdge}`}>
       <div className="p-4 sm:p-6">
         <p className="eyebrow">{t("kicker")}</p>
         <h2 className="display-3 mt-1 flex items-center gap-2">
           {view.tone === "danger" ? (
             <TrendingDown className="h-5 w-5 text-destructive" strokeWidth={1.75} aria-hidden />
           ) : view.tone === "ok" ? (
-            <CircleCheck className="h-5 w-5 text-success" strokeWidth={1.75} aria-hidden />
+            <CircleCheck className="h-5 w-5 text-primary" strokeWidth={1.75} aria-hidden />
           ) : (
             <AlertTriangle className="h-5 w-5 text-warning" strokeWidth={1.75} aria-hidden />
           )}
@@ -46,7 +44,7 @@ export function RescueBoard({ prices, inventory, salesCount, profit, marginPct }
         {view.hasProducts ? (
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {view.expensive ? (
-              <article className="border border-border bg-background p-4">
+              <article className="border border-border p-4">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("expensive")}</p>
                 <p className="mt-1 font-medium">{view.expensive.sku}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -60,7 +58,7 @@ export function RescueBoard({ prices, inventory, salesCount, profit, marginPct }
               </article>
             ) : null}
             {view.cheap ? (
-              <article className="border border-border bg-background p-4">
+              <article className="border border-border p-4">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("cheap")}</p>
                 <p className="mt-1 font-medium">{view.cheap.sku}</p>
                 <p className="mt-1 text-sm text-muted-foreground">

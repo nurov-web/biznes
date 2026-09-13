@@ -8,6 +8,7 @@ import { requireBusiness } from "@/lib/business";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { financeTotals, incomeInRange } from "@/services/finance";
 import { isEphemeralStore, readDb } from "@/lib/store";
+import { productBuyCost, productSellPrice } from "@/services/pos/price";
 
 export async function GET() {
   try {
@@ -27,6 +28,11 @@ export async function GET() {
         new Date(c.createdAt).getTime() >= start.getTime(),
     ).length;
     const products = db.products.filter((p) => p.businessId === business.id && !p.archived);
+    const clients = db.customers.filter((c) => c.businessId === business.id && !c.archived);
+    const sales = db.salesLines.filter((s) => s.businessId === business.id);
+    const remainingUnits = products.reduce((sum, p) => sum + p.quantity, 0);
+    const stockValue = products.reduce((sum, p) => sum + productBuyCost(p) * p.quantity, 0);
+    const shelfValue = products.reduce((sum, p) => sum + productSellPrice(p) * p.quantity, 0);
     const tasks = db.tasks
       .filter((t) => t.businessId === business.id && !t.archived && !t.done)
       .slice(0, 5);
@@ -60,6 +66,14 @@ export async function GET() {
         : null,
       businessName: business.name,
       ephemeralStore: isEphemeralStore(),
+      guide: {
+        products: products.length,
+        clients: clients.length,
+        sales: sales.length,
+        remainingUnits,
+        stockValue,
+        shelfValue,
+      },
     });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);

@@ -104,7 +104,7 @@ export function ChannelHub() {
           return (
             <li key={kind} className="border border-border p-4">
               <p className="flex items-center gap-2 text-sm font-semibold">
-                <Glyph className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
+                <Glyph className="h-4 w-4 text-ink" strokeWidth={1.75} aria-hidden />
                 {t(`kind_${kind}`)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">{t(`hint_${kind}`)}</p>

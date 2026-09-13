@@ -141,6 +141,7 @@ export type DealRow = {
   id: string;
   businessId: string;
   customerId: string | null;
+  productId: string | null;
   title: string;
   stage: string;
   amount: number;
@@ -198,6 +199,7 @@ export type SalesLineRow = {
   revenue: number;
   cost: number;
   dealId: string | null;
+  customerId: string | null;
   createdAt: string;
 };
 
@@ -336,6 +338,56 @@ export type ChannelLinkRow = {
   createdAt: string;
 };
 
+export type PilotKind = "has_business" | "starting";
+export type PilotDifficulty = "easy" | "medium" | "hard";
+
+export type PilotProfileRow = {
+  id: string;
+  userId: string;
+  kind: PilotKind;
+  category: string;
+  subcategory: string;
+  product: string;
+  region: string;
+  volume: string;
+  price: string;
+  channels: string[];
+  problem: string;
+  createdAt: string;
+};
+
+export type PilotSuggestionItem = {
+  title: string;
+  description: string;
+  difficulty: PilotDifficulty;
+  potentialSomoni: number;
+};
+
+export type PilotSuggestionRow = {
+  id: string;
+  userId: string;
+  profileId: string | null;
+  items: PilotSuggestionItem[];
+  chosenIndex: number | null;
+  createdAt: string;
+};
+
+export type PilotPlanRow = {
+  id: string;
+  userId: string;
+  content: string;
+  createdAt: string;
+};
+
+export type PilotCourseRow = {
+  id: string;
+  userId: string;
+  moduleId: number;
+  completed: boolean;
+  score: number | null;
+  completedAt: string | null;
+};
+
 export type Database = {
   users: UserRow[];
   smsCodes: SmsRow[];
@@ -359,6 +411,10 @@ export type Database = {
   learnProgress: LearnProgressRow[];
   storeAudits: StoreAuditRow[];
   channelLinks: ChannelLinkRow[];
+  pilotProfiles: PilotProfileRow[];
+  pilotSuggestions: PilotSuggestionRow[];
+  pilotPlans: PilotPlanRow[];
+  pilotCourse: PilotCourseRow[];
 };
 
 const EMPTY: Database = {
@@ -384,6 +440,10 @@ const EMPTY: Database = {
   learnProgress: [],
   storeAudits: [],
   channelLinks: [],
+  pilotProfiles: [],
+  pilotSuggestions: [],
+  pilotPlans: [],
+  pilotCourse: [],
 };
 
 type StoreMemory = { __bpDb?: Database };
@@ -416,7 +476,11 @@ function hydrate(raw: Partial<Database>): Database {
     products: raw.products ?? [],
     movements: raw.movements ?? [],
     customers: raw.customers ?? [],
-    deals: raw.deals ?? [],
+    deals: (raw.deals ?? []).map((row) => ({
+      ...row,
+      customerId: row.customerId ?? null,
+      productId: row.productId ?? null,
+    })),
     financeEntries: raw.financeEntries ?? [],
     tasks: raw.tasks ?? [],
     aiReports: raw.aiReports ?? [],
@@ -424,6 +488,7 @@ function hydrate(raw: Partial<Database>): Database {
     salesLines: (raw.salesLines ?? []).map((row) => ({
       ...row,
       dealId: row.dealId ?? null,
+      customerId: row.customerId ?? null,
     })),
     memory: raw.memory ?? [],
     actions: raw.actions ?? [],
@@ -443,6 +508,14 @@ function hydrate(raw: Partial<Database>): Database {
       aiError: row.aiError ?? null,
     })),
     channelLinks: raw.channelLinks ?? [],
+    pilotProfiles: raw.pilotProfiles ?? [],
+    pilotSuggestions: (raw.pilotSuggestions ?? []).map((row) => ({
+      ...row,
+      profileId: row.profileId ?? null,
+      chosenIndex: row.chosenIndex ?? null,
+    })),
+    pilotPlans: raw.pilotPlans ?? [],
+    pilotCourse: raw.pilotCourse ?? [],
     businesses: (raw.businesses ?? []).map((b) => ({
       ...b,
       stage: b.stage === "idea" ? "idea" : "running",

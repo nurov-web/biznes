@@ -46,11 +46,11 @@ export function SetupChecklist({
   }, []);
 
   const steps: Step[] = [
-    { done: hasStore, label: t("setupStore"), href: "/store", cta: t("setupStoreCta") },
     { done: hasProducts, label: t("setup1"), href: "/inventory", cta: t("setup1cta") },
     { done: hasClients, label: t("setupCrm"), href: "/crm/clients", cta: t("setupCrmCta") },
+    { done: hasSales, label: t("setupPos"), href: "/pos", cta: t("setupPosCta") },
     { done: hasCash, label: t("setupFinance"), href: "/finance", cta: t("setupFinanceCta") },
-    { done: hasSales, label: t("setup2"), href: "/crm/sales", cta: t("setup2cta") },
+    { done: hasStore, label: t("setupStore"), href: "/store", cta: t("setupStoreCta") },
     { done: hasCompetitors, label: t("setup3"), href: "/competitors", cta: t("setup3cta") },
     { done: hasLearn, label: t("setupLearn"), href: "/learn", cta: t("setupLearnCta") },
   ];
@@ -64,21 +64,17 @@ export function SetupChecklist({
           <h2 className="display-3">{t("setupTitle")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{t("setupLead")}</p>
         </div>
-        <span className="chip num">{steps.length - left}/{steps.length}</span>
+        <span className="num text-sm text-muted-foreground">
+          {steps.length - left}/{steps.length}
+        </span>
       </div>
       <ol className="divide-y divide-border">
         {steps.map((step, i) => (
           <li key={step.href} className="flex flex-wrap items-center gap-3 px-6 py-4">
-            <span
-              className={`num grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-semibold ${
-                step.done
-                  ? "bg-[#e7f6ee] text-success"
-                  : "border border-border-strong text-muted-foreground"
-              }`}
-            >
-              {step.done ? <Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden /> : i + 1}
+            <span className={`mark ${step.done ? "mark-on" : ""}`}>
+              {step.done ? <Check className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden /> : i + 1}
             </span>
-            <p className={`flex-1 text-sm ${step.done ? "text-muted-foreground line-through" : ""}`}>
+            <p className={`flex-1 text-sm ${step.done ? "text-muted-foreground" : ""}`}>
               {step.label}
             </p>
             {step.done ? null : (

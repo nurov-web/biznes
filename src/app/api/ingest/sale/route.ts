@@ -77,6 +77,7 @@ export async function POST(request: Request) {
         revenue: data.revenue,
         cost: finalCost,
         dealId: null,
+        customerId: null,
         createdAt: nowIso(),
       };
       db.salesLines.push(row);

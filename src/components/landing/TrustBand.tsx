@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Check, X } from "lucide-react";
 import { Reveal } from "@/components/motion/Reveal";
+import { WorkSlider } from "@/components/motion/WorkSlider";
 
 export function TrustBand() {
   const t = useTranslations("landing");
@@ -16,30 +17,44 @@ export function TrustBand() {
         <h2 className="display-2 mt-3 max-w-2xl text-balance">{t("honestTitle")}</h2>
         <p className="lead mt-4 max-w-2xl">{t("honestLead")}</p>
       </Reveal>
-      <Reveal stagger className="mt-9 grid gap-4 md:grid-cols-2">
-        <div className="card-raised p-4 sm:p-6">
-          <p className="text-sm font-semibold">{t("isTitle")}</p>
-          <ul className="mt-4 space-y-3">
-            {isKeys.map((k) => (
-              <li key={k} className="flex min-w-0 gap-3 text-sm leading-relaxed">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" strokeWidth={1.75} aria-hidden />
-                <span className="min-w-0">{t(k)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="card-raised p-4 sm:p-6">
-          <p className="text-sm font-semibold">{t("notTitle")}</p>
-          <ul className="mt-4 space-y-3">
-            {notKeys.map((k) => (
-              <li key={k} className="flex min-w-0 gap-3 text-sm leading-relaxed text-muted-foreground">
-                <X className="mt-0.5 h-4 w-4 shrink-0 text-destructive" strokeWidth={1.75} aria-hidden />
-                <span className="min-w-0">{t(k)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </Reveal>
+      <div className="mt-9 grid gap-8 md:grid-cols-2 md:gap-10">
+        <Reveal>
+          <p className="mb-4 text-sm font-semibold">{t("isTitle")}</p>
+          <WorkSlider
+            label={t("isTitle")}
+            prevLabel={t("prevSlide")}
+            nextLabel={t("nextSlide")}
+            formatStatus={(current, total) => t("slideStatus", { current, total })}
+            slides={isKeys.map((k) => ({
+              id: k,
+              node: (
+                <div data-slide-body className="card-raised min-h-[8.5rem] p-5">
+                  <Check className="h-4 w-4 text-success" strokeWidth={1.75} aria-hidden />
+                  <p className="mt-3 text-sm leading-relaxed">{t(k)}</p>
+                </div>
+              ),
+            }))}
+          />
+        </Reveal>
+        <Reveal delay={0.08}>
+          <p className="mb-4 text-sm font-semibold">{t("notTitle")}</p>
+          <WorkSlider
+            label={t("notTitle")}
+            prevLabel={t("prevSlide")}
+            nextLabel={t("nextSlide")}
+            formatStatus={(current, total) => t("slideStatus", { current, total })}
+            slides={notKeys.map((k) => ({
+              id: k,
+              node: (
+                <div data-slide-body className="card-raised min-h-[8.5rem] p-5">
+                  <X className="h-4 w-4 text-destructive" strokeWidth={1.75} aria-hidden />
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{t(k)}</p>
+                </div>
+              ),
+            }))}
+          />
+        </Reveal>
+      </div>
     </section>
   );
 }

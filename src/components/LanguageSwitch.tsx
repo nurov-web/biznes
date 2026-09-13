@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSwitchLocale } from "@/components/i18n/I18nClientProvider";
+import { LocaleFlag } from "@/components/ui/LocaleFlag";
 import type { AppLocale } from "@/i18n/routing";
 
-/** Коди масир `tg` мемонад, вале дар экран ТҶ нишон дода мешавад. */
-const LOCALES: { code: AppLocale; label: string }[] = [
-  { code: "tg", label: "ТҶ" },
-  { code: "ru", label: "RU" },
-  { code: "en", label: "EN" },
+const LOCALES: { code: AppLocale; nameKey: "localeTg" | "localeRu" | "localeEn" }[] = [
+  { code: "tg", nameKey: "localeTg" },
+  { code: "ru", nameKey: "localeRu" },
+  { code: "en", nameKey: "localeEn" },
 ];
 
 export function LanguageSwitch({ className }: { className?: string }) {
@@ -28,14 +28,14 @@ export function LanguageSwitch({ className }: { className?: string }) {
 
   return (
     <div
-      className={`seg relative w-max max-w-full flex-none ${className ?? ""}`}
+      className={`seg relative w-max max-w-full flex-none p-1 ${className ?? ""}`}
       role="group"
       aria-label={t("language")}
     >
       <span
-        className="pointer-events-none absolute inset-y-0 left-0 rounded-[0.7rem] bg-primary transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        className="pointer-events-none absolute top-1 bottom-1 left-1 z-0 rounded-lg bg-primary shadow-[0_1px_2px_rgb(13_74_143/0.28)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
         style={{
-          width: `${100 / LOCALES.length}%`,
+          width: `calc((100% - 0.5rem) / ${LOCALES.length})`,
           transform: `translateX(${active * 100}%)`,
         }}
         aria-hidden
@@ -52,9 +52,9 @@ export function LanguageSwitch({ className }: { className?: string }) {
           className="seg-item relative z-10 flex-1 bg-transparent hover:bg-transparent"
           data-selected={active === i}
           aria-pressed={locale === item.code}
-          aria-label={item.label}
+          aria-label={t(item.nameKey)}
         >
-          {item.label}
+          <LocaleFlag locale={item.code} />
         </button>
       ))}
     </div>

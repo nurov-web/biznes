@@ -138,6 +138,7 @@ export async function recordStoreLedger(
       revenue: amount,
       cost: costEach * qty,
       dealId: null,
+      customerId: null,
       createdAt: nowIso(),
     };
     db.salesLines.push(row);

@@ -15,13 +15,19 @@ export function Icon({
 export function IconWell({
   icon,
   className,
+  tone = "soft",
 }: {
   icon: LucideIcon;
   className?: string;
+  tone?: "soft" | "ink";
 }) {
+  const well =
+    tone === "ink"
+      ? "bg-ink text-white"
+      : "bg-primary-soft text-primary";
   return (
     <span
-      className={`grid h-11 w-11 place-items-center rounded-2xl bg-primary-soft text-primary ${className ?? ""}`}
+      className={`grid h-11 w-11 place-items-center rounded-xl ${well} ${className ?? ""}`}
     >
       <Icon icon={icon} className="h-5 w-5" />
     </span>

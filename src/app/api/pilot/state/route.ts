@@ -1,0 +1,34 @@
+/**
+ * GET /api/pilot/state — профил, пешниҳодҳо, курс, нақша.
+ */
+import { NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth";
+import { isUnauthorized, jsonError } from "@/lib/api-error";
+import {
+  getPilotProfile,
+  latestPlan,
+  latestSuggestions,
+  listCompletedModules,
+} from "@/services/pilot";
+
+export async function GET() {
+  try {
+    const user = await requireUser();
+    const [profile, suggestions, plan, progress] = await Promise.all([
+      getPilotProfile(user.id),
+      latestSuggestions(user.id),
+      latestPlan(user.id),
+      listCompletedModules(user.id),
+    ]);
+    return NextResponse.json({
+      profile,
+      suggestions: suggestions?.items ?? [],
+      chosenIndex: suggestions?.chosenIndex ?? null,
+      plan: plan?.content ?? "",
+      progress,
+    });
+  } catch (error) {
+    if (isUnauthorized(error)) return jsonError("unauthorized", 401);
+    return jsonError("server", 500);
+  }
+}

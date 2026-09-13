@@ -138,7 +138,7 @@ export function ImportHub({ onImported }: Props) {
       <div className="mt-5 grid gap-4 lg:grid-cols-3">
         <article className="border border-border p-4">
           <p className="flex items-center gap-2 text-sm font-semibold">
-            <Globe className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
+            <Globe className="h-4 w-4 text-ink" strokeWidth={1.75} aria-hidden />
             {t("urlTitle")}
           </p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("urlHint")}</p>
@@ -163,7 +163,7 @@ export function ImportHub({ onImported }: Props) {
 
         <article className="border border-border p-4">
           <p className="flex items-center gap-2 text-sm font-semibold">
-            <Table2 className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
+            <Table2 className="h-4 w-4 text-ink" strokeWidth={1.75} aria-hidden />
             {t("csvTitle")}
           </p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("csvHint")}</p>
@@ -190,7 +190,7 @@ export function ImportHub({ onImported }: Props) {
 
         <article className="border border-border p-4">
           <p className="flex items-center gap-2 text-sm font-semibold">
-            <Plug className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
+            <Plug className="h-4 w-4 text-ink" strokeWidth={1.75} aria-hidden />
             {t("pipeTitle")}
           </p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("pipeHint")}</p>

@@ -1,249 +1,166 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
-import { AlertTriangle, ClipboardCheck, TrendingUp } from "lucide-react";
-import { PageShell } from "@/components/PageShell";
-import { Reveal } from "@/components/motion/Reveal";
-import { Slider } from "@/components/ui/Slider";
-import { RecommendedNote } from "@/components/ui/Recommended";
-import { SalesChart } from "@/components/SalesChart";
-import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
-import { SellCoachCard } from "@/components/dashboard/SellCoachCard";
-import { PurposeMap } from "@/components/dashboard/PurposeMap";
-import { RescueBoard } from "@/components/dashboard/RescueBoard";
-import { ChannelHub } from "@/components/dashboard/ChannelHub";
-import { StockCountBoard } from "@/components/dashboard/StockCountBoard";
-import { StoreGapBanner } from "@/components/dashboard/StoreGapBanner";
-import { EphemeralStoreBanner } from "@/components/dashboard/EphemeralStoreBanner";
-import { ImportHub } from "@/components/dashboard/ImportHub";
-import { healthTone, money, useIntelligence } from "@/hooks/useIntelligence";
-import { parseLocale } from "@/lib/locale-query";
-import { suggestNextMove } from "@/services/intelligence/advice";
+import { useLocale, useTranslations } from "next-intl";
+import { BookOpen, Check, Wallet } from "lucide-react";
+import { Link } from "@/i18n/navigation";
+import { PageBody } from "@/components/PageShell";
+import { PilotHero } from "@/components/pilot/PilotHero";
+import { PILOT_MODULES } from "@/constants/pilot-course";
+import { PILOT_MODULE_COUNT } from "@/constants/pilot";
+import type { PilotProfileRow } from "@/lib/store";
 
-type Week = { day: string; value: number }[];
+type Tab = "course" | "sales";
 
 export default function DashboardPage() {
-  const t = useTranslations("intel");
-  const { data, loading, error, reload, locale } = useIntelligence();
-  const [busy, setBusy] = useState(false);
-  const [decision, setDecision] = useState("");
-  const [week, setWeek] = useState<Week>([]);
-  const [ephemeral, setEphemeral] = useState(false);
+  const t = useTranslations("pilot");
+  const tc = useTranslations("pilotCourse");
+  const locale = useLocale();
+  const [tab, setTab] = useState<Tab>("course");
+  const [profile, setProfile] = useState<PilotProfileRow | null>(null);
+  const [progress, setProgress] = useState<number[]>([]);
+  const [plan, setPlan] = useState("");
+  const [planLoading, setPlanLoading] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    fetch("/api/dashboard", { credentials: "include", cache: "no-store" })
+    fetch("/api/pilot/state", { credentials: "include", cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { week?: Week; ephemeralStore?: boolean } | null) => {
-        setWeek(d?.week ?? []);
-        setEphemeral(Boolean(d?.ephemeralStore));
+      .then((d: { profile?: PilotProfileRow; progress?: number[]; plan?: string } | null) => {
+        setProfile(d?.profile ?? null);
+        setProgress(d?.progress ?? []);
+        setPlan(d?.plan ?? "");
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => setReady(true));
   }, []);
 
-  async function decide() {
-    setBusy(true);
+  async function makePlan() {
+    setPlanLoading(true);
     try {
-      const response = await fetch("/api/intelligence/decide", {
+      const response = await fetch("/api/generate-plan", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ locale }),
       });
-      const json = (await response.json()) as { narrative?: string };
-      setDecision(json.narrative || "");
-      await reload();
+      const json = (await response.json()) as { plan?: string };
+      if (json.plan) setPlan(json.plan);
     } finally {
-      setBusy(false);
+      setPlanLoading(false);
     }
   }
 
-  if (loading || error || !data) {
-    return (
-      <p className="p-8 text-sm text-muted-foreground" role={error ? "alert" : undefined}>
-        {error ? t("error") : t("loading")}
-      </p>
-    );
+  if (!ready) {
+    return <p className="p-8 text-sm text-muted-foreground">{t("saving")}</p>;
   }
 
-  const questions = [
-    { k: t("happened"), v: data.happened },
-    { k: t("why"), v: data.why },
-    { k: t("will"), v: data.willHappen },
-    { k: t("should"), v: data.shouldDo },
-  ];
-
-  const cards = questions.map((q) => (
-    <article key={q.k} className="card-raised min-h-[9.5rem] min-w-0 p-4 sm:p-6">
-      <p className="eyebrow">{q.k}</p>
-      <p className="mt-2.5 text-sm leading-relaxed">{q.v}</p>
-    </article>
-  ));
-
-  const nextMove = suggestNextMove(
-    {
-      prices: data.prices,
-      inventory: data.inventory,
-      actions: data.actions,
-      marginPct: data.marginPct,
-      cashFlow: data.cashFlow,
-      healthScore: data.healthScore,
-      hasCompetitorPrices: data.competitorRows.some((c) => c.price > 0),
-    },
-    parseLocale(locale),
-  );
+  const pct = Math.round((progress.length / PILOT_MODULE_COUNT) * 100);
+  const product = profile?.product || "—";
+  const region = profile?.region || "—";
 
   return (
-    <PageShell
-      eyebrow={`${data.businessName} · ${data.city}`}
-      title={t("dashTitle")}
-      lead={t("dashLead")}
-      action={
-        <button type="button" className="btn btn-primary" onClick={() => void decide()} disabled={busy} title={t("decideHint")}>
-          <ClipboardCheck className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-          {busy ? t("running") : t("decide")}
-        </button>
-      }
-    >
-      <EphemeralStoreBanner show={ephemeral} />
-      <PurposeMap salesCount={data.salesCount} />
-      <ImportHub onImported={() => void reload()} />
-      <RescueBoard
-        prices={data.prices}
-        inventory={data.inventory}
-        salesCount={data.salesCount}
-        profit={data.profit}
-        marginPct={data.marginPct}
-      />
-      <ChannelHub />
-      <StockCountBoard prices={data.prices} inventory={data.inventory} />
-      <StoreGapBanner salesCount={data.salesCount} />
-
-      <SellCoachCard
-        locale={locale}
-        storedNiche={data.niche}
-        focus={data.focus}
-        prices={data.prices}
-        inventory={data.inventory}
-        salesCount={data.salesCount}
-        revenue={data.revenue}
-        profit={data.profit}
+    <>
+      <PilotHero
+        eyebrow={t("welcome")}
+        title={product}
+        lead={t("bizLine", { product, region })}
+        progressLabel={t("progress")}
+        progressMeta={t("ofModules", { done: progress.length, total: PILOT_MODULE_COUNT })}
+        pct={pct}
       />
 
-      <RecommendedNote suggestion={nextMove} />
-
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
-        <article className="card-raised col-span-2 p-5 lg:col-span-1">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("health")}</p>
-          <p className={`num mt-2 text-3xl font-semibold sm:text-4xl ${healthTone(data.healthScore)}`}>
-            {data.healthScore}
-            <span className="text-base text-muted-foreground">/100</span>
-          </p>
-          <div className="mt-3 h-1 overflow-hidden bg-muted">
-            <div
-              className="h-full bg-ink"
-              style={{ width: `${data.healthScore}%` }}
-            />
-          </div>
-        </article>
-        {data.kpis
-          .filter((k) => k.key !== "health")
-          .slice(0, 4)
-          .map((k) => (
-            <article key={k.key} className="card-raised min-w-0 p-4 sm:p-5">
-              <p className="truncate text-xs uppercase tracking-wide text-muted-foreground">{k.label}</p>
-              <p className="num mt-2 text-xl font-semibold sm:text-2xl">
-                {k.value.toLocaleString("ru-RU")}
-                <span className="ml-1 font-sans text-xs font-normal text-muted-foreground">{k.unit}</span>
-              </p>
-            </article>
-          ))}
-      </section>
-
-      <Reveal>
-        <div className="md:hidden">
-          <Slider
-            items={cards}
-            label={t("dashTitle")}
-            prevLabel={t("prev")}
-            nextLabel={t("next")}
-            autoPlayMs={7000}
-          />
+      <PageBody>
+        <div className="flex border-b border-border" role="tablist" aria-label={t("welcome")}>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "course"}
+            className={`flex min-h-12 flex-1 items-center justify-center gap-2 border-b-2 px-3 text-sm font-medium sm:flex-none sm:px-5 ${
+              tab === "course"
+                ? "border-ink text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+            onClick={() => setTab("course")}
+          >
+            <BookOpen className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+            {t("tabCourse")}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "sales"}
+            className={`flex min-h-12 flex-1 items-center justify-center gap-2 border-b-2 px-3 text-sm font-medium sm:flex-none sm:px-5 ${
+              tab === "sales"
+                ? "border-ink text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+            onClick={() => setTab("sales")}
+          >
+            <Wallet className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+            {t("tabSales")}
+          </button>
         </div>
-        <div className="hidden gap-3 md:grid md:grid-cols-2">{cards}</div>
-      </Reveal>
 
-      {decision ? (
-        <article className="card-raised border-primary/30 p-4 sm:p-6">
-          <p className="eyebrow">{t("pipeline")}</p>
-          <p className="mt-2.5 whitespace-pre-wrap text-sm leading-relaxed">{decision}</p>
-        </article>
-      ) : null}
-
-      {week.length ? <SalesChart points={week} label={t("week")} /> : null}
-
-      <section className="grid gap-3 lg:grid-cols-2">
-        <article className="card-raised p-4 sm:p-6">
-          <h2 className="display-3 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-warning" strokeWidth={1.75} aria-hidden />
-            {t("alerts")}
-          </h2>
-          <ul className="mt-4 space-y-3">
-            {data.alerts.length === 0 ? (
-              <li className="text-sm text-muted-foreground">{t("noAlerts")}</li>
-            ) : (
-              data.alerts.map((a) => (
-                <li key={a.title} className="border border-border px-4 py-3">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">
-                        <span className={a.kind === "problem" ? "text-destructive" : "text-success"}>
-                          {a.kind === "problem" ? t("problem") : t("opportunity")}
-                        </span>
-                        {" · "}
-                        {a.title}
-                      </p>
-                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{a.detail}</p>
-                    </div>
-                    <p className="num shrink-0 text-sm">{money(a.impactMonthly)}</p>
-                  </div>
-                </li>
-              ))
-            )}
-          </ul>
-        </article>
-        <article className="card-raised p-4 sm:p-6">
-          <h2 className="display-3 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
-            {t("memory")}
-          </h2>
-          <ul className="mt-4 space-y-2.5 text-sm">
-            {data.memory.length === 0 ? (
-              <li className="text-muted-foreground">{t("noMemory")}</li>
-            ) : (
-              data.memory.slice(0, 8).map((m) => (
-                <li key={m.id} className="flex justify-between gap-3 border-b border-border pb-2 last:border-0">
-                  <span className="min-w-0 truncate">{m.title}</span>
-                  <span className="num shrink-0 text-xs text-muted-foreground">
-                    {m.createdAt.slice(0, 10)}
+        {tab === "course" ? (
+          <ol className="card-raised divide-y divide-border overflow-hidden">
+            {PILOT_MODULES.map((m) => {
+              const done = progress.includes(m.id);
+              return (
+                <li key={m.id} className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-5">
+                  <span className={`mark ${done ? "mark-on" : ""}`}>
+                    {done ? <Check className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden /> : m.id}
                   </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{tc(m.titleKey)}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{tc(m.descKey)}</p>
+                  </div>
+                  {done ? (
+                    <span className="text-sm text-muted-foreground">{t("done")}</span>
+                  ) : (
+                    <Link href={`/dashboard/course/${m.id}`} className="btn btn-primary min-h-12 shrink-0">
+                      {t("startModule")}
+                    </Link>
+                  )}
                 </li>
-              ))
-            )}
-          </ul>
-          <p className="mt-5 text-xs text-muted-foreground">
-            {t("quality")}: <span className="num">{data.dataQuality}%</span> · CSV:{" "}
-            <span className="num">{data.salesCount}</span>
-          </p>
-        </article>
-      </section>
-      <p className="text-xs leading-relaxed text-muted-foreground">{data.disclaimer}</p>
-
-      <SetupChecklist
-        hasProducts={data.prices.length > 0}
-        hasSales={data.salesCount > 0}
-        hasCompetitors={data.competitorRows.some((c) => c.price > 0)}
-      />
-    </PageShell>
+              );
+            })}
+          </ol>
+        ) : (
+          <div className="grid gap-4">
+            {!plan && !planLoading ? (
+              <article className="card-raised p-5 sm:p-6">
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {t("planEmpty", { product })}
+                </p>
+                <button type="button" className="btn btn-primary mt-5 min-h-12" onClick={() => void makePlan()}>
+                  {t("planCta")}
+                </button>
+              </article>
+            ) : null}
+            {planLoading ? (
+              <p className="text-sm text-muted-foreground">{t("planWait")}</p>
+            ) : null}
+            {plan && !planLoading ? (
+              <>
+                <article className="card-raised whitespace-pre-wrap p-5 text-sm leading-relaxed sm:p-6">
+                  {plan}
+                </article>
+                {profile?.volume && profile.price ? (
+                  <article className="card-raised p-5 sm:p-6">
+                    <h2 className="display-3">{t("calcTitle")}</h2>
+                    <p className="mt-2 text-sm">{t("calcNow", { volume: profile.volume, price: profile.price })}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{t("calcAfter")}</p>
+                  </article>
+                ) : null}
+                <button type="button" className="btn btn-ghost min-h-12 w-fit" onClick={() => void makePlan()}>
+                  {t("planAgain")}
+                </button>
+              </>
+            ) : null}
+          </div>
+        )}
+      </PageBody>
+    </>
   );
 }

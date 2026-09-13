@@ -15,6 +15,7 @@ const createSchema = z.object({
   title: z.string().trim().min(1).max(160),
   amount: z.number().nonnegative().default(0),
   customerId: z.string().optional().nullable(),
+  productId: z.string().optional().nullable(),
 });
 
 const stageSchema = z.object({
@@ -67,6 +68,9 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ deal });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
+    if (error instanceof Error && error.message === "NEGATIVE_STOCK") {
+      return jsonError("insufficient_stock", 409);
+    }
     return jsonError("server", 500);
   }
 }

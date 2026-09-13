@@ -34,6 +34,36 @@ export async function POST(request: Request) {
           const quantity = num(row.quantity || row.qty || row.дона);
           const revenue = num(row.revenue || row.даромад || row.sell);
           if (!sku || (quantity <= 0 && revenue <= 0)) continue;
+          const clientName = (row.customer || row.client || row.мизоҷ || row.buyer || "").trim();
+          const phone = (row.phone || row.телефон || "").trim();
+          let customerId: string | null = null;
+          if (clientName) {
+            const existing = db.customers.find(
+              (c) =>
+                c.businessId === business.id &&
+                !c.archived &&
+                ((phone && c.phone === phone) || (!phone && tajikEquals(c.name, clientName))),
+            );
+            if (existing) {
+              customerId = existing.id;
+            } else {
+              const now = nowIso();
+              customerId = newId();
+              db.customers.push({
+                id: customerId,
+                businessId: business.id,
+                name: clientName.slice(0, 120),
+                phone: phone.slice(0, 30),
+                email: (row.email || "").slice(0, 120),
+                tags: "regular",
+                notes: sku,
+                archived: false,
+                createdAt: now,
+                updatedAt: now,
+              });
+              clients += 1;
+            }
+          }
           db.salesLines.push({
             id: newId(),
             businessId: business.id,
@@ -43,33 +73,10 @@ export async function POST(request: Request) {
             revenue,
             cost: num(row.cost || row.хароҷот || row.buy),
             dealId: null,
+            customerId,
             createdAt: nowIso(),
           });
           n += 1;
-          const clientName = (row.customer || row.client || row.мизоҷ || row.buyer || "").trim();
-          const phone = (row.phone || row.телефон || "").trim();
-          if (!clientName) continue;
-          const exists = db.customers.some(
-            (c) =>
-              c.businessId === business.id &&
-              !c.archived &&
-              ((phone && c.phone === phone) || (!phone && tajikEquals(c.name, clientName))),
-          );
-          if (exists) continue;
-          const now = nowIso();
-          db.customers.push({
-            id: newId(),
-            businessId: business.id,
-            name: clientName.slice(0, 120),
-            phone: phone.slice(0, 30),
-            email: (row.email || "").slice(0, 120),
-            tags: "regular",
-            notes: sku,
-            archived: false,
-            createdAt: now,
-            updatedAt: now,
-          });
-          clients += 1;
         }
         return { n, clients };
       });

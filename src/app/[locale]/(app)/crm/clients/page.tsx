@@ -16,6 +16,9 @@ type Customer = {
   tags: string;
   notes: string;
   createdAt: string;
+  purchases?: number;
+  spent?: number;
+  lastSku?: string;
 };
 
 const EMPTY = { name: "", phone: "", email: "", tags: "regular", notes: "" };
@@ -199,14 +202,15 @@ export default function ClientsPage() {
               <th>{t("name")}</th>
               <th>{t("phone")}</th>
               <th>{t("segment")}</th>
-              <th>{t("notes")}</th>
+              <th>{t("bought")}</th>
+              <th>{t("spent")}</th>
               <th />
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-sm text-muted-foreground">
+                  <td colSpan={6} className="text-sm text-muted-foreground">
                   {t("noClients")}
                 </td>
               </tr>
@@ -218,7 +222,12 @@ export default function ClientsPage() {
                   <td>
                     <span className="chip text-xs">{c.tags ? t(`tagNames.${c.tags}`) : "—"}</span>
                   </td>
-                  <td className="max-w-xs text-muted-foreground">{c.notes || "—"}</td>
+                  <td className="text-sm text-muted-foreground">
+                    {(c.purchases ?? 0) > 0
+                      ? `${c.purchases} · ${c.lastSku || "—"}`
+                      : t("noPurchases")}
+                  </td>
+                  <td className="num">{Math.round(c.spent ?? 0).toLocaleString("ru-RU")}</td>
                   <td>
                     <button
                       type="button"

@@ -6,8 +6,17 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { CrmTabs } from "@/components/crm/CrmTabs";
 import { DEAL_STAGES, type DealStage } from "@/constants";
+import { productSellPrice } from "@/services/pos/price";
 
 type Customer = { id: string; name: string };
+type CatalogProduct = {
+  id: string;
+  brand: string;
+  model: string;
+  quantity: number;
+  sellPriceMin: number;
+  sellPriceMax: number;
+};
 type Deal = {
   id: string;
   title: string;
@@ -15,6 +24,7 @@ type Deal = {
   amount: number;
   lostReason: string;
   customerId: string | null;
+  productId: string | null;
 };
 
 function money(n: number): string {
@@ -25,18 +35,26 @@ export default function SalesPage() {
   const t = useTranslations("crm");
   const [deals, setDeals] = useState<Deal[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [customerId, setCustomerId] = useState("");
+  const [productId, setProductId] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   async function load() {
-    const [dealRes, clientRes] = await Promise.all([fetch("/api/crm/deals"), fetch("/api/crm/clients")]);
+    const [dealRes, clientRes, invRes] = await Promise.all([
+      fetch("/api/crm/deals"),
+      fetch("/api/crm/clients"),
+      fetch("/api/inventory"),
+    ]);
     const dealJson = (await dealRes.json()) as { deals?: Deal[] };
     const clientJson = (await clientRes.json()) as { customers?: Customer[] };
+    const invJson = (await invRes.json()) as { products?: CatalogProduct[] };
     setDeals(dealJson.deals ?? []);
     setCustomers(clientJson.customers ?? []);
+    setProducts(invJson.products ?? []);
   }
 
   useEffect(() => {
@@ -60,6 +78,7 @@ export default function SalesPage() {
           title,
           amount: Number(amount) || 0,
           customerId: customerId || null,
+          productId: productId || null,
         }),
       });
       if (!response.ok) {
@@ -69,6 +88,7 @@ export default function SalesPage() {
       setTitle("");
       setAmount("");
       setCustomerId("");
+      setProductId("");
       await load();
     } catch {
       setError(t("saveError"));
@@ -92,7 +112,8 @@ export default function SalesPage() {
       }),
     });
     if (!response.ok) {
-      setError(t("saveError"));
+      const json = (await response.json().catch(() => ({}))) as { error?: string };
+      setError(json.error === "insufficient_stock" ? t("noStock") : t("saveError"));
       return;
     }
     await load();
@@ -108,6 +129,29 @@ export default function SalesPage() {
     >
       <CrmTabs />
       <form onSubmit={onSubmit} className="card-raised flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-end sm:p-5">
+        <label className="grid min-w-0 w-full flex-1 gap-1.5 text-sm font-medium sm:min-w-56">
+          {t("product")}
+          <select
+            className="input-field min-h-12"
+            value={productId}
+            onChange={(e) => {
+              const id = e.target.value;
+              setProductId(id);
+              const p = products.find((row) => row.id === id);
+              if (!p) return;
+              const sku = `${p.brand} ${p.model}`.trim();
+              setTitle(sku);
+              if (!amount) setAmount(String(productSellPrice(p)));
+            }}
+          >
+            <option value="">{t("noProduct")}</option>
+            {products.map((p) => (
+              <option key={p.id} value={p.id}>
+                {`${p.brand} ${p.model}`.trim()} · {p.quantity}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="grid min-w-0 w-full flex-1 gap-1.5 text-sm font-medium sm:min-w-56">
           {t("dealTitle")}
           <input

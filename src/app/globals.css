@@ -252,20 +252,6 @@ svg {
   color: var(--dark-text);
 }
 
-.seg-on-dark {
-  border-color: rgb(255 255 255 / 0.16);
-  background: rgb(255 255 255 / 0.06);
-}
-
-.seg-on-dark .seg-item {
-  color: rgb(255 255 255 / 0.72);
-}
-
-.seg-on-dark .seg-item:hover {
-  background: rgb(255 255 255 / 0.08);
-  color: var(--dark-text);
-}
-
 .step-index {
   font-family: var(--font-mono);
   font-size: clamp(2rem, 1.4rem + 2vw, 3.25rem);
@@ -352,6 +338,15 @@ svg {
   background: var(--card);
 }
 
+.seg.seg-on-dark {
+  border-color: rgb(255 255 255 / 0.18);
+  background: rgb(255 255 255 / 0.08);
+}
+
+.seg.seg-on-dark .seg-item:hover {
+  background: transparent;
+}
+
 .seg-wrap {
   display: flex;
   flex-wrap: wrap;
@@ -359,11 +354,13 @@ svg {
 }
 
 .seg-item {
-  display: grid;
-  place-items: center;
-  min-height: 34px;
-  min-width: 38px;
-  padding: 0 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 36px;
+  min-width: 3.15rem;
+  padding: 0 0.7rem;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -377,8 +374,12 @@ svg {
 }
 
 .seg-item:hover {
-  background: var(--muted);
+  background: transparent;
   color: var(--foreground);
+}
+
+.seg-item[data-selected="true"]:hover {
+  color: var(--on-primary);
 }
 
 .seg-item[data-active="true"] {
@@ -419,17 +420,16 @@ svg {
 
 @media (max-width: 768px) {
   .seg-item {
-    min-height: 40px;
-    min-width: 40px;
+    min-height: 44px;
+    min-width: 2.75rem;
   }
 }
 
 @media (max-width: 380px) {
   .seg-item {
-    min-height: 36px;
-    min-width: 2rem;
-    padding: 0 0.2rem;
-    font-size: 0.6875rem;
+    min-height: 40px;
+    min-width: 2.5rem;
+    padding: 0 0.35rem;
   }
 }
 
@@ -698,3 +698,119 @@ summary {
 }
 
 /* Ҳолати ибтидоӣ дигар пинҳон нест — GSAP набояд матнро ноаён гузорад */
+
+/* ── Панели дӯкон: сиёҳи вуруд + коғаз, на корти рангоранг ── */
+
+[data-app] {
+  --radius: 0.85rem;
+}
+
+[data-app] .card-raised {
+  box-shadow: none;
+}
+
+[data-app] .chip {
+  border-radius: 0.45rem;
+}
+
+.app-rail {
+  position: relative;
+  isolation: isolate;
+  background: var(--dark-bg);
+  color: var(--dark-text);
+  border-right: 1px solid var(--dark-border);
+}
+
+.app-rail::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto;
+  height: 11rem;
+  width: 100%;
+  background: radial-gradient(ellipse at 30% 0%, rgb(21 101 192 / 0.34), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app-rail > * {
+  position: relative;
+  z-index: 1;
+}
+
+.rail-link {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: 0.65rem;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--dark-muted);
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.rail-link:hover {
+  background: rgb(255 255 255 / 0.05);
+  color: var(--dark-text);
+}
+
+.rail-link[aria-current="page"] {
+  background: rgb(255 255 255 / 0.08);
+  color: #fff;
+  font-weight: 500;
+  box-shadow: inset 2px 0 0 var(--primary);
+}
+
+.app-dock {
+  background: rgb(11 16 24 / 0.94);
+  border-top: 1px solid var(--dark-border);
+  color: var(--dark-muted);
+}
+
+.app-dock a[aria-current="page"] {
+  color: #fff;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: 0.65rem;
+  border: 1px solid var(--border-strong);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+.mark-on {
+  border-color: transparent;
+  background: var(--ink);
+  color: #fff;
+}
+
+.tone-edge {
+  border-left-width: 3px;
+  border-left-style: solid;
+}
+
+.dash-kpi {
+  padding: 1rem 0.85rem 0.15rem;
+}
+
+@media (min-width: 640px) {
+  .dash-kpi {
+    padding: 1.15rem 1rem 0.2rem;
+  }
+}
+
+.app-rail :focus-visible,
+.app-dock :focus-visible {
+  outline-color: var(--dark-accent);
+}

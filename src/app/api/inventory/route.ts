@@ -14,6 +14,7 @@ import {
   listProducts,
   updateProduct,
 } from "@/services/inventory";
+import { readDb } from "@/lib/store";
 
 const schema = z.object({
   category: z.string().trim().min(1).max(80),
@@ -33,7 +34,18 @@ export async function GET() {
     const business = await requireBusiness(user.id);
     const products = await listProducts(business.id);
     const movements = await listMovements(business.id);
-    return NextResponse.json({ products, movements });
+    const db = await readDb();
+    const soldBySku = new Map<string, number>();
+    for (const line of db.salesLines.filter((s) => s.businessId === business.id)) {
+      soldBySku.set(line.sku, (soldBySku.get(line.sku) ?? 0) + line.quantity);
+    }
+    return NextResponse.json({
+      products: products.map((p) => ({
+        ...p,
+        sold: soldBySku.get(`${p.brand} ${p.model}`.trim()) ?? 0,
+      })),
+      movements,
+    });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
     if (error instanceof Error && error.message === "NO_BUSINESS") {

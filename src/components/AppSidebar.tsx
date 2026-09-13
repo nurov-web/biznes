@@ -68,7 +68,7 @@ function moreContains(pathname: string): boolean {
   return MORE.some((item) => isActive(pathname, item.href));
 }
 
-function NavLink({ item, pathname, nested }: { item: Item; pathname: string; nested?: boolean }) {
+function NavLink({ item, pathname }: { item: Item; pathname: string }) {
   const t = useTranslations("nav");
   const th = useTranslations("navHints");
   const active = isActive(pathname, item.href);
@@ -77,13 +77,7 @@ function NavLink({ item, pathname, nested }: { item: Item; pathname: string; nes
       href={item.href}
       title={th(item.key as "dashboard")}
       aria-current={active ? "page" : undefined}
-      className={`group flex min-h-11 items-center gap-2.5 rounded-xl px-3 text-sm ${
-        nested ? "pl-3" : ""
-      } ${
-        active
-          ? "bg-primary-soft font-medium text-primary"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-      }`}
+      className="rail-link"
     >
       <item.icon className="h-5 w-5 shrink-0" strokeWidth={1.75} aria-hidden />
       {t(item.key as "dashboard")}
@@ -103,23 +97,23 @@ export function AppSidebar() {
   }, [onMore]);
 
   return (
-    <aside className="hidden w-60 shrink-0 border-r border-border bg-background md:flex md:flex-col">
+    <aside className="app-rail hidden w-60 shrink-0 md:flex md:flex-col">
       <Link
         href="/dashboard"
-        className="flex items-center gap-2.5 px-4 py-4 text-sm font-semibold tracking-tight"
+        className="flex items-center gap-2.5 px-4 py-5 text-[0.9375rem] font-semibold tracking-tight text-white"
       >
-        <BrandMark size={32} />
+        <BrandMark size={28} />
         {APP_NAME}
       </Link>
-      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3">
+      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 pb-3">
         {MAIN.map((item) => (
           <NavLink key={item.href} item={item} pathname={pathname} />
         ))}
 
-        <div className="mt-2 border-t border-border pt-2">
+        <div className="mt-2 border-t border-white/10 pt-2">
           <button
             type="button"
-            className="flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="rail-link w-full justify-between"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
           >
@@ -136,24 +130,21 @@ export function AppSidebar() {
           {open ? (
             <div className="mt-0.5 flex flex-col gap-0.5">
               {MORE.map((item) => (
-                <NavLink key={item.href} item={item} pathname={pathname} nested />
+                <NavLink key={item.href} item={item} pathname={pathname} />
               ))}
             </div>
           ) : null}
         </div>
 
-        <div className="mt-2 border-t border-border pt-2">
+        <div className="mt-2 border-t border-white/10 pt-2">
           <NavLink item={settingsItem} pathname={pathname} />
         </div>
       </nav>
       <Link
         href="/profile"
         title={th("profile")}
-        className={`mx-3 mb-4 flex min-h-11 items-center gap-2.5 rounded-xl px-3 text-sm ${
-          isActive(pathname, "/profile")
-            ? "bg-primary-soft font-medium text-primary"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-        }`}
+        aria-current={isActive(pathname, "/profile") ? "page" : undefined}
+        className="rail-link mx-2.5 mb-4"
       >
         <UserRound className="h-5 w-5" strokeWidth={1.75} aria-hidden />
         {t("profile")}
@@ -170,7 +161,7 @@ export function MobileNav() {
   const width = 100 / MOBILE.length;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
+    <nav className="app-dock fixed inset-x-0 bottom-0 z-30 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
       <div className="relative">
         <span
           className="pointer-events-none absolute top-0 h-0.5 rounded-full bg-primary transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
@@ -190,9 +181,7 @@ export function MobileNav() {
                   href={item.href}
                   title={th(item.key as "dashboard")}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-2 text-[10px] leading-tight ${
-                    active ? "text-primary" : "text-muted-foreground"
-                  }`}
+                  className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-2 text-[11px] font-medium leading-tight"
                 >
                   <item.icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />
                   <span className="max-w-full truncate px-0.5 text-center">{t(item.key as "dashboard")}</span>

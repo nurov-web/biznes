@@ -1,7 +1,7 @@
 /**
  * GET/POST /api/pos — кассаи мобилӣ (POS).
- * GET: рӯйхати молҳои фаъоли бизнес.
- * POST: { productId, quantity } — фурӯш ба salesLines ва кам шудани анбор.
+ * GET: молҳо + мизоҷон.
+ * POST: фурӯш → анбор кам, CRM (агар мизоҷ бошад), молия.
  */
 import { z } from "zod";
 import { NextResponse } from "next/server";
@@ -9,20 +9,27 @@ import { requireUser } from "@/lib/auth";
 import { requireBusiness } from "@/lib/business";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { originForbidden } from "@/lib/origin";
+import { listCustomers } from "@/services/crm";
 import { listProducts } from "@/services/inventory";
 import { checkoutPos } from "@/services/pos/checkout";
 
 const postSchema = z.object({
   productId: z.string().min(1),
   quantity: z.number().int().positive(),
+  customerId: z.string().trim().max(80).optional().nullable(),
+  customerName: z.string().trim().max(120).optional(),
+  customerPhone: z.string().trim().max(30).optional(),
 });
 
 export async function GET() {
   try {
     const user = await requireUser();
     const business = await requireBusiness(user.id);
-    const products = await listProducts(business.id);
-    return NextResponse.json({ products });
+    const [products, customers] = await Promise.all([
+      listProducts(business.id),
+      listCustomers(business.id),
+    ]);
+    return NextResponse.json({ products, customers });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
     if (error instanceof Error && error.message === "NO_BUSINESS") {
@@ -42,7 +49,11 @@ export async function POST(request: Request) {
     const parsed = postSchema.safeParse(body);
     if (!parsed.success) return jsonError("validation", 400);
 
-    const result = await checkoutPos(business.id, parsed.data.productId, parsed.data.quantity);
+    const result = await checkoutPos(business.id, parsed.data.productId, parsed.data.quantity, {
+      id: parsed.data.customerId,
+      name: parsed.data.customerName,
+      phone: parsed.data.customerPhone,
+    });
 
     if (!result.success) {
       if (result.error === "not_found") return jsonError("not_found", 404);
@@ -51,7 +62,12 @@ export async function POST(request: Request) {
       return jsonError("server", 500);
     }
 
-    return NextResponse.json({ success: true, salesLine: result.salesLine });
+    return NextResponse.json({
+      success: true,
+      salesLine: result.salesLine,
+      remaining: result.remaining,
+      customerName: result.customerName,
+    });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
     if (error instanceof Error && error.message === "NO_BUSINESS") {

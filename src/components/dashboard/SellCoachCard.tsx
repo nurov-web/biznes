@@ -70,7 +70,7 @@ export function SellCoachCard({
             <CoachColumn icon={ShoppingBag} title={t("sellTitle")} items={view.sell} border />
             <article className="p-4 sm:p-6">
               <p className="flex items-center gap-2 text-sm font-semibold">
-                <BarChart3 className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
+                <BarChart3 className="h-4 w-4 text-ink" strokeWidth={1.75} aria-hidden />
                 {t("reportTitle")}
               </p>
               <p className="mt-3 text-sm leading-relaxed">
@@ -129,13 +129,13 @@ function CoachColumn({
       className={`p-4 sm:p-6 ${border ? "border-b border-border lg:border-b-0 lg:border-r" : ""}`}
     >
       <p className="flex items-center gap-2 text-sm font-semibold">
-        <Glyph className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
+        <Glyph className="h-4 w-4 text-ink" strokeWidth={1.75} aria-hidden />
         {title}
       </p>
       <ol className="mt-3 space-y-3">
         {items.map((line, i) => (
           <li key={line} className="flex gap-3 text-sm leading-relaxed">
-            <span className="num mt-0.5 grid h-6 w-6 shrink-0 place-items-center border border-border text-xs text-muted-foreground">
+            <span className="num mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md border border-border text-xs text-muted-foreground">
               {i + 1}
             </span>
             <span>{line}</span>
