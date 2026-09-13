@@ -57,7 +57,7 @@ export default function SuggestionsPage() {
   if (loading) {
     return (
       <PilotFormShell>
-        <div className="flex min-h-[50vh] flex-col justify-center gap-2">
+        <div className="flex min-h-[50vh] flex-col justify-center gap-2" role="status">
           <p className="text-sm font-medium">{t("sugLoad")}</p>
           <p className="text-xs text-muted-foreground">{t("sugWait")}</p>
         </div>

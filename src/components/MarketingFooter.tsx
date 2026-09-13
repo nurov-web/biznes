@@ -23,6 +23,12 @@ export function MarketingFooter() {
             </p>
           </div>
           <nav className="flex flex-wrap gap-4 text-sm" aria-label={t("colAccount")}>
+            <Link href="/legal/terms" className="text-muted-foreground hover:text-foreground">
+              {tn("terms")}
+            </Link>
+            <Link href="/legal/privacy" className="text-muted-foreground hover:text-foreground">
+              {tn("privacy")}
+            </Link>
             <Link href="/register" className="text-muted-foreground hover:text-foreground">
               {tn("register")}
             </Link>

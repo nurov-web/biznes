@@ -6,6 +6,12 @@ import { Link } from "@/i18n/navigation";
 import { FormErrorSummary } from "@/components/FormErrorSummary";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { saveRememberedLogin } from "@/lib/remember-login";
+import { safeNextPath } from "@/lib/safe-next";
+
+function destination(locale: string, fallback: string): string {
+  const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
+  return `/${locale}${next || fallback}`;
+}
 
 export default function RegisterPage() {
   const t = useTranslations("auth");
@@ -95,6 +101,10 @@ export default function RegisterPage() {
         const message = t("serverSetup");
         setErrors([{ id: "register-form", message }]);
         setField({});
+      } else if (data.error === "rate") {
+        const message = t("rateLimit");
+        setErrors([{ id: "register-form", message }]);
+        setField({});
       } else if (data.error === "validation") {
         const next: Record<string, string> = {};
         const items: { id: string; message: string }[] = [];
@@ -118,7 +128,7 @@ export default function RegisterPage() {
       return;
     }
     saveRememberedLogin(form.email);
-    window.location.assign(`/${locale}/has-business`);
+    window.location.assign(destination(locale, "/has-business"));
   }
 
   return (
@@ -149,12 +159,14 @@ export default function RegisterPage() {
               onChange={(e) => setForm({ ...form, firstName: e.target.value })}
             />
           </label>
-          <label className="grid gap-1.5 text-sm font-medium">
+          <label className="grid gap-1.5 text-sm font-medium" htmlFor="lastName">
             {t("lastName")}
             <input
+              id="lastName"
               className={`input-field ${field.lastName ? "input-error" : ""}`}
               autoComplete="family-name"
               value={form.lastName}
+              aria-invalid={Boolean(field.lastName)}
               onChange={(e) => setForm({ ...form, lastName: e.target.value })}
             />
           </label>
@@ -169,7 +181,9 @@ export default function RegisterPage() {
             aria-invalid={Boolean(field.phone)}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
           />
-          {field.phone ? <span className="font-normal text-destructive">{field.phone}</span> : null}
+          {field.phone ? <span className="font-normal text-destructive">{field.phone}</span> : (
+            <span className="font-normal text-muted-foreground">{t("phoneHint")}</span>
+          )}
         </label>
         <label className="grid gap-1.5 text-sm font-medium" htmlFor="email">
           {t("email")}
@@ -214,7 +228,12 @@ export default function RegisterPage() {
             checked={form.offerAccepted}
             onChange={(e) => setForm({ ...form, offerAccepted: e.target.checked })}
           />
-          <span className="leading-relaxed">{t("offer")}</span>
+          <span className="leading-relaxed">
+            {t("offer")}{" "}
+            <Link href="/legal/terms" className="font-medium text-primary hover:underline">
+              {t("offerLink")}
+            </Link>
+          </span>
         </label>
         {field.offer ? <p className="text-sm text-destructive">{field.offer}</p> : null}
         <button className="btn btn-primary w-full" type="submit" disabled={busy}>

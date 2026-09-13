@@ -8,6 +8,7 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { EntryVeil } from "@/components/motion/EntryVeil";
 import { readRememberedLogin, saveRememberedLogin } from "@/lib/remember-login";
 import { consumeLoggedOut } from "@/lib/splash";
+import { safeNextPath } from "@/lib/safe-next";
 
 export default function LoginPage() {
   const t = useTranslations("auth");
@@ -31,7 +32,10 @@ export default function LoginPage() {
         if (!cancelled && r.ok) {
           setLeaving(true);
           const data = (await r.json()) as { hasPilotProfile?: boolean };
-          window.location.assign(`/${locale}/${data.hasPilotProfile ? "dashboard" : "has-business"}`);
+          const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
+          window.location.assign(
+            `/${locale}/${data.hasPilotProfile ? "dashboard" : next || "has-business"}`,
+          );
         }
       })
       .catch(() => undefined);
@@ -64,7 +68,8 @@ export default function LoginPage() {
     });
     if (!response.ok) {
       setBusy(false);
-      const message = t("badCreds");
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+      const message = payload.error === "rate" ? t("rateLimit") : t("badCreds");
       setSummary(message);
       setFieldErrors({ login: message, password: message });
       requestAnimationFrame(() => document.getElementById("form-errors")?.focus());
@@ -73,7 +78,8 @@ export default function LoginPage() {
     setLeaving(true);
     saveRememberedLogin(login);
     const data = (await response.json().catch(() => ({}))) as { hasPilotProfile?: boolean };
-    window.location.assign(`/${locale}/${data.hasPilotProfile ? "dashboard" : "has-business"}`);
+    const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
+    window.location.assign(`/${locale}/${data.hasPilotProfile ? "dashboard" : next || "has-business"}`);
   }
 
   return (

@@ -106,6 +106,8 @@ export default function DashboardPage() {
           <ol className="card-raised divide-y divide-border overflow-hidden">
             {PILOT_MODULES.map((m) => {
               const done = progress.includes(m.id);
+              const nextId = PILOT_MODULES.find((row) => !progress.includes(row.id))?.id;
+              const isNext = !done && m.id === nextId;
               return (
                 <li key={m.id} className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-5">
                   <span className={`mark ${done ? "mark-on" : ""}`}>
@@ -118,7 +120,10 @@ export default function DashboardPage() {
                   {done ? (
                     <span className="text-sm text-muted-foreground">{t("done")}</span>
                   ) : (
-                    <Link href={`/dashboard/course/${m.id}`} className="btn btn-primary min-h-12 shrink-0">
+                    <Link
+                      href={`/dashboard/course/${m.id}`}
+                      className={`btn min-h-12 shrink-0 ${isNext ? "btn-primary" : "btn-ghost"}`}
+                    >
                       {t("startModule")}
                     </Link>
                   )}

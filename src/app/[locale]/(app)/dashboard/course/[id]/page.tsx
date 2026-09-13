@@ -18,6 +18,7 @@ export default function CourseModulePage() {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
+  const [key, setKey] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
 
   if (!module) {
@@ -32,22 +33,23 @@ export default function CourseModulePage() {
 
   async function check() {
     if (!module) return;
-    let correct = 0;
-    module.questions.forEach((q, i) => {
-      if (answers[i] === q.correct) correct += 1;
-    });
-    const finalScore = Math.round((correct / module.questions.length) * 100);
-    setScore(finalScore);
-    setSubmitted(true);
-    if (finalScore < PILOT_PASS_SCORE) return;
     setBusy(true);
-    await fetch("/api/pilot/progress", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ moduleId: module.id, score: finalScore }),
-    });
-    setBusy(false);
+    try {
+      const ordered = module.questions.map((_, i) => answers[i] ?? -1);
+      const response = await fetch("/api/pilot/progress", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moduleId: module.id, answers: ordered }),
+      });
+      const json = (await response.json()) as { score?: number; correct?: number[]; error?: string };
+      const finalScore = typeof json.score === "number" ? json.score : 0;
+      setScore(finalScore);
+      setKey(json.correct ?? []);
+      setSubmitted(true);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -65,8 +67,8 @@ export default function CourseModulePage() {
           <div className="mt-3 grid gap-2">
             {q.options.map((opt, j) => {
               const picked = answers[i] === j;
-              const right = submitted && j === q.correct;
-              const wrong = submitted && picked && j !== q.correct;
+              const right = submitted && key[i] === j;
+              const wrong = submitted && picked && key[i] !== j;
               return (
                 <label key={opt} className="flex min-h-12 items-center gap-2 text-sm">
                   <input
@@ -74,7 +76,7 @@ export default function CourseModulePage() {
                     name={`q${i}`}
                     className="h-4 w-4 accent-[color:var(--primary)]"
                     checked={picked}
-                    disabled={submitted}
+                    disabled={submitted || busy}
                     onChange={() => setAnswers({ ...answers, [i]: j })}
                   />
                   <span className={right ? "font-medium text-ink" : wrong ? "text-destructive" : ""}>
@@ -90,10 +92,10 @@ export default function CourseModulePage() {
         <button
           type="button"
           className="btn btn-primary min-h-12"
-          disabled={Object.keys(answers).length < module.questions.length}
+          disabled={busy || Object.keys(answers).length < module.questions.length}
           onClick={() => void check()}
         >
-          {t("check")}
+          {busy ? t("saving") : t("check")}
         </button>
       ) : (
         <div className="card-raised p-6">
@@ -104,7 +106,6 @@ export default function CourseModulePage() {
               <button
                 type="button"
                 className="btn btn-primary mt-4 min-h-12"
-                disabled={busy}
                 onClick={() => router.push("/dashboard")}
               >
                 {t("backDash")}
@@ -119,6 +120,7 @@ export default function CourseModulePage() {
                 onClick={() => {
                   setSubmitted(false);
                   setAnswers({});
+                  setKey([]);
                 }}
               >
                 {t("retryBtn")}

@@ -6,6 +6,7 @@ import { routing } from "@/i18n/routing";
 import { LocaleTransition } from "@/components/motion/LocaleTransition";
 import { DocumentLang } from "@/components/motion/DocumentLang";
 import { I18nClientProvider } from "@/components/i18n/I18nClientProvider";
+import { siteOrigin } from "@/lib/site-url";
 
 export async function generateMetadata({
   params,
@@ -17,9 +18,34 @@ export async function generateMetadata({
   const messages = (await import(`../../../messages/${safe}.json`)).default as {
     meta: { title: string; description: string };
   };
+  const origin = siteOrigin();
+  const ogLocale = safe === "tg" ? "tg_TJ" : safe === "ru" ? "ru_RU" : "en_US";
   return {
+    metadataBase: new URL(origin),
     title: messages.meta.title,
     description: messages.meta.description,
+    alternates: {
+      canonical: `/${safe}`,
+      languages: {
+        tg: "/tg",
+        ru: "/ru",
+        en: "/en",
+        "x-default": "/tg",
+      },
+    },
+    openGraph: {
+      title: messages.meta.title,
+      description: messages.meta.description,
+      locale: ogLocale,
+      type: "website",
+      url: `/${safe}`,
+      siteName: "BusinessPilot AI",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: messages.meta.title,
+      description: messages.meta.description,
+    },
   };
 }
 

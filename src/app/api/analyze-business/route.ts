@@ -6,6 +6,8 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { originForbidden } from "@/lib/origin";
+import { rateLimit } from "@/lib/rate-limit";
+import { consumeAiQuota } from "@/lib/ai-quota";
 import { parseLocale } from "@/lib/locale-query";
 import { PILOT_CATEGORIES, PILOT_CHANNELS, PILOT_UNITS } from "@/constants/pilot";
 import { analyzeBusinessSuggestions } from "@/services/ai/pilot";
@@ -28,8 +30,10 @@ export async function POST(request: Request) {
   try {
     if (originForbidden(request)) return jsonError("forbidden", 403);
     const user = await requireUser();
+    if (!rateLimit(`ai:${user.id}`, 20, 60_000)) return jsonError("rate", 429);
     const parsed = schema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return jsonError("validation", 400);
+    if (!(await consumeAiQuota(user.id))) return jsonError("rate", 429);
     const data = parsed.data;
     const profile = await savePilotProfile(user.id, {
       kind: "has_business",

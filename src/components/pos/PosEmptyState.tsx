@@ -11,9 +11,9 @@ export function PosEmptyState() {
   const t = useTranslations("pos");
 
   return (
-    <div className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card p-6 text-center">
-      <span className="mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-primary-soft text-primary">
-        <PackageSearch className="h-6 w-6" strokeWidth={1.75} aria-hidden />
+    <div className="card-raised flex min-h-[280px] flex-col items-center justify-center p-6 text-center">
+      <span className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-ink text-white">
+        <PackageSearch className="h-5 w-5" strokeWidth={1.75} aria-hidden />
       </span>
       <h2 className="text-base font-semibold text-foreground">{t("noProductsTitle")}</h2>
       <p className="mt-2 max-w-md text-sm text-muted-foreground">{t("noProductsDescription")}</p>

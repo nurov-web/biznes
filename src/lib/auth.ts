@@ -13,6 +13,7 @@ import {
   type BusinessRow,
   type UserRow,
 } from "@/lib/store";
+import { isSecureCookie } from "@/lib/site-url";
 import type { SessionPayload, SessionProfile, SessionUser } from "@/types";
 
 const SALT_ROUNDS = 12;
@@ -83,7 +84,7 @@ function cookieBase(maxAge: number, httpOnly = true) {
   return {
     httpOnly,
     sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
+    secure: isSecureCookie(),
     path: "/",
     maxAge,
     expires: new Date(Date.now() + maxAge * 1000),
@@ -95,7 +96,7 @@ function cookieExpire(httpOnly = true) {
   return {
     httpOnly,
     sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
+    secure: isSecureCookie(),
     path: "/",
     maxAge: 0,
     expires: new Date(0),
@@ -114,7 +115,6 @@ export async function signSession(payload: SessionPayload): Promise<string> {
     lastName: payload.lastName ?? "",
     email: payload.email ?? "",
     phone: payload.phone ?? "",
-    ph: payload.ph ?? "",
     bid: payload.bid ?? "",
     bname: payload.bname ?? "",
     bcity: payload.bcity ?? "",
@@ -148,7 +148,6 @@ export async function readSessionToken(
         lastName: claimString(payload.lastName),
         email: claimString(payload.email),
         phone: claimString(payload.phone),
-        ph: claimString(payload.ph),
         bid: claimString(payload.bid),
         bname: claimString(payload.bname),
         bcity: claimString(payload.bcity),
@@ -172,7 +171,6 @@ function payloadFromUser(user: UserRow, business: BusinessRow | null): SessionPa
     lastName: user.lastName,
     email: user.email,
     phone: user.phone,
-    ph: user.passwordHash,
     bid: business?.id ?? "",
     bname: business?.name ?? "",
     bcity: business?.city ?? "",
@@ -303,17 +301,16 @@ export async function restoreAccountFromPayload(payload: SessionPayload): Promis
           lastName: payload.lastName || "",
           email,
           phone: payload.phone || "",
-          passwordHash: payload.ph || "",
+          passwordHash: "",
           phoneVerified: false,
           offerAccepted: true,
+          aiCallsDate: "",
+          aiCallsCount: 0,
           role: payload.role,
           createdAt: now,
           updatedAt: now,
         };
         db.users.push(user);
-      } else if (!user.passwordHash && payload.ph) {
-        user.passwordHash = payload.ph;
-        user.updatedAt = now;
       }
       const ownerId = user.id;
       const hasBiz = db.businesses.some((b) => b.ownerId === ownerId || (payload.bid && b.id === payload.bid));

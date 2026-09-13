@@ -3,6 +3,7 @@
  */
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
+import { isEphemeralStore } from "@/lib/store";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import {
   getPilotProfile,
@@ -26,6 +27,7 @@ export async function GET() {
       chosenIndex: suggestions?.chosenIndex ?? null,
       plan: plan?.content ?? "",
       progress,
+      ephemeralStore: isEphemeralStore(),
     });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);

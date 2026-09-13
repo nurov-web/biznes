@@ -28,6 +28,9 @@ export type UserRow = {
   phoneVerified: boolean;
   role: string;
   offerAccepted: boolean;
+  /** Рӯзи лимити AI (YYYY-MM-DD). */
+  aiCallsDate: string;
+  aiCallsCount: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -471,7 +474,11 @@ function hydrate(raw: Partial<Database>): Database {
   return {
     ...EMPTY,
     ...raw,
-    users: raw.users ?? [],
+    users: (raw.users ?? []).map((user) => ({
+      ...user,
+      aiCallsDate: user.aiCallsDate ?? "",
+      aiCallsCount: typeof user.aiCallsCount === "number" ? user.aiCallsCount : 0,
+    })),
     smsCodes: raw.smsCodes ?? [],
     products: raw.products ?? [],
     movements: raw.movements ?? [],
@@ -629,6 +636,10 @@ function mergeSnapshots(local: Database, remote: Database): Database {
     channelLinks: mergeRows(local.channelLinks, remote.channelLinks),
     aiReports: mergeRows(local.aiReports, remote.aiReports),
     smsCodes: mergeRows(local.smsCodes, remote.smsCodes),
+    pilotProfiles: mergeRows(local.pilotProfiles, remote.pilotProfiles),
+    pilotSuggestions: mergeRows(local.pilotSuggestions, remote.pilotSuggestions),
+    pilotPlans: mergeRows(local.pilotPlans, remote.pilotPlans),
+    pilotCourse: mergeRows(local.pilotCourse, remote.pilotCourse),
   };
 }
 

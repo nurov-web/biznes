@@ -7,8 +7,6 @@ import {
   assertAuthConfigured,
   findUserByLogin,
   JWT_NOT_CONFIGURED,
-  readAuthPayload,
-  restoreAccountFromPayload,
   stampAuthCookies,
   verifyPassword,
 } from "@/lib/auth";
@@ -17,8 +15,7 @@ import { clientIp } from "@/lib/client-ip";
 import { originForbidden } from "@/lib/origin";
 import { rateLimit } from "@/lib/rate-limit";
 import { normalizePhone } from "@/lib/phone";
-import { nowIso, readDb, type UserRow } from "@/lib/store";
-import type { Role } from "@/constants";
+import { readDb, type UserRow } from "@/lib/store";
 import { getPilotProfile } from "@/services/pilot";
 
 export const dynamic = "force-dynamic";
@@ -64,32 +61,7 @@ export async function POST(request: Request) {
   try {
     assertAuthConfigured();
     const db = await readDb();
-    let user = findUserByLogin(db.users, email, phone);
-
-    if (!user) {
-      const saved = await readAuthPayload();
-      const loginMatches =
-        saved &&
-        ((saved.email && saved.email === email) ||
-          (phone.length >= 10 && saved.phone === phone));
-      if (loginMatches && saved.ph && (await verifyPassword(parsed.data.password, saved.ph))) {
-        user =
-          (await restoreAccountFromPayload(saved)) ??
-          ({
-            id: saved.sub,
-            firstName: saved.firstName || "",
-            lastName: saved.lastName || "",
-            email: saved.email || email,
-            phone: saved.phone || phone,
-            passwordHash: saved.ph,
-            phoneVerified: false,
-            offerAccepted: true,
-            role: saved.role as Role,
-            createdAt: nowIso(),
-            updatedAt: nowIso(),
-          } satisfies UserRow);
-      }
-    }
+    const user = findUserByLogin(db.users, email, phone);
 
     if (!user) return jsonError("invalid_credentials", 401);
     const ok = await verifyPassword(parsed.data.password, user.passwordHash);

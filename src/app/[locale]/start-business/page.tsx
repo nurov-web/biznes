@@ -33,7 +33,11 @@ export default function StartBusinessPage() {
         body: JSON.stringify({ locale, interests, budget, time, skills, region }),
       });
       if (response.status === 401) {
-        router.push("/register");
+        router.push("/register?next=/start-business");
+        return;
+      }
+      if (response.status === 429) {
+        setError(t("rateLimit"));
         return;
       }
       if (!response.ok) {

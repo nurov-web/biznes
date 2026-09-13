@@ -103,25 +103,28 @@ export function MarketingHeader({ tone = "light" }: Props) {
           </MotionLink>
         </nav>
 
-        <button
-          type="button"
-          data-nav="toggle"
-          className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl border shadow-[var(--shadow-xs)] md:hidden ${
-            dark
-              ? "border-white/15 bg-white/10 text-white"
-              : "border-border bg-white text-ink"
-          }`}
-          aria-label={open ? t("closeMenu") : t("menu")}
-          aria-expanded={open}
-          aria-controls="mobile-site-menu"
-          onClick={() => setOpen((value) => !value)}
-        >
-          {open ? (
-            <X className="h-5 w-5" strokeWidth={1.75} aria-hidden />
-          ) : (
-            <Menu className="h-5 w-5" strokeWidth={1.75} aria-hidden />
-          )}
-        </button>
+        <div className="flex shrink-0 items-center gap-1 md:hidden">
+          <LanguageSwitch className={dark ? "seg-on-dark" : undefined} />
+          <button
+            type="button"
+            data-nav="toggle"
+            className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl border shadow-[var(--shadow-xs)] ${
+              dark
+                ? "border-white/15 bg-white/10 text-white"
+                : "border-border bg-white text-ink"
+            }`}
+            aria-label={open ? t("closeMenu") : t("menu")}
+            aria-expanded={open}
+            aria-controls="mobile-site-menu"
+            onClick={() => setOpen((value) => !value)}
+          >
+            {open ? (
+              <X className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+            ) : (
+              <Menu className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+            )}
+          </button>
+        </div>
       </div>
 
       {open ? (
@@ -133,10 +136,6 @@ export function MarketingHeader({ tone = "light" }: Props) {
           }`}
         >
           <div className="gutter-x mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-2 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-            <p className={`text-xs font-medium ${dark ? "text-dark-muted" : "text-muted-foreground"}`}>
-              {t("language")}
-            </p>
-            <LanguageSwitch className={`flex w-full ${dark ? "seg-on-dark" : ""}`} />
             <MotionLink href="/login" className={`btn w-full ${dark ? "btn-dark" : "btn-ghost"}`}>
               {t("login")}
             </MotionLink>

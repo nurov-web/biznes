@@ -6,6 +6,7 @@ import { getSessionUser, readAuthPayload } from "@/lib/auth";
 import { getOwnedBusiness } from "@/lib/business";
 import { jsonError } from "@/lib/api-error";
 import { getPilotProfile } from "@/services/pilot";
+import { isEphemeralStore } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,7 @@ export async function GET() {
       user,
       business,
       hasPilotProfile: Boolean(pilot),
+      ephemeralStore: isEphemeralStore(),
       pilot: pilot
         ? { product: pilot.product, region: pilot.region, kind: pilot.kind }
         : null,

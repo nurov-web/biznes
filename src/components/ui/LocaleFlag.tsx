@@ -16,7 +16,7 @@ export function LocaleFlag({ locale }: Props) {
 
 function FlagFrame({ children }: { children: ReactNode }) {
   return (
-    <svg viewBox="0 0 22 15" width="22" height="15" className="block overflow-hidden rounded-[3px] shadow-[0_0_0_1px_rgb(18_20_26/0.16)]">
+    <svg viewBox="0 0 22 15" width="24" height="16" className="block overflow-hidden rounded-[2px]">
       {children}
     </svg>
   );

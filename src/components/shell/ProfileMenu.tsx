@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { ChevronDown, LogOut, Settings, UserRound } from "lucide-react";
+import { LogOut, Settings, UserRound } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { EASE, gsap, reducedMotion } from "@/lib/gsap";
 
@@ -10,6 +11,7 @@ type Props = {
   firstName: string;
   lastName: string;
   businessName: string;
+  email?: string;
   onLogout: () => void;
   onDark?: boolean;
 };
@@ -18,25 +20,59 @@ function initials(first: string, last: string): string {
   return `${first.slice(0, 1)}${last.slice(0, 1)}`.toUpperCase();
 }
 
-export function ProfileMenu({ firstName, lastName, businessName, onLogout, onDark }: Props) {
+/** Менюи ҳисоб: сиёҳи дафтар, на корти кремии кӯдакона. */
+export function ProfileMenu({
+  firstName,
+  lastName,
+  businessName,
+  email,
+  onLogout,
+  onDark,
+}: Props) {
   const t = useTranslations("nav");
   const th = useTranslations("navHints");
   const tp = useTranslations("profilePage");
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [pos, setPos] = useState({ top: 0, right: 12 });
   const panel = useRef<HTMLDivElement>(null);
+  const btn = useRef<HTMLButtonElement>(null);
   const root = useRef<HTMLDivElement>(null);
+  const name = `${firstName} ${lastName}`.trim();
+  const mark = initials(firstName, lastName);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  function place(): void {
+    const node = btn.current;
+    if (!node) return;
+    const box = node.getBoundingClientRect();
+    setPos({
+      top: box.bottom + 10,
+      right: Math.max(12, window.innerWidth - box.right),
+    });
+  }
 
   useEffect(() => {
     if (!open) return;
+    place();
     const onDoc = (event: MouseEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (root.current?.contains(target) || panel.current?.contains(target)) return;
+      setOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
     return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
     };
@@ -52,90 +88,98 @@ export function ProfileMenu({ firstName, lastName, businessName, onLogout, onDar
     const ctx = gsap.context(() => {
       gsap.fromTo(
         node,
-        { opacity: 0, y: 8, scale: 0.97 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.28, ease: EASE },
+        { opacity: 0, y: 8, scale: 0.98 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.26, ease: EASE },
       );
     }, node);
     return () => ctx.revert();
   }, [open]);
 
+  const menu = open ? (
+    <div
+      ref={panel}
+      role="menu"
+      aria-label={tp("openMenu")}
+      className="account-menu fixed z-[80]"
+      style={{ top: pos.top, right: pos.right }}
+    >
+      <div className="flex items-center gap-3 px-2.5 py-2.5">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white/10 text-[13px] font-semibold tracking-wide text-white">
+          {mark}
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-white">{name}</p>
+          <p className="truncate text-[12px] text-dark-muted">{businessName || email}</p>
+        </div>
+      </div>
+      <div className="mx-2 my-1 h-px bg-white/10" />
+      <Link
+        href="/profile"
+        role="menuitem"
+        className="account-menu-item"
+        onClick={() => setOpen(false)}
+      >
+        <UserRound className="h-4 w-4 text-dark-muted" strokeWidth={1.75} aria-hidden />
+        {t("profile")}
+      </Link>
+      <Link
+        href="/settings"
+        role="menuitem"
+        className="account-menu-item"
+        onClick={() => setOpen(false)}
+      >
+        <Settings className="h-4 w-4 text-dark-muted" strokeWidth={1.75} aria-hidden />
+        {t("settings")}
+      </Link>
+      <div className="mx-2 my-1 h-px bg-white/10" />
+      <button
+        type="button"
+        role="menuitem"
+        title={th("logout")}
+        className="account-menu-item account-menu-item-danger"
+        onClick={() => {
+          setOpen(false);
+          onLogout();
+        }}
+      >
+        <LogOut className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+        {t("logout")}
+      </button>
+    </div>
+  ) : null;
+
   return (
     <div ref={root} className="relative">
       <button
+        ref={btn}
         type="button"
-        className={`flex min-h-11 max-w-full items-center gap-2 rounded-lg px-1.5 py-1 text-left ${
-          onDark ? "hover:bg-white/5" : "hover:bg-muted"
-        }`}
+        className={
+          onDark
+            ? "account-face"
+            : `flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg px-1.5 hover:bg-muted ${
+                open ? "bg-muted" : ""
+              }`
+        }
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={tp("openMenu")}
         onClick={() => setOpen((value) => !value)}
       >
-        <span
-          className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg text-xs font-semibold ${
-            onDark ? "bg-white/10 text-white" : "bg-ink text-white"
-          }`}
-        >
-          {initials(firstName, lastName)}
-        </span>
-        <span className="hidden min-w-0 sm:grid">
-          <span
-            className={`truncate text-sm font-medium leading-tight ${onDark ? "text-white" : ""}`}
-          >
-            {firstName} {lastName}
-          </span>
-          <span className={`truncate text-[11px] ${onDark ? "text-dark-muted" : "text-muted-foreground"}`}>
-            {businessName}
-          </span>
-        </span>
-        <ChevronDown
-          className={`hidden h-4 w-4 shrink-0 sm:block ${onDark ? "text-dark-muted" : "text-muted-foreground"} ${
-            open ? "rotate-180" : ""
-          }`}
-          strokeWidth={1.75}
-          aria-hidden
-        />
+        {onDark ? (
+          mark
+        ) : (
+          <>
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-ink text-[11px] font-semibold tracking-wide text-white">
+              {mark}
+            </span>
+            <span className="hidden min-w-0 lg:grid">
+              <span className="truncate text-sm font-medium leading-tight">{name}</span>
+              <span className="truncate text-[11px] text-muted-foreground">{businessName}</span>
+            </span>
+          </>
+        )}
       </button>
-
-      {open ? (
-        <div
-          ref={panel}
-          role="menu"
-          className="absolute right-0 z-40 mt-2 w-64 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl border border-border bg-card py-1.5 shadow-[var(--shadow-md)]"
-        >
-          <Link
-            href="/profile"
-            role="menuitem"
-            className="flex min-h-11 items-center gap-2.5 px-3 text-sm hover:bg-muted"
-            onClick={() => setOpen(false)}
-          >
-            <UserRound className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} aria-hidden />
-            {t("profile")}
-          </Link>
-          <Link
-            href="/settings"
-            role="menuitem"
-            className="flex min-h-11 items-center gap-2.5 px-3 text-sm hover:bg-muted"
-            onClick={() => setOpen(false)}
-          >
-            <Settings className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} aria-hidden />
-            {t("settings")}
-          </Link>
-          <button
-            type="button"
-            role="menuitem"
-            title={th("logout")}
-            className="flex min-h-11 w-full items-center gap-2.5 px-3 text-left text-sm text-destructive hover:bg-muted"
-            onClick={() => {
-              setOpen(false);
-              onLogout();
-            }}
-          >
-            <LogOut className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-            {t("logout")}
-          </button>
-        </div>
-      ) : null}
+      {mounted && menu ? createPortal(menu, document.body) : menu}
     </div>
   );
 }

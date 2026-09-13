@@ -75,7 +75,11 @@ export default function HasBusinessPage() {
         }),
       });
       if (response.status === 401) {
-        router.push("/register");
+        router.push("/register?next=/has-business");
+        return;
+      }
+      if (response.status === 429) {
+        setError(t("rateLimit"));
         return;
       }
       if (!response.ok) {

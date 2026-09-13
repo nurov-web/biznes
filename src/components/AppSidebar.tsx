@@ -158,15 +158,13 @@ export function MobileNav() {
   const th = useTranslations("navHints");
   const pathname = usePathname();
   const index = MOBILE.findIndex((item) => isActive(pathname, item.href));
-  const width = 100 / MOBILE.length;
 
   return (
-    <nav className="app-dock fixed inset-x-0 bottom-0 z-30 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
-      <div className="relative">
+    <nav className="app-dock fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 md:hidden">
+      <div className="relative p-1">
         <span
-          className="pointer-events-none absolute top-0 h-0.5 rounded-full bg-primary transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+          className="app-dock-pill"
           style={{
-            width: `${width}%`,
             transform: `translateX(${Math.max(index, 0) * 100}%)`,
             opacity: index < 0 ? 0 : 1,
           }}
@@ -181,9 +179,9 @@ export function MobileNav() {
                   href={item.href}
                   title={th(item.key as "dashboard")}
                   aria-current={active ? "page" : undefined}
-                  className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-2 text-[11px] font-medium leading-tight"
+                  className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 py-1.5 text-[10px] font-medium leading-tight tracking-wide"
                 >
-                  <item.icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+                  <item.icon className="h-5 w-5" strokeWidth={active ? 2 : 1.75} aria-hidden />
                   <span className="max-w-full truncate px-0.5 text-center">{t(item.key as "dashboard")}</span>
                 </Link>
               </li>

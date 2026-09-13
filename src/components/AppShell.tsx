@@ -6,6 +6,7 @@ import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { AppSidebar, MobileNav } from "@/components/AppSidebar";
 import { ProfileMenu } from "@/components/shell/ProfileMenu";
 import { EntryVeil } from "@/components/motion/EntryVeil";
+import { EphemeralStoreBanner } from "@/components/dashboard/EphemeralStoreBanner";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { clearEntrySplash, markLoggedOut } from "@/lib/splash";
 import { saveRememberedLogin } from "@/lib/remember-login";
@@ -15,6 +16,7 @@ type Me = {
   user: { firstName: string; lastName: string; email: string; phoneVerified: boolean };
   business: { onboardingDone: boolean; name: string; city: string } | null;
   hasPilotProfile?: boolean;
+  ephemeralStore?: boolean;
   pilot?: { product: string; region: string } | null;
 };
 
@@ -115,19 +117,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {me.pilot?.region || me.business?.city}
               </p>
             </div>
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <LanguageSwitch className="seg-on-dark" />
+            <div className="account-cluster">
+              <LanguageSwitch className="seg-on-dark seg-bare" />
+              <span className="account-cluster-rule" aria-hidden />
               <ProfileMenu
                 firstName={me.user.firstName}
                 lastName={me.user.lastName}
                 businessName={me.pilot?.product ?? me.business?.name ?? ""}
+                email={me.user.email}
                 onDark
                 onLogout={() => void logout()}
               />
             </div>
           </div>
         </header>
-        <div className="min-w-0 flex-1">{children}</div>
+        <div className="min-w-0 flex-1 pb-[calc(6.25rem+env(safe-area-inset-bottom))] md:pb-0">
+          {me.ephemeralStore ? (
+            <div className="gutter-x pt-4">
+              <EphemeralStoreBanner show />
+            </div>
+          ) : null}
+          {children}
+        </div>
+        <MobileNav />
       </div>
     );
   }
@@ -142,19 +154,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <p className="truncate text-sm font-semibold tracking-tight text-white">{me.business?.name}</p>
               <p className="truncate text-xs text-dark-muted">{me.business?.city}</p>
             </div>
-            <div className="flex w-max max-w-full flex-none items-center justify-end gap-1.5 sm:gap-2">
-              <LanguageSwitch className="seg-on-dark" />
+            <div className="account-cluster">
+              <LanguageSwitch className="seg-on-dark seg-bare" />
+              <span className="account-cluster-rule" aria-hidden />
               <ProfileMenu
                 firstName={me.user.firstName}
                 lastName={me.user.lastName}
                 businessName={me.business?.name ?? ""}
+                email={me.user.email}
                 onDark
                 onLogout={() => void logout()}
               />
             </div>
           </div>
         </header>
-        <div className="min-w-0 flex-1 overflow-x-clip pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
+        <div className="min-w-0 flex-1 overflow-x-clip pb-[calc(6.25rem+env(safe-area-inset-bottom))] md:pb-0">
+          {me.ephemeralStore ? (
+            <div className="gutter-x pt-4">
+              <EphemeralStoreBanner show />
+            </div>
+          ) : null}
           {children}
         </div>
       </div>

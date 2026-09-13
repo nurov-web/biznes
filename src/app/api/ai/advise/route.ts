@@ -5,7 +5,8 @@ import { z } from "zod";
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { requireBusiness } from "@/lib/business";
-import { isUnauthorized, jsonError } from "@/lib/api-error";
+import { jsonError, isUnauthorized } from "@/lib/api-error";
+import { consumeAiQuota } from "@/lib/ai-quota";
 import { completeClaude } from "@/services/ai/claude";
 import { businessSystemPrompt } from "@/services/ai/business-system";
 import { readDb } from "@/lib/store";
@@ -20,6 +21,7 @@ const schema = z.object({
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
+    if (!(await consumeAiQuota(user.id))) return jsonError("rate", 429);
     const business = await requireBusiness(user.id);
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) return jsonError("validation", 400);

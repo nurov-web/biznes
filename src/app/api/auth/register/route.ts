@@ -9,13 +9,13 @@ import {
   findUserByLogin,
   hashPassword,
   JWT_NOT_CONFIGURED,
-  readAuthPayload,
-  restoreAccountFromPayload,
   stampAuthCookies,
   verifyPassword,
 } from "@/lib/auth";
 import { jsonError } from "@/lib/api-error";
 import { originForbidden } from "@/lib/origin";
+import { rateLimit } from "@/lib/rate-limit";
+import { clientIp } from "@/lib/client-ip";
 import { normalizePhone } from "@/lib/phone";
 import { newId, nowIso, readDb, StoreWriteError, withDb, type UserRow } from "@/lib/store";
 
@@ -57,6 +57,9 @@ async function signedIn(user: UserRow): Promise<NextResponse> {
 
 export async function POST(request: Request) {
   if (originForbidden(request)) return jsonError("forbidden", 403);
+  if (!rateLimit(`register:${clientIp(request)}`, 5, 15 * 60_000)) {
+    return jsonError("rate", 429);
+  }
   let json: unknown;
   try {
     json = await request.json();
@@ -78,27 +81,6 @@ export async function POST(request: Request) {
 
   try {
     assertAuthConfigured();
-    const saved = await readAuthPayload();
-    if (saved && (saved.email === email || saved.phone === phone)) {
-      if (saved.ph && (await verifyPassword(data.password, saved.ph))) {
-        const user = (await restoreAccountFromPayload(saved)) ?? {
-          id: saved.sub,
-          firstName: saved.firstName || data.firstName,
-          lastName: saved.lastName || data.lastName,
-          email,
-          phone,
-          passwordHash: saved.ph,
-          phoneVerified: false,
-          offerAccepted: true,
-          role: saved.role,
-          createdAt: nowIso(),
-          updatedAt: nowIso(),
-        };
-        return signedIn(user);
-      }
-      return jsonError("user_exists", 409);
-    }
-
     const db = await readDb();
     const existing = findUserByLogin(db.users, email, phone);
     if (existing) {
@@ -119,6 +101,8 @@ export async function POST(request: Request) {
       phoneVerified: false,
       offerAccepted: true,
       role: "owner",
+      aiCallsDate: "",
+      aiCallsCount: 0,
       createdAt: now,
       updatedAt: now,
     };
