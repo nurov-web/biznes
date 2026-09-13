@@ -22,9 +22,7 @@ export function TrustBand() {
           <ul className="mt-4 space-y-3">
             {isKeys.map((k) => (
               <li key={k} className="flex min-w-0 gap-3 text-sm leading-relaxed">
-                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-[#e7f6ee] text-success">
-                  <Check className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
-                </span>
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" strokeWidth={1.75} aria-hidden />
                 <span className="min-w-0">{t(k)}</span>
               </li>
             ))}
@@ -35,9 +33,7 @@ export function TrustBand() {
           <ul className="mt-4 space-y-3">
             {notKeys.map((k) => (
               <li key={k} className="flex min-w-0 gap-3 text-sm leading-relaxed text-muted-foreground">
-                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-[#fdeceb] text-destructive">
-                  <X className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
-                </span>
+                <X className="mt-0.5 h-4 w-4 shrink-0 text-destructive" strokeWidth={1.75} aria-hidden />
                 <span className="min-w-0">{t(k)}</span>
               </li>
             ))}

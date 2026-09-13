@@ -11,6 +11,8 @@ export const LOGIN_HINT_COOKIE = "bp_login";
 
 /** Як маротиба дар ҷаласа: интро пас аз вуруд. */
 export const SPLASH_SESSION_KEY = "bp_entry_splash";
+/** Пас аз «Баромад» — саҳифаи вуруд худкор боз дарун накунад. */
+export const LOGOUT_FLAG = "bp_logged_out";
 
 export const ROLES = ["owner", "manager", "cashier"] as const;
 export type Role = (typeof ROLES)[number];

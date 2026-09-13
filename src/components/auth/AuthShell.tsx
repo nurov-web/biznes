@@ -49,7 +49,7 @@ export function AuthShell({ title, lead, children, footer, points }: Props) {
   }, []);
 
   return (
-    <div ref={root} className="grid min-h-screen min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+    <div ref={root} className="grid min-h-screen min-w-0 bg-background lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <div className="gutter-x flex min-w-0 flex-col py-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/" className="flex min-w-0 items-center gap-2 text-[0.9375rem] font-semibold tracking-tight">
@@ -69,8 +69,12 @@ export function AuthShell({ title, lead, children, footer, points }: Props) {
         </div>
       </div>
 
-      <aside className="section-dark relative hidden overflow-hidden lg:block">
-        <div className="pointer-events-none absolute inset-0 glow-primary" />
+      <aside className="hero-ink relative hidden overflow-hidden lg:block">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 glow-primary" />
+          <div className="absolute -left-24 top-24 h-72 w-72 rounded-full bg-primary/25 blur-3xl" />
+          <div className="absolute -right-16 bottom-10 h-64 w-64 rounded-full bg-dark-accent/20 blur-3xl" />
+        </div>
         <div
           data-auth-panel
           className="relative flex h-full flex-col justify-center gap-6 px-12 py-16"

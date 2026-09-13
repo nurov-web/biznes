@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useLocale } from "next-intl";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { AppSidebar, MobileNav } from "@/components/AppSidebar";
 import { ProfileMenu } from "@/components/shell/ProfileMenu";
 import { EntryVeil } from "@/components/motion/EntryVeil";
 import { useRouter } from "@/i18n/navigation";
-import { clearEntrySplash } from "@/lib/splash";
+import { clearEntrySplash, markLoggedOut } from "@/lib/splash";
 import { saveRememberedLogin } from "@/lib/remember-login";
+import { LOGOUT_FLAG } from "@/constants";
 
 type Me = {
   user: { firstName: string; lastName: string; email: string; phoneVerified: boolean };
@@ -18,6 +20,7 @@ const ME_KEY = "bp_me_cache";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const locale = useLocale();
   const routerRef = useRef(router);
   routerRef.current = router;
   const [me, setMe] = useState<Me | null>(null);
@@ -25,10 +28,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     try {
-      const raw = sessionStorage.getItem(ME_KEY);
-      if (raw) {
-        const cached = JSON.parse(raw) as Me;
-        if (cached?.user) setMe(cached);
+      if (sessionStorage.getItem(LOGOUT_FLAG) === "1") {
+        sessionStorage.removeItem(ME_KEY);
+      } else {
+        const raw = sessionStorage.getItem(ME_KEY);
+        if (raw) {
+          const cached = JSON.parse(raw) as Me;
+          if (cached?.user) setMe(cached);
+        }
       }
     } catch {
       /* холӣ */
@@ -64,9 +71,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   async function logout() {
     clearEntrySplash();
+    markLoggedOut();
     sessionStorage.removeItem(ME_KEY);
-    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-    router.replace("/login");
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include", cache: "no-store" });
+    window.location.assign(`/${locale}/login`);
   }
 
   if (!me) {

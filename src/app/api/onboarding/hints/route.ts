@@ -58,7 +58,11 @@ export async function POST(request: Request) {
     if (!parsed.success) return jsonError("validation", 400);
     const data = parsed.data;
     const locale = parseLocale(data.locale);
-    const market = localMarketBrief(data.city || "Душанбе", data.type, locale, data.typeNote || data.name);
+    const goal = [data.typeNote, data.name, ...data.products.map((p) => p.model || p.category)]
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join(" ");
+    const market = localMarketBrief(data.city || "Душанбе", data.type, locale, goal);
     const sku = market.prices.find((p) => p.verdict === "good") ?? market.prices[0];
     const fallback = sku
       ? [

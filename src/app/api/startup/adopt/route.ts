@@ -8,7 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { requireBusiness } from "@/lib/business";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { addAudit, addMemory } from "@/services/intelligence/persist";
-import { businessTypeForNiche, detectNiche } from "@/lib/niche";
+import { businessTypeForNiche, detectNiche, optionFitsOwnerGoal } from "@/lib/niche";
 import { newId, nowIso, readDb, withDb } from "@/lib/store";
 
 const schema = z.object({
@@ -31,23 +31,40 @@ export async function POST(request: Request) {
     const option = plan.options[parsed.data.optionIndex];
     if (!option) return jsonError("not_found", 404);
 
+    const optionText = [option.name, ...option.products.map((p) => p.name)].join(" ");
+    const drifted = !optionFitsOwnerGoal(plan.goal, optionText);
+    const goodsName = (plan.goal.trim() || option.name).slice(0, 80);
+    const products = drifted
+      ? [
+          {
+            name: goodsName,
+            supplier: "Бозор / оптом",
+            buyPrice: 4,
+            sellPrice: 7,
+            quantity: 40,
+          },
+        ]
+      : option.products;
+    const shopName = drifted ? goodsName : option.name;
+    const niche = detectNiche(plan.goal);
+
     const now = nowIso();
     const added = await withDb((db) => {
       const row = db.businesses.find((b) => b.id === business.id);
       if (row) {
-        row.name = option.name;
+        row.name = shopName;
         row.goal = plan.goal || row.goal;
-        row.typeNote = plan.goal || option.name;
-        row.type = businessTypeForNiche(detectNiche(plan.goal, option.name));
+        row.typeNote = plan.goal || shopName;
+        row.type = businessTypeForNiche(niche === "general" ? detectNiche(plan.goal, shopName) : niche);
         row.updatedAt = now;
       }
       let n = 0;
-      for (const item of option.products) {
+      for (const item of products) {
         if (!item.name || item.buyPrice <= 0) continue;
         db.products.push({
           id: newId(),
           businessId: business.id,
-          category: option.name.slice(0, 80),
+          category: shopName.slice(0, 80),
           brand: item.supplier.slice(0, 80) || "—",
           model: item.name.slice(0, 120),
           buyPriceMin: item.buyPrice,
@@ -65,7 +82,7 @@ export async function POST(request: Request) {
       return n;
     });
 
-    await addMemory(business.id, "plan_adopted", option.name.slice(0, 120), {
+    await addMemory(business.id, "plan_adopted", shopName.slice(0, 120), {
       planId: plan.id,
       monthlyProfit: option.monthlyProfit,
       breakEvenMonths: option.breakEvenMonths,

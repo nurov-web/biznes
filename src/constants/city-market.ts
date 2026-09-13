@@ -4,7 +4,7 @@
  */
 import type { MarketBrief, MarketSkuHint } from "@/types";
 import type { Locale } from "@/lib/locale-query";
-import { detectNiche, nicheLabel, type NicheId } from "@/lib/niche";
+import { detectNiche, nicheLabel, optionFitsOwnerGoal, type NicheId } from "@/lib/niche";
 import { tajikIncludes } from "@/lib/tajik-text";
 
 type CityId = "dushanbe" | "khujand" | "bokhtar" | "kulob" | "other";
@@ -58,6 +58,9 @@ const NICHE_SKUS: Record<NicheId, MarketSkuHint[]> = {
     sku("Курткаи мавсимӣ", "Либос", 220, 340, "watch", "Берун аз мавсим фурӯш қатъ мешавад."),
   ],
   food: [
+    sku("Себ (кг)", "Мева", 4, 7, "good", "Гардиши зуд. Вайроншавиро ҳисоб кунед, на танҳо нархи харид."),
+    sku("Ангур / меваи мавсимӣ (кг)", "Мева", 6, 10, "good", "Мавсимӣ. Партияи калон пулро банд мекунад."),
+    sku("Сабзавоти рӯз (кг)", "Сабзавот", 3, 5, "good", "Ҳар рӯз харида мешавад, агар тоза бошад."),
     sku("Қаҳва (дона, кг)", "Хӯрок", 190, 520, "good", "Маржа баланд, агар ҷой ва ҷараёни одамон бошад."),
     sku("Нони рӯз", "Хӯрок", 3, 5, "good", "Гардиши ҳаррӯза, бе tajribаи калон."),
     sku("Шир / нӯшокӣ", "Хӯрок", 9, 14, "watch", "Муддати кӯтоҳ — хароҷоти вайроншавӣ ҳисоб кунед."),
@@ -207,11 +210,30 @@ export function localMarketBrief(
   goal?: string,
 ): MarketBrief {
   const id = cityId(city);
-  const niche = detectNiche(goal, type);
-  const prices = scalePrices(NICHE_SKUS[niche], id);
   const climate: MarketBrief["climate"] =
     id === "dushanbe" ? "mixed" : id === "khujand" ? "mixed" : "hard";
-  const label = nicheLabel(niche, locale);
+  const ownerNiche = detectNiche(goal);
+  const niche = ownerNiche !== "general" ? ownerNiche : detectNiche(goal, type);
+  const canned = scalePrices(NICHE_SKUS[niche], id);
+  const named = goal?.trim().slice(0, 80) ?? "";
+  const own =
+    named.length > 0
+      ? sku(
+          named,
+          nicheLabel(niche, locale),
+          8,
+          14,
+          "good",
+          copy(locale, {
+            tg: `Ин моли шумост («${named}»). Нархи харидро бо роҳ худатон нависед — ин ориентир аст, на нарх аз бозор.`,
+            ru: `Это ваш товар («${named}»). Цену закупа с дорогой впишите сами — это ориентир, не цена с рынка.`,
+            en: `This is your goods («${named}»). Enter buy + freight yourself — this is an orienter, not a live market price.`,
+          }),
+        )
+      : null;
+  const rest = named ? canned.filter((row) => optionFitsOwnerGoal(named, `${row.name} ${row.category}`)) : canned;
+  const prices = own ? [own, ...rest].slice(0, 6) : rest;
+  const label = named || nicheLabel(niche, locale);
 
   return {
     city,

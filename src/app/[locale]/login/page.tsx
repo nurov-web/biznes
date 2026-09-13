@@ -7,6 +7,7 @@ import { FormErrorSummary } from "@/components/FormErrorSummary";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { EntryVeil } from "@/components/motion/EntryVeil";
 import { readRememberedLogin, saveRememberedLogin } from "@/lib/remember-login";
+import { consumeLoggedOut } from "@/lib/splash";
 
 export default function LoginPage() {
   const t = useTranslations("auth");
@@ -23,6 +24,7 @@ export default function LoginPage() {
   useEffect(() => {
     const saved = readRememberedLogin();
     if (saved) setLogin(saved);
+    if (consumeLoggedOut()) return;
     let cancelled = false;
     fetch("/api/auth/me", { credentials: "include", cache: "no-store" })
       .then((r) => {

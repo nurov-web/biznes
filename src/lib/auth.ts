@@ -90,6 +90,23 @@ function cookieBase(maxAge: number, httpOnly = true) {
   };
 }
 
+/** Ҳамон path/secure, ки ҳангоми сабт — вагарна браузер кукиро намепошад. */
+function cookieExpire(httpOnly = true) {
+  return {
+    httpOnly,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+    expires: new Date(0),
+  };
+}
+
+function expireAuthCookiesOnStore(store: Awaited<ReturnType<typeof cookies>>): void {
+  store.set(SESSION_COOKIE, "", cookieExpire());
+  store.set(ACCOUNT_COOKIE, "", cookieExpire());
+}
+
 export async function signSession(payload: SessionPayload): Promise<string> {
   return new SignJWT({
     role: payload.role,
@@ -229,11 +246,12 @@ export async function setSessionCookie(
 
 export async function clearSessionCookie(): Promise<void> {
   const store = await cookies();
-  store.delete(SESSION_COOKIE);
+  expireAuthCookiesOnStore(store);
 }
 
 export function clearSessionOnResponse(res: NextResponse): void {
-  res.cookies.delete(SESSION_COOKIE);
+  res.cookies.set(SESSION_COOKIE, "", cookieExpire());
+  res.cookies.set(ACCOUNT_COOKIE, "", cookieExpire());
 }
 
 export async function readAuthPayload(): Promise<SessionPayload | null> {

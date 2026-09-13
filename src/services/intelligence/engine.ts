@@ -9,7 +9,7 @@ import type {
 
 import type { Locale } from "@/lib/locale-query";
 import { cityId } from "@/constants/city-market";
-import { detectNiche, nicheLabel, ownerFocusText } from "@/lib/niche";
+import { detectOwnerNiche, nicheLabel, ownerFocusText } from "@/lib/niche";
 
 export type { Locale };
 
@@ -201,7 +201,12 @@ export function buildIntelligence(
   const catalogText = products
     .map((p) => `${p.category} ${p.brand} ${p.model}`)
     .join(" ");
-  const niche = detectNiche(focus, business.type, catalogText);
+  const niche = detectOwnerNiche({
+    goal: business.goal,
+    typeNote: business.typeNote,
+    name: business.name,
+    catalog: catalogText,
+  });
   const marketSize = Math.round(typeBase(business.type, niche) * cityK * season.factor);
   const nicheName = nicheLabel(niche, locale);
 

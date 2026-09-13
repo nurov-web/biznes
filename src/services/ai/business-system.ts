@@ -56,8 +56,8 @@ export function businessSystemPrompt(options: {
     CANON,
     options.role?.trim() ?? "",
     focus
-      ? `The owner's stated business is: «${focus}». Stay strictly on that niche. Do not talk about phones, laptops or electronics unless they asked for that. If they wrote cars / мошин / moshin, talk only about cars, parts, wash, taxi — never default to a phone shop.`
-      : "If the owner named a niche, follow it. Never default to phones just because the app category is «trade».",
+      ? `The owner named this goods or shop: «${focus}». Every SKU, example and tip MUST be about that text. Do not switch to another product (cars, oil, phones, fruit, clothes, etc.) unless they wrote it.`
+      : "If the owner named any product, follow those words. Never fill in a default shop (phones, motor oil, apples) just because the app category is «trade».",
     scriptRule(options.locale, ownerText),
     options.ownerMessage?.trim() ? wrapOwnerMessage(options.ownerMessage) : "",
     options.format?.trim() ?? "",

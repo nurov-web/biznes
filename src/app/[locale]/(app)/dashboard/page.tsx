@@ -99,13 +99,14 @@ export default function DashboardPage() {
       title={t("dashTitle")}
       lead={t("dashLead")}
       action={
-        <button type="button" className="btn btn-primary" onClick={() => void decide()} disabled={busy}>
+        <button type="button" className="btn btn-primary" onClick={() => void decide()} disabled={busy} title={t("decideHint")}>
           <ClipboardCheck className="h-4 w-4" strokeWidth={1.75} aria-hidden />
           {busy ? t("running") : t("decide")}
         </button>
       }
     >
       <EphemeralStoreBanner show={ephemeral} />
+      <PurposeMap salesCount={data.salesCount} />
       <ImportHub onImported={() => void reload()} />
       <RescueBoard
         prices={data.prices}
@@ -116,7 +117,6 @@ export default function DashboardPage() {
       />
       <ChannelHub />
       <StockCountBoard prices={data.prices} inventory={data.inventory} />
-      <PurposeMap salesCount={data.salesCount} />
       <StoreGapBanner salesCount={data.salesCount} />
 
       <SellCoachCard

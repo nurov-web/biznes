@@ -21,10 +21,10 @@ export function Hero() {
     }
     const ctx = gsap.context(() => {
       gsap.from(items, {
-        y: 10,
-        duration: 0.45,
+        y: 14,
+        duration: 0.55,
         ease: EASE,
-        stagger: 0.06,
+        stagger: 0.07,
         clearProps: "transform",
       });
     }, node);
@@ -35,31 +35,31 @@ export function Hero() {
   }, []);
 
   return (
-    <section ref={root} className="hero-wash relative border-b border-border">
-      <div className="gutter-x relative mx-auto grid w-full min-w-0 max-w-6xl grid-cols-1 items-center gap-10 py-14 sm:py-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16 lg:py-24">
-        <div className="min-w-0 max-w-full">
-          <p data-hero className="chip border-primary/20 bg-primary-soft font-medium text-primary">
+    <section ref={root} className="relative min-w-0">
+      <div className="gutter-x relative mx-auto grid w-full min-w-0 max-w-6xl grid-cols-1 items-center gap-12 py-16 sm:py-24 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:gap-16 lg:py-28">
+        <div className="w-full min-w-0 max-w-full">
+          <p data-hero className="chip chip-dark font-medium text-dark-accent">
             {t("kicker")}
           </p>
-          <h1 data-hero className="display-1 mt-4 w-full max-w-xl text-ink">
+          <h1 data-hero className="display-1 mt-5 w-full max-w-xl text-balance text-white">
             {t("title")}
           </h1>
-          <p data-hero className="lead mt-5 w-full max-w-lg">
+          <p data-hero className="lead mt-5 w-full max-w-full text-dark-muted md:max-w-lg">
             {t("subtitle")}
           </p>
           <div
             data-hero
-            className="hero-actions mt-8 flex w-full min-w-0 flex-col gap-3 md:flex-row md:flex-wrap"
+            className="hero-actions mt-9 flex w-full min-w-0 flex-col gap-3 md:flex-row md:flex-wrap"
           >
-            <MotionLink href="/register" className="btn btn-primary w-full md:w-auto">
+            <MotionLink href="/register" className="btn btn-light w-full md:w-auto">
               {t("cta")}
               <ArrowRight className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
             </MotionLink>
-            <MotionLink href="/login" className="btn btn-ghost w-full md:w-auto">
+            <MotionLink href="/login" className="btn btn-dark w-full md:w-auto">
               {t("ctaLogin")}
             </MotionLink>
           </div>
-          <p data-hero className="mt-4 max-w-full text-sm text-muted-foreground">
+          <p data-hero className="mt-4 max-w-full text-sm text-dark-muted">
             {t("trial")}
           </p>
         </div>

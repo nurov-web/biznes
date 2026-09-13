@@ -70,10 +70,12 @@ function moreContains(pathname: string): boolean {
 
 function NavLink({ item, pathname, nested }: { item: Item; pathname: string; nested?: boolean }) {
   const t = useTranslations("nav");
+  const th = useTranslations("navHints");
   const active = isActive(pathname, item.href);
   return (
     <Link
       href={item.href}
+      title={th(item.key as "dashboard")}
       aria-current={active ? "page" : undefined}
       className={`group flex min-h-11 items-center gap-2.5 rounded-xl px-3 text-sm ${
         nested ? "pl-3" : ""
@@ -91,6 +93,7 @@ function NavLink({ item, pathname, nested }: { item: Item; pathname: string; nes
 
 export function AppSidebar() {
   const t = useTranslations("nav");
+  const th = useTranslations("navHints");
   const pathname = usePathname();
   const onMore = moreContains(pathname);
   const [open, setOpen] = useState(onMore);
@@ -145,6 +148,7 @@ export function AppSidebar() {
       </nav>
       <Link
         href="/profile"
+        title={th("profile")}
         className={`mx-3 mb-4 flex min-h-11 items-center gap-2.5 rounded-xl px-3 text-sm ${
           isActive(pathname, "/profile")
             ? "bg-primary-soft font-medium text-primary"
@@ -160,6 +164,7 @@ export function AppSidebar() {
 
 export function MobileNav() {
   const t = useTranslations("nav");
+  const th = useTranslations("navHints");
   const pathname = usePathname();
   const index = MOBILE.findIndex((item) => isActive(pathname, item.href));
   const width = 100 / MOBILE.length;
@@ -183,6 +188,7 @@ export function MobileNav() {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  title={th(item.key as "dashboard")}
                   aria-current={active ? "page" : undefined}
                   className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-2 text-[10px] leading-tight ${
                     active ? "text-primary" : "text-muted-foreground"

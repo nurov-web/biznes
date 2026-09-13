@@ -10,10 +10,12 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
   const { locale } = await params;
   setRequestLocale(locale);
   return (
-    <div className="flex min-h-screen w-full min-w-0 flex-col">
-      <MarketingHeader />
-      <main className="min-w-0 flex-1">
+    <div className="flex min-h-screen w-full min-w-0 flex-col bg-background">
+      <div className="hero-ink w-full min-w-0">
+        <MarketingHeader tone="dark" />
         <Hero />
+      </div>
+      <main className="min-w-0 flex-1">
         <PurposeSteps />
         <TrustBand />
         <CtaBand />

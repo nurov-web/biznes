@@ -19,6 +19,44 @@ export const NICHES = [
 
 export type NicheId = (typeof NICHES)[number];
 
+/** Мева / сабзавот — агар танҳо «себ» нависанд, ин хӯрок аст, на равғани мошин. */
+const PRODUCE_KEYS = [
+  "себ",
+  "seb",
+  "яблок",
+  "apple",
+  "мева",
+  "meva",
+  "фрукт",
+  "сабзавот",
+  "sabzavot",
+  "овощ",
+  "банан",
+  "banana",
+  "ангур",
+  "angur",
+  "виноград",
+  "нок",
+  "груш",
+  "pear",
+  "апельсин",
+  "мандарин",
+  "тарбуз",
+  "харбуз",
+  "арбуз",
+  "картошк",
+  "помидор",
+  "пиёз",
+  "сабзӣ",
+  "карам",
+  "хиёр",
+  "огурец",
+  "бодиринг",
+  "нон",
+  "хлеб",
+  "дастархон",
+];
+
 const RULES: { id: NicheId; keys: string[] }[] = [
   {
     id: "cars",
@@ -66,7 +104,24 @@ const RULES: { id: NicheId; keys: string[] }[] = [
   },
   {
     id: "food",
-    keys: ["хӯрок", "еда", "кафе", "кофе", "қаҳва", "food", "coffee", "ресторан", "оши", "xurok"],
+    keys: [
+      "хӯрок",
+      "еда",
+      "кафе",
+      "кофе",
+      "қаҳва",
+      "food",
+      "coffee",
+      "ресторан",
+      "оши",
+      "xurok",
+      "хӯроквор",
+      "grocery",
+      "produce",
+      "fruit",
+      "vegetable",
+      ...PRODUCE_KEYS,
+    ],
   },
   {
     id: "construction",
@@ -115,7 +170,7 @@ export function nicheLabel(id: NicheId, locale: Locale): string {
     cars: { tg: "мошин / запчаст", ru: "авто / запчасти", en: "cars / parts" },
     phones: { tg: "телефон ва гаҷет", ru: "телефоны и гаджеты", en: "phones and gadgets" },
     clothes: { tg: "либос", ru: "одежда", en: "clothing" },
-    food: { tg: "хӯрок / қаҳва", ru: "еда / кофе", en: "food / coffee" },
+    food: { tg: "мева / хӯрок", ru: "фрукты / еда", en: "fruit / food" },
     construction: { tg: "сохтмон", ru: "стройка", en: "construction" },
     agriculture: { tg: "кишоварзӣ", ru: "сельское хозяйство", en: "agriculture" },
     education: { tg: "таълим", ru: "обучение", en: "education" },
@@ -144,6 +199,78 @@ export function ownerFocusText(parts: {
     .map((s) => s?.trim())
     .filter((s): s is string => Boolean(s))
     .join(" · ");
+}
+
+export function looksLikeProduce(text: string): boolean {
+  return PRODUCE_KEYS.some((key) => tajikIncludes(text, key));
+}
+
+const GOAL_STOP = [
+  "дар",
+  "ба",
+  "аз",
+  "ва",
+  "ё",
+  "барои",
+  "бизнес",
+  "дукон",
+  "дӯкон",
+  "фурӯш",
+  "furush",
+  "мехоҳам",
+  "хоҳам",
+  "кушо",
+  "нав",
+  "огоз",
+  "оғоз",
+  "shop",
+  "want",
+  "sell",
+  "start",
+  "the",
+  "and",
+  "for",
+];
+
+/** Оё матн ҳамон молеро, ки соҳиб навишт, ёдовар мешавад — на қолаби бегона. */
+export function textMentionsOwnerGoal(goal: string, blob: string): boolean {
+  const written = goal.trim();
+  if (!written) return true;
+  if (tajikIncludes(blob, written)) return true;
+  const parts = written.split(/[^\p{L}\p{N}]+/u).filter((word) => {
+    const folded = foldTajik(word);
+    if (folded.length < 3) return false;
+    return !GOAL_STOP.some((stop) => foldTajik(stop) === folded);
+  });
+  if (parts.length === 0) return false;
+  return parts.some((word) => tajikIncludes(blob, word));
+}
+
+/**
+ * Самти навиштаи соҳибкор. Номи қолаб ё SKU-и боқимонда
+ * (равғани мошин) ҳадафи «себ»-ро набояд бипӯшонад.
+ */
+export function detectOwnerNiche(parts: {
+  goal?: string | null;
+  typeNote?: string | null;
+  name?: string | null;
+  catalog?: string | null;
+}): NicheId {
+  const goal = parts.goal?.trim() ?? "";
+  if (goal) {
+    const fromGoal = detectNiche(goal);
+    return fromGoal;
+  }
+  const fromNote = detectNiche(parts.typeNote);
+  if (fromNote !== "general") return fromNote;
+  const fromCatalog = detectNiche(parts.catalog);
+  if (fromCatalog !== "general") return fromCatalog;
+  return detectNiche(parts.name);
+}
+
+/** Вариант бояд ҳамон моли навиштаро ёдовар шавад. */
+export function optionFitsOwnerGoal(goal: string, blob: string): boolean {
+  return textMentionsOwnerGoal(goal, blob);
 }
 
 const PHONE_MARK = /телефон|iphone|redmi|xiaomi|powerbank|ноутбук|lenovo|airpods|наушник|кабел type|смартфон|gadget|laptop|telefon/i;

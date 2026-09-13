@@ -19,6 +19,7 @@ function initials(first: string, last: string): string {
 
 export function ProfileMenu({ firstName, lastName, businessName, onLogout }: Props) {
   const t = useTranslations("nav");
+  const th = useTranslations("navHints");
   const tp = useTranslations("profilePage");
   const [open, setOpen] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
@@ -110,6 +111,7 @@ export function ProfileMenu({ firstName, lastName, businessName, onLogout }: Pro
           <button
             type="button"
             role="menuitem"
+            title={th("logout")}
             className="flex min-h-11 w-full items-center gap-2.5 px-3 text-left text-sm text-destructive hover:bg-muted"
             onClick={() => {
               setOpen(false);

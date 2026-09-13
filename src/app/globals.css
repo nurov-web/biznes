@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  /* SaaS фурӯшӣ: кабуд + сафед, кунҷи мулоим */
-  --background: #f3f6fb;
-  --surface: #eaf0f8;
-  --card: #ffffff;
-  --ink: #0c1424;
-  --foreground: #0c1424;
-  --muted: #e8eef6;
-  --muted-foreground: #4b5b73;
-  --border: #d7e0ec;
-  --border-strong: #c2cddc;
+  /* Stitch / Material 3: коғази гарм + сиёҳи дафтар + як кабуд */
+  --background: #f6f4ef;
+  --surface: #efeae1;
+  --card: #fffcf7;
+  --ink: #12141a;
+  --foreground: #12141a;
+  --muted: #ece7de;
+  --muted-foreground: #5c5a55;
+  --border: #e2ddd4;
+  --border-strong: #d2ccc2;
 
   --primary: #1565c0;
   --primary-hover: #0d4a8f;
   --primary-soft: #e3eef9;
   --on-primary: #ffffff;
-  --secondary: #334155;
+  --secondary: #2c3038;
   --accent: #1565c0;
   --on-accent: #ffffff;
   --ring: #1565c0;
@@ -25,19 +25,19 @@
   --success: #067647;
   --warning: #b54708;
 
-  --dark-bg: #0c1424;
-  --dark-surface: #152033;
-  --dark-border: #243044;
-  --dark-text: #f3f6fb;
-  --dark-muted: #93a4bb;
+  --dark-bg: #0b1018;
+  --dark-surface: #151b26;
+  --dark-border: #2a3344;
+  --dark-text: #f6f4ef;
+  --dark-muted: #9aa3b2;
   --dark-accent: #90caf9;
 
-  --shadow-xs: 0 1px 0 rgb(12 20 36 / 0.05);
-  --shadow-sm: 0 1px 2px rgb(12 20 36 / 0.06), 0 8px 24px rgb(21 101 192 / 0.06);
-  --shadow-md: 0 8px 28px rgb(12 20 36 / 0.08), 0 2px 8px rgb(21 101 192 / 0.08);
-  --shadow-lg: 0 16px 40px rgb(12 20 36 / 0.12), 0 4px 14px rgb(21 101 192 / 0.1);
-  --shadow-xl: 0 28px 60px rgb(12 20 36 / 0.16);
-  --radius: 0.875rem;
+  --shadow-xs: 0 1px 0 rgb(18 20 26 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(18 20 26 / 0.05), 0 10px 28px rgb(21 101 192 / 0.07);
+  --shadow-md: 0 10px 32px rgb(18 20 26 / 0.08), 0 2px 8px rgb(21 101 192 / 0.08);
+  --shadow-lg: 0 22px 50px rgb(11 16 24 / 0.28), 0 4px 16px rgb(21 101 192 / 0.16);
+  --shadow-xl: 0 32px 70px rgb(11 16 24 / 0.34);
+  --radius: 1.25rem;
 }
 
 @theme inline {
@@ -141,9 +141,9 @@ svg {
 /* ── Типографияи сайёл ───────────────────────────────── */
 
 .display-1 {
-  font-size: clamp(1.75rem, 1.1rem + 2.4vw, 3.25rem);
-  line-height: 1.12;
-  letter-spacing: -0.038em;
+  font-size: clamp(1.85rem, 1.05rem + 3.2vw, 4.15rem);
+  line-height: 1.08;
+  letter-spacing: -0.042em;
   font-weight: 650;
   max-width: 100%;
   overflow-wrap: break-word;
@@ -214,15 +214,65 @@ svg {
 }
 
 .hero-wash {
+  background: transparent;
+}
+
+.hero-ink {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  background: var(--dark-bg);
+  color: var(--dark-text);
+}
+
+.hero-ink::before {
+  content: "";
+  position: absolute;
+  inset: -20% -10% auto;
+  height: 70%;
   background:
-    radial-gradient(70% 60% at 92% -8%, rgb(21 101 192 / 0.18), transparent 58%),
-    radial-gradient(45% 40% at 0% 100%, rgb(21 101 192 / 0.08), transparent 52%),
-    var(--background);
+    radial-gradient(ellipse at 20% 20%, rgb(21 101 192 / 0.42), transparent 55%),
+    radial-gradient(ellipse at 80% 0%, rgb(144 202 249 / 0.22), transparent 50%),
+    radial-gradient(ellipse at 60% 80%, rgb(21 101 192 / 0.18), transparent 45%);
+  filter: blur(8px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-ink > * {
+  position: relative;
+  z-index: 1;
 }
 
 .section-dark {
   background: var(--dark-bg);
   color: var(--dark-text);
+}
+
+.seg-on-dark {
+  border-color: rgb(255 255 255 / 0.16);
+  background: rgb(255 255 255 / 0.06);
+}
+
+.seg-on-dark .seg-item {
+  color: rgb(255 255 255 / 0.72);
+}
+
+.seg-on-dark .seg-item:hover {
+  background: rgb(255 255 255 / 0.08);
+  color: var(--dark-text);
+}
+
+.step-index {
+  font-family: var(--font-mono);
+  font-size: clamp(2rem, 1.4rem + 2vw, 3.25rem);
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  color: var(--primary);
 }
 
 /* ── Тугмаҳо ─────────────────────────────────────────── */

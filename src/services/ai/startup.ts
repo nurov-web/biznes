@@ -4,7 +4,13 @@
  */
 import type { PlanOption } from "@/lib/store";
 import type { Locale } from "@/lib/locale-query";
-import { detectNiche, nicheLabel, type NicheId } from "@/lib/niche";
+import {
+  detectNiche,
+  looksLikeProduce,
+  nicheLabel,
+  optionFitsOwnerGoal,
+  type NicheId,
+} from "@/lib/niche";
 import { wrapOwnerMessage } from "@/lib/tajik-text";
 import { completeClaude, extractJsonObject } from "@/services/ai/claude";
 import { businessSystemPrompt } from "@/services/ai/business-system";
@@ -224,20 +230,103 @@ const TEMPLATES: Template[] = [
   },
 ];
 
+function typicalBuy(good: string, niche: NicheId): number {
+  if (niche === "food" || looksLikeProduce(good)) return 4;
+  if (niche === "phones") return 90;
+  if (niche === "cars") return 40;
+  if (niche === "clothes") return 50;
+  if (niche === "construction") return 48;
+  return 16;
+}
+
+function ownerGoodsTemplates(input: StartupInput): Template[] {
+  const good = input.goal.trim().slice(0, 60);
+  const detected = detectNiche(good);
+  const niche: NicheId = detected;
+  const buy = typicalBuy(good, detected);
+  const stall: Template = {
+    key: "owner-stall",
+    niche,
+    name: {
+      tg: `Нуқтаи «${good}»`,
+      ru: `Точка «${good}»`,
+      en: `Stall «${good}»`,
+    },
+    minBudget: 1500,
+    marginPct: 35,
+    turnsPerMonth: 3.2,
+    fixedCostShare: 0.16,
+    risk: {
+      tg: `Ин ҳамон мол аст, ки шумо навиштед. Вайроншавӣ, нақлиёт ва нархи бозорро худатон санҷед.`,
+      ru: `Это тот товар, который вы написали. Порчу, дорогу и рыночную цену проверьте сами.`,
+      en: `This is the goods you wrote. Check spoilage, transport and market price yourself.`,
+    },
+    items: [
+      { name: good, supplier: "Бозор / оптом", buy, margin: 0.4 },
+      { name: "Халта / қуттӣ", supplier: "Оптом", buy: 0.8, margin: 0.5 },
+    ],
+  };
+  const bulk: Template = {
+    key: "owner-bulk",
+    niche,
+    name: {
+      tg: `«${good}» бо яклухт`,
+      ru: `«${good}» оптом`,
+      en: `Wholesale «${good}»`,
+    },
+    minBudget: 2500,
+    marginPct: 28,
+    turnsPerMonth: 2.4,
+    fixedCostShare: 0.14,
+    risk: {
+      tg: `Партияи калон пулро банд мекунад. Аввал 1–2 рӯзи фурӯшро бинед, баъд зиёд харед.`,
+      ru: `Крупная партия замораживает деньги. Сначала посмотрите 1–2 дня продаж.`,
+      en: `A large lot freezes cash. Watch 1–2 days of sales before buying more.`,
+    },
+    items: [
+      { name: `${good} (партия)`, supplier: "Корвон / оптом", buy: buy * 0.85, margin: 0.32 },
+      { name: "Нақлиёт (як бор)", supplier: "Маҳаллӣ", buy: 80, margin: 0 },
+    ],
+  };
+  const online: Template = {
+    key: "owner-online",
+    niche: "online",
+    name: {
+      tg: `«${good}» дар WhatsApp / Instagram`,
+      ru: `«${good}» в WhatsApp / Instagram`,
+      en: `«${good}» on WhatsApp / Instagram`,
+    },
+    minBudget: 1200,
+    marginPct: 38,
+    turnsPerMonth: 2.6,
+    fixedCostShare: 0.1,
+    risk: {
+      tg: `Бе акс ва ҷавоби зуд фурӯш нест. Баргашт ва расонидан хароҷот аст.`,
+      ru: `Без фото и быстрого ответа продаж нет. Возврат и доставка — расход.`,
+      en: `Without photos and a fast reply there are no sales. Returns and delivery cost money.`,
+    },
+    items: [
+      { name: good, supplier: "Оптом / бозор", buy, margin: 0.5 },
+      { name: "Бастабандӣ + расонидан", supplier: "Маҳаллӣ", buy: 5, margin: 0.2 },
+    ],
+  };
+  return [stall, bulk, online];
+}
+
 function pickTemplates(input: StartupInput): Template[] {
-  const niche = detectNiche(input.goal);
-  const byNiche = TEMPLATES.filter((t) => t.niche === niche);
-  let picked: Template[];
-  if (niche !== "general" && byNiche.length) {
-    const affordable = byNiche.filter((t) => t.minBudget <= Math.max(input.budget, 1));
-    picked = (affordable.length ? affordable : byNiche).slice(0, 3);
-  } else {
-    const affordable = TEMPLATES.filter(
-      (t) => t.niche !== "phones" && t.minBudget <= Math.max(input.budget, 1),
-    );
-    picked = (affordable.length ? affordable : TEMPLATES.filter((t) => t.niche === "online")).slice(0, 3);
+  const named = input.goal.trim();
+  if (named) {
+    return ownerGoodsTemplates(input).slice(0, 3);
   }
-  return picked;
+
+  return TEMPLATES.filter((t) => t.niche === "food" || t.niche === "clothes" || t.niche === "online").slice(
+    0,
+    3,
+  );
+}
+
+function optionBlob(option: PlanOption): string {
+  return [option.name, ...option.products.map((p) => p.name)].join(" ");
 }
 
 function money(n: number): string {
@@ -342,10 +431,9 @@ function buildPrompt(input: StartupInput): string {
   return [
     `Budget: ${input.budget} TJS. City: ${input.city}, Tajikistan.`,
     wrapOwnerMessage(input.goal || "not specified"),
-    `Detected niche: ${niche}. All 3 options MUST stay in this niche.`,
-    niche !== "phones"
-      ? "Do not propose a phone, laptop or gadget shop unless the owner asked for that."
-      : "",
+    `Detected niche: ${niche}. All 3 options MUST stay on what the owner wrote.`,
+    `Every option's products must name «${input.goal || "the owner's goods"}» or a close pack of that same goods. Do not invent a different shop.`,
+    "Do not replace the owner's goods with a canned example (motor oil, phones, apples, coffee) unless they wrote that.",
     `Experience: ${input.experience || "none"}. Time available: ${input.hoursPerWeek} hours/week.`,
     "Return JSON only, no prose outside JSON.",
     'Shape: {"summary":"","warnings":["",""],"options":[{"name":"","why":"","startupCost":0,"monthlyRevenue":0,"monthlyProfit":0,"breakEvenMonths":0,"risk":"","firstSteps":["",""],"products":[{"name":"","supplier":"","buyPrice":0,"sellPrice":0,"quantity":0}]}]}',
@@ -401,7 +489,7 @@ export async function planStartup(
         jsonOnly: true,
         ownerFocus: input.goal,
         ownerMessage: input.goal,
-        role: "You plan a first shop or stall for someone who may have no business yet. Follow their written niche only.",
+        role: "You plan a first shop for someone who named their goods in their own words. Every option and SKU must use those words. Never replace them with a canned shop (oil, phones, apples, jackets) they did not write.",
         format:
           "Conservative. startupCost must fit the budget. Subtract rent, transport, spoilage and a tax buffer from monthlyProfit. Exactly 3 options in the owner's niche.",
       }),
@@ -411,7 +499,14 @@ export async function planStartup(
     const rawOptions = Array.isArray(raw.options) ? raw.options : [];
     const options = rawOptions
       .slice(0, 3)
-      .map((o, i) => toOption(o, local.options[i] ?? local.options[0]));
+      .map((o, i) => {
+        const fallback = local.options[i] ?? local.options[0];
+        if (!fallback) return null;
+        const next = toOption(o, fallback);
+        if (!optionFitsOwnerGoal(input.goal, optionBlob(next))) return fallback;
+        return next;
+      })
+      .filter((row): row is PlanOption => Boolean(row));
     return {
       summary: String(raw.summary || local.summary),
       warnings: Array.isArray(raw.warnings) && raw.warnings.length

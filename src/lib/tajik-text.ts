@@ -128,7 +128,7 @@ export function foldTajik(input: string): string {
 
 export function tajikIncludes(haystack: string, needle: string): boolean {
   const n = foldTajik(needle);
-  if (!n) return true;
+  if (!n) return false;
   return foldTajik(haystack).includes(n);
 }
 
