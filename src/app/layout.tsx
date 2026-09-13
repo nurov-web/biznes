@@ -10,6 +10,8 @@ const inter = localFont({
   display: "swap",
   variable: "--font-inter",
   weight: "100 900",
+  adjustFontFallback: "Arial",
+  preload: true,
 });
 
 /** Viewport дар root — вагарна телефон саҳифаро ҳамчун desktop мекушояд. */

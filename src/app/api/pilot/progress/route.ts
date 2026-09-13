@@ -6,9 +6,9 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { originForbidden } from "@/lib/origin";
-import { PILOT_MODULE_COUNT } from "@/constants/pilot";
+import { isModuleOpen, PILOT_MODULE_COUNT } from "@/constants/pilot";
 import { PILOT_MODULE_ANSWERS } from "@/constants/pilot-course-answers";
-import { completeModule } from "@/services/pilot";
+import { completeModule, listCompletedModules } from "@/services/pilot";
 
 const schema = z.object({
   moduleId: z.number().int().min(1).max(PILOT_MODULE_COUNT),
@@ -24,6 +24,10 @@ export async function POST(request: Request) {
     const key = PILOT_MODULE_ANSWERS[parsed.data.moduleId];
     if (!key || parsed.data.answers.length !== key.length) {
       return jsonError("validation", 400);
+    }
+    const done = await listCompletedModules(user.id);
+    if (!isModuleOpen(parsed.data.moduleId, done)) {
+      return jsonError("locked", 409);
     }
     let correct = 0;
     key.forEach((expected, i) => {

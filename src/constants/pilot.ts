@@ -33,4 +33,12 @@ export const PILOT_TIME = ["full", "part", "weekend"] as const;
 
 export const PILOT_MODULE_COUNT = 6;
 
-export const PILOT_PASS_SCORE = 50;
+/** Дар модул ду савол аст — бо як ҷавоби дуруст дарс гузашта намешавад. */
+export const PILOT_PASS_SCORE = 100;
+
+/** Дарс N кушода аст, агар қаблӣ гузашта бошад ё худи ҳамин аллакай гузашта бошад. */
+export function isModuleOpen(moduleId: number, completed: number[]): boolean {
+  if (moduleId <= 1) return true;
+  if (completed.includes(moduleId)) return true;
+  return completed.includes(moduleId - 1);
+}

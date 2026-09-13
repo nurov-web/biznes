@@ -1,62 +1,38 @@
-"use client";
-
-import { useLayoutEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowRight, Rocket, Store } from "lucide-react";
-import { EASE, gsap, restoreVisible, shouldSkipIntro } from "@/lib/gsap";
-import { MotionLink } from "@/components/motion/MotionLink";
-import { InkMark } from "@/components/motion/InkMark";
+import { Link } from "@/i18n/navigation";
 
 export function Hero() {
   const t = useTranslations("landing");
-  const root = useRef<HTMLElement>(null);
-
-  useLayoutEffect(() => {
-    const node = root.current;
-    if (!node) return;
-    const items = node.querySelectorAll<HTMLElement>("[data-hero]");
-    if (shouldSkipIntro()) {
-      restoreVisible(items);
-      return;
-    }
-    const ctx = gsap.context(() => {
-      gsap.from(items, {
-        y: 14,
-        duration: 0.55,
-        ease: EASE,
-        stagger: 0.07,
-        clearProps: "transform",
-      });
-    }, node);
-    return () => {
-      ctx.revert();
-      restoreVisible(items);
-    };
-  }, []);
 
   return (
-    <section ref={root} className="relative min-w-0">
+    <section className="relative min-w-0">
       <div className="gutter-x relative mx-auto w-full min-w-0 max-w-3xl py-16 sm:py-24 lg:py-28">
-        <div data-hero className="chip chip-dark font-medium text-dark-accent">
-          <InkMark />
+        <div className="chip chip-dark font-medium text-dark-accent">
+          <svg width="20" height="20" viewBox="0 0 64 64" className="shrink-0" aria-hidden>
+            <path
+              d="M14 42 24 30 32 38 50 18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
           {t("kicker")}
         </div>
-        <h1 data-hero className="display-1 mt-5 w-full text-balance text-white">
-          {t("title")}
-        </h1>
-        <p data-hero className="lead mt-5 max-w-xl text-dark-muted">
-          {t("subtitle")}
-        </p>
-        <div data-hero className="hero-actions mt-9 flex w-full min-w-0 flex-col gap-3 sm:flex-row">
-          <MotionLink href="/has-business" className="btn btn-light min-h-12 w-full sm:w-auto">
+        <h1 className="display-1 mt-5 w-full text-balance text-white">{t("title")}</h1>
+        <p className="lead mt-5 max-w-xl text-dark-muted">{t("subtitle")}</p>
+        <div className="hero-actions mt-9 flex w-full min-w-0 flex-col gap-3 sm:flex-row">
+          <Link href="/has-business" className="btn btn-light min-h-12 w-full sm:w-auto">
             <Store className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
             {t("ctaHas")}
             <ArrowRight className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-          </MotionLink>
-          <MotionLink href="/start-business" className="btn btn-primary min-h-12 w-full sm:w-auto">
+          </Link>
+          <Link href="/start-business" className="btn btn-primary min-h-12 w-full sm:w-auto">
             <Rocket className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
             {t("ctaStart")}
-          </MotionLink>
+          </Link>
         </div>
       </div>
     </section>

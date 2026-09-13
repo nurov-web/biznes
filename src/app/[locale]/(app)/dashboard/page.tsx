@@ -6,8 +6,9 @@ import { BookOpen, Check, Wallet } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { PageBody } from "@/components/PageShell";
 import { PilotHero } from "@/components/pilot/PilotHero";
+import { SalesPlanBoard } from "@/components/pilot/SalesPlanBoard";
 import { PILOT_MODULES } from "@/constants/pilot-course";
-import { PILOT_MODULE_COUNT } from "@/constants/pilot";
+import { isModuleOpen, PILOT_MODULE_COUNT } from "@/constants/pilot";
 import type { PilotProfileRow } from "@/lib/store";
 
 type Tab = "course" | "sales";
@@ -20,17 +21,28 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<PilotProfileRow | null>(null);
   const [progress, setProgress] = useState<number[]>([]);
   const [plan, setPlan] = useState("");
+  const [planDate, setPlanDate] = useState("");
   const [planLoading, setPlanLoading] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     fetch("/api/pilot/state", { credentials: "include", cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { profile?: PilotProfileRow; progress?: number[]; plan?: string } | null) => {
-        setProfile(d?.profile ?? null);
-        setProgress(d?.progress ?? []);
-        setPlan(d?.plan ?? "");
-      })
+      .then(
+        (
+          d: {
+            profile?: PilotProfileRow;
+            progress?: number[];
+            plan?: string;
+            planDate?: string;
+          } | null,
+        ) => {
+          setProfile(d?.profile ?? null);
+          setProgress(d?.progress ?? []);
+          setPlan(d?.plan ?? "");
+          setPlanDate(d?.planDate ?? "");
+        },
+      )
       .catch(() => undefined)
       .finally(() => setReady(true));
   }, []);
@@ -45,7 +57,10 @@ export default function DashboardPage() {
         body: JSON.stringify({ locale }),
       });
       const json = (await response.json()) as { plan?: string };
-      if (json.plan) setPlan(json.plan);
+      if (json.plan) {
+        setPlan(json.plan);
+        setPlanDate(new Date().toISOString());
+      }
     } finally {
       setPlanLoading(false);
     }
@@ -106,8 +121,9 @@ export default function DashboardPage() {
           <ol className="card-raised divide-y divide-border overflow-hidden">
             {PILOT_MODULES.map((m) => {
               const done = progress.includes(m.id);
+              const open = isModuleOpen(m.id, progress);
               const nextId = PILOT_MODULES.find((row) => !progress.includes(row.id))?.id;
-              const isNext = !done && m.id === nextId;
+              const isNext = open && !done && m.id === nextId;
               return (
                 <li key={m.id} className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-5">
                   <span className={`mark ${done ? "mark-on" : ""}`}>
@@ -119,13 +135,15 @@ export default function DashboardPage() {
                   </div>
                   {done ? (
                     <span className="text-sm text-muted-foreground">{t("done")}</span>
-                  ) : (
+                  ) : open ? (
                     <Link
                       href={`/dashboard/course/${m.id}`}
                       className={`btn min-h-12 shrink-0 ${isNext ? "btn-primary" : "btn-ghost"}`}
                     >
                       {t("startModule")}
                     </Link>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">{t("moduleLocked")}</span>
                   )}
                 </li>
               );
@@ -146,19 +164,14 @@ export default function DashboardPage() {
             {planLoading ? (
               <p className="text-sm text-muted-foreground">{t("planWait")}</p>
             ) : null}
-            {plan && !planLoading ? (
+            {plan && !planLoading && profile ? (
               <>
-                <article className="card-raised whitespace-pre-wrap p-5 text-sm leading-relaxed sm:p-6">
-                  {plan}
-                </article>
-                {profile?.volume && profile.price ? (
-                  <article className="card-raised p-5 sm:p-6">
-                    <h2 className="display-3">{t("calcTitle")}</h2>
-                    <p className="mt-2 text-sm">{t("calcNow", { volume: profile.volume, price: profile.price })}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{t("calcAfter")}</p>
-                  </article>
-                ) : null}
-                <button type="button" className="btn btn-ghost min-h-12 w-fit" onClick={() => void makePlan()}>
+                <SalesPlanBoard plan={plan} planDate={planDate} profile={profile} />
+                <button
+                  type="button"
+                  className="no-print btn btn-ghost min-h-12 w-fit"
+                  onClick={() => void makePlan()}
+                >
                   {t("planAgain")}
                 </button>
               </>

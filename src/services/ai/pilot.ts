@@ -166,23 +166,34 @@ export async function generateStartIdeas(input: {
 
 export async function generateSalesPlan(input: {
   locale: string;
+  category: string;
   product: string;
   region: string;
   volume: string;
   price: string;
+  channels: string[];
+  problem: string;
 }): Promise<string> {
   try {
     return await completeClaude(
       businessSystemPrompt({
         locale: parseLocale(input.locale),
-        role: "Write a short sales plan: 3–4 steps. Each step: title + 2–3 concrete actions. End with a simple TJS calculation. No markdown.",
+        role: [
+          "Write a short sales plan: 3–4 steps. Each step: title + 2–3 concrete actions.",
+          "Name this owner's product, city and price in the actions — never generic advice.",
+          "Start from the channels the owner already uses and answer the problem they wrote.",
+          "End with a simple TJS calculation. No markdown.",
+        ].join(" "),
         ownerFocus: input.product,
       }),
       [
+        `Соҳа: ${input.category}`,
         `Маҳсулот: ${input.product}`,
         `Минтақа: ${input.region}`,
         `Ҳаҷм: ${input.volume}`,
         `Нархи ҳозира: ${input.price} сомонӣ`,
+        `Каналҳои ҳозира: ${input.channels.join(", ") || "зикр нашуд"}`,
+        `Мушкил: ${input.problem || "зикр нашуд"}`,
       ].join("\n"),
       { timeoutMs: 22000, maxTokens: 1500 },
     );

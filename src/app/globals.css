@@ -1052,8 +1052,125 @@ summary {
   border-left-style: solid;
 }
 
+/* ── Чоп / PDF: танҳо нақша ва ҷадвали ҳафта ───────── */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  [data-app],
+  body {
+    background: #fff;
+  }
+
+  .card-raised {
+    box-shadow: none;
+    border: 1px solid #d9d5cd;
+    break-inside: avoid;
+  }
+
+  a[href]::after {
+    content: "";
+  }
+}
+
 .app-rail :focus-visible,
 .app-dock :focus-visible,
 .account-menu :focus-visible {
   outline-color: var(--dark-accent);
+}
+
+.bp-chat-fab {
+  position: fixed;
+  z-index: 220;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+  display: grid;
+  height: 3.5rem;
+  width: 3.5rem;
+  place-items: center;
+  border: 1px solid var(--dark-border);
+  border-radius: 1.1rem;
+  background: var(--dark-bg);
+  color: #fff;
+  box-shadow: var(--shadow-lg);
+}
+
+.bp-chat-fab:hover {
+  background: #151b26;
+}
+
+.bp-chat {
+  position: fixed;
+  z-index: 230;
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  left: max(0.75rem, env(safe-area-inset-left));
+}
+
+@media (min-width: 640px) {
+  .bp-chat {
+    left: auto;
+    width: 24.5rem;
+  }
+}
+
+.bp-chat-panel {
+  display: flex;
+  max-height: min(36rem, calc(100dvh - 1.5rem));
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: 1.15rem;
+  background: var(--card);
+  box-shadow: var(--shadow-xl);
+}
+
+.bp-chat-list {
+  display: grid;
+  gap: 0.65rem;
+  flex: 1;
+  min-height: 12rem;
+  overflow: auto;
+  padding: 0.25rem 1rem 1rem;
+}
+
+.bp-chat-hint {
+  min-height: 48px;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.bp-chat-hint:hover {
+  border-color: var(--border-strong);
+  background: var(--primary-soft);
+}
+
+.bp-chat-bubble-user,
+.bp-chat-bubble-ai {
+  max-width: 92%;
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.85rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.bp-chat-bubble-user {
+  justify-self: end;
+  background: var(--ink);
+  color: #fff;
+}
+
+.bp-chat-bubble-ai {
+  justify-self: start;
+  background: var(--surface);
+  color: var(--ink);
 }

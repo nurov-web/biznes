@@ -26,6 +26,7 @@ export async function GET() {
       suggestions: suggestions?.items ?? [],
       chosenIndex: suggestions?.chosenIndex ?? null,
       plan: plan?.content ?? "",
+      planDate: plan?.createdAt ?? "",
       progress,
       ephemeralStore: isEphemeralStore(),
     });

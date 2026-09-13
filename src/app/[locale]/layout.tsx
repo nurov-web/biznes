@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { hasLocale } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
+import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { LocaleTransition } from "@/components/motion/LocaleTransition";
 import { DocumentLang } from "@/components/motion/DocumentLang";
 import { I18nClientProvider } from "@/components/i18n/I18nClientProvider";
+import { BusinessChat } from "@/components/chat/BusinessChat";
 import { siteOrigin } from "@/lib/site-url";
 
 export async function generateMetadata({
@@ -62,10 +63,12 @@ export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
+  const messages = await getMessages();
   return (
-    <I18nClientProvider locale={locale}>
+    <I18nClientProvider locale={locale} messages={messages}>
       <DocumentLang />
       <LocaleTransition>{children}</LocaleTransition>
+      <BusinessChat />
     </I18nClientProvider>
   );
 }

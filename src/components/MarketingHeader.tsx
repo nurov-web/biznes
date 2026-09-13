@@ -75,9 +75,7 @@ export function MarketingHeader({ tone = "light" }: Props) {
       }`}
     >
       <div
-        className={`gutter-x mx-auto flex w-full min-w-0 max-w-6xl items-center gap-2 ${
-          scrolled ? "py-1.5" : "py-2.5"
-        }`}
+        className={`gutter-x mx-auto flex w-full min-w-0 max-w-6xl items-center gap-2 py-2.5`}
       >
         <MotionLink
           href="/"

@@ -1,5 +1,3 @@
-"use client";
-
 import { useTranslations } from "next-intl";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { Link } from "@/i18n/navigation";

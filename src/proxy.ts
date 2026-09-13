@@ -12,12 +12,19 @@ const PROTECTED = [
   "/suggestions",
   "/has-business",
   "/start-business",
+  "/settings",
+  "/profile",
+] as const;
+
+/**
+ * Панелҳои кӯҳна (касса, анбор, CRM…). Маҳсули сайт курс ва нақшаи фурӯш аст —
+ * то соҳибкор ду барномаи ҷудогонаро набинад, ҳама ба панел бармегарданд.
+ */
+const LEGACY = [
   "/crm",
   "/pos",
   "/inventory",
   "/finance",
-  "/settings",
-  "/profile",
   "/tasks",
   "/simulator",
   "/pricing",
@@ -33,8 +40,12 @@ const PROTECTED = [
   "/store",
 ] as const;
 
+function matches(bare: string, list: readonly string[]): boolean {
+  return list.some((prefix) => bare === prefix || bare.startsWith(`${prefix}/`));
+}
+
 function isProtected(bare: string): boolean {
-  return PROTECTED.some((prefix) => bare === prefix || bare.startsWith(`${prefix}/`));
+  return matches(bare, PROTECTED);
 }
 
 function hasSession(request: NextRequest): boolean {
@@ -51,6 +62,13 @@ export default function proxy(request: NextRequest) {
   if (bare === "/onboarding" || bare.startsWith("/onboarding/")) {
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}/has-business`;
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  if (matches(bare, LEGACY)) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${locale}/dashboard`;
     url.search = "";
     return NextResponse.redirect(url);
   }

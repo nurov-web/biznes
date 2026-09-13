@@ -28,10 +28,13 @@ export async function POST(request: Request) {
     if (!(await consumeAiQuota(user.id))) return jsonError("rate", 429);
     const plan = await generateSalesPlan({
       locale,
+      category: profile.category,
       product: profile.product,
       region: profile.region,
       volume: profile.volume,
       price: profile.price,
+      channels: profile.channels,
+      problem: profile.problem,
     });
     await savePlan(user.id, plan);
     return NextResponse.json({ plan });

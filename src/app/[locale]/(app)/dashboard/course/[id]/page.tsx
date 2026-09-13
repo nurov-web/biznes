@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { PILOT_MODULES } from "@/constants/pilot-course";
-import { PILOT_PASS_SCORE } from "@/constants/pilot";
+import { isModuleOpen, PILOT_PASS_SCORE } from "@/constants/pilot";
 import { PageShell } from "@/components/PageShell";
+import { monthlyRevenue, splitVolume } from "@/lib/pilot-volume";
+import type { PilotProfileRow } from "@/lib/store";
 
 export default function CourseModulePage() {
   const params = useParams<{ id: string }>();
@@ -20,11 +22,40 @@ export default function CourseModulePage() {
   const [score, setScore] = useState(0);
   const [key, setKey] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
+  const [profile, setProfile] = useState<PilotProfileRow | null>(null);
+  const [progress, setProgress] = useState<number[]>([]);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/pilot/state", { credentials: "include", cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { profile?: PilotProfileRow; progress?: number[] } | null) => {
+        setProfile(d?.profile ?? null);
+        setProgress(d?.progress ?? []);
+      })
+      .catch(() => undefined)
+      .finally(() => setReady(true));
+  }, []);
 
   if (!module) {
     return (
       <PageShell title={t("missing")}>
         <button type="button" className="btn btn-ghost min-h-12" onClick={() => router.push("/dashboard")}>
+          {t("backDash")}
+        </button>
+      </PageShell>
+    );
+  }
+
+  if (!ready) {
+    return <p className="p-8 text-sm text-muted-foreground">{t("saving")}</p>;
+  }
+
+  if (!isModuleOpen(module.id, progress)) {
+    return (
+      <PageShell title={tc(module.titleKey)}>
+        <p className="text-sm text-muted-foreground">{t("moduleLocked")}</p>
+        <button type="button" className="btn btn-primary min-h-12 w-fit" onClick={() => router.push("/dashboard")}>
           {t("backDash")}
         </button>
       </PageShell>
@@ -58,6 +89,22 @@ export default function CourseModulePage() {
         {t("backDash")}
       </button>
       <article className="card-raised whitespace-pre-wrap p-5 text-sm leading-relaxed">{tc(module.contentKey)}</article>
+      {profile ? (
+        <article className="card-raised tone-edge border-l-primary p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t("applyTitle")}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed">
+            {tc(module.applyKey, {
+              product: profile.product,
+              region: profile.region,
+              price: profile.price,
+              volume: `${splitVolume(profile.volume).amount} ${t(`units.${splitVolume(profile.volume).unit}`)}`,
+              revenue: monthlyRevenue(profile.volume, profile.price),
+            })}
+          </p>
+        </article>
+      ) : null}
       <h2 className="display-3 mt-2">{t("quiz")}</h2>
       {module.questions.map((q, i) => (
         <fieldset key={q.q} className="card-raised p-4">

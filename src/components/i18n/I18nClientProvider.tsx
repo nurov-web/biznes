@@ -9,15 +9,16 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { NextIntlClientProvider } from "next-intl";
+import { NextIntlClientProvider, type AbstractIntlMessages } from "next-intl";
 import { hasLocale } from "next-intl";
 import { routing, type AppLocale } from "@/i18n/routing";
 import { markLocaleSwap } from "@/lib/locale-swap";
-import en from "../../../messages/en.json";
-import ru from "../../../messages/ru.json";
-import tg from "../../../messages/tg.json";
 
-const BUNDLES = { tg, ru, en } as const;
+const MESSAGE_LOADERS: Record<AppLocale, () => Promise<{ default: AbstractIntlMessages }>> = {
+  tg: () => import("../../../messages/tg.json"),
+  ru: () => import("../../../messages/ru.json"),
+  en: () => import("../../../messages/en.json"),
+};
 
 type LocaleSwitchContextValue = {
   locale: AppLocale;
@@ -54,45 +55,53 @@ function nextPathFor(locale: AppLocale): string {
 
 /**
  * Ивази забон бе навигатсияи Next — дарахти UI намеафтад, танҳо матн нав мешавад.
+ * Як бандли забон дар HTML, дигарҳо танҳо ҳангоми иваз бор мешаванд.
  */
 export function I18nClientProvider({
   locale,
+  messages,
   children,
 }: {
   locale: string;
+  messages: AbstractIntlMessages;
   children: ReactNode;
 }) {
   const initial = hasLocale(routing.locales, locale) ? locale : routing.defaultLocale;
   const [current, setCurrent] = useState<AppLocale>(initial);
+  const [bundle, setBundle] = useState<AbstractIntlMessages>(messages);
 
   useEffect(() => {
     const fromUrl = localeFromPath(window.location.pathname);
-    if (fromUrl) {
-      setCurrent(fromUrl);
-      return;
+    const next = fromUrl ?? (hasLocale(routing.locales, locale) ? locale : routing.defaultLocale);
+    setCurrent(next);
+    if (next === (hasLocale(routing.locales, locale) ? locale : routing.defaultLocale)) {
+      setBundle(messages);
     }
-    if (hasLocale(routing.locales, locale)) setCurrent(locale);
-  }, [locale]);
+  }, [locale, messages]);
 
   useEffect(() => {
     function onPop() {
       const fromUrl = localeFromPath(window.location.pathname);
-      if (fromUrl) setCurrent(fromUrl);
+      if (!fromUrl) return;
+      void MESSAGE_LOADERS[fromUrl]().then((mod) => {
+        setBundle(mod.default);
+        setCurrent(fromUrl);
+      });
     }
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
   const switchLocale = useCallback((next: AppLocale) => {
-    setCurrent((prev) => {
-      if (prev === next) return prev;
+    void MESSAGE_LOADERS[next]().then((mod) => {
       markLocaleSwap();
       document.documentElement.lang = next;
       window.history.replaceState(window.history.state, "", nextPathFor(next));
       document.cookie = `NEXT_LOCALE=${next};path=/;max-age=31536000;samesite=lax${
         window.location.protocol === "https:" ? ";secure" : ""
       }`;
-      return next;
+      setBundle(mod.default);
+      setCurrent(next);
     });
   }, []);
 
@@ -100,7 +109,7 @@ export function I18nClientProvider({
 
   return (
     <LocaleSwitchContext.Provider value={value}>
-      <NextIntlClientProvider locale={current} messages={BUNDLES[current]} timeZone="Asia/Dushanbe">
+      <NextIntlClientProvider locale={current} messages={bundle} timeZone="Asia/Dushanbe">
         {children}
       </NextIntlClientProvider>
     </LocaleSwitchContext.Provider>

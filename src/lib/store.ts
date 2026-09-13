@@ -542,15 +542,45 @@ function loadFromFile(): Database {
   }
 }
 
+/** Ҳамон сохтор, ки дар prisma/migrations аст. */
+const CREATE_SNAPSHOT_TABLE = `CREATE TABLE IF NOT EXISTS "AppSnapshot" (
+  "id" TEXT NOT NULL,
+  "payload" JSONB NOT NULL,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "AppSnapshot_pkey" PRIMARY KEY ("id")
+)`;
+
+/** P2021 — ҷадвал нест. */
+function isMissingTable(error: unknown): boolean {
+  return (error as { code?: string } | null)?.code === "P2021";
+}
+
+/**
+ * Агар `prisma migrate deploy` иҷро нашуда бошад, ҷадвалро худамон месозем.
+ * Ҳамин тавр дар Vercel танҳо DATABASE_URL кифоя аст — бе build-и нав.
+ */
+async function withSnapshotTable<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    if (!prisma || !isMissingTable(error)) throw error;
+    await prisma.$executeRawUnsafe(CREATE_SNAPSHOT_TABLE);
+    return fn();
+  }
+}
+
 async function load(): Promise<Database> {
   const g = storeMemory();
 
   if (isPostgresConfigured() && prisma) {
     if (g.__bpDb) return g.__bpDb;
+    const client = prisma;
     try {
-      const snap = await prisma.appSnapshot.findUnique({
-        where: { id: "global" },
-      });
+      const snap = await withSnapshotTable(() =>
+        client.appSnapshot.findUnique({
+          where: { id: "global" },
+        }),
+      );
       if (snap && snap.payload) {
         const raw = snap.payload as unknown as Partial<Database>;
         const db = hydrate(raw);
@@ -648,23 +678,28 @@ async function save(db: Database): Promise<void> {
   g.__bpDb = db;
 
   if (isPostgresConfigured() && prisma) {
+    const client = prisma;
     try {
-      const snap = await prisma.appSnapshot.findUnique({ where: { id: "global" } });
+      const snap = await withSnapshotTable(() =>
+        client.appSnapshot.findUnique({ where: { id: "global" } }),
+      );
       if (snap?.payload) {
         const merged = mergeSnapshots(db, hydrate(snap.payload as unknown as Partial<Database>));
         Object.assign(db, merged);
         g.__bpDb = db;
       }
-      await prisma.appSnapshot.upsert({
-        where: { id: "global" },
-        create: {
-          id: "global",
-          payload: db as unknown as Prisma.InputJsonValue,
-        },
-        update: {
-          payload: db as unknown as Prisma.InputJsonValue,
-        },
-      });
+      await withSnapshotTable(() =>
+        client.appSnapshot.upsert({
+          where: { id: "global" },
+          create: {
+            id: "global",
+            payload: db as unknown as Prisma.InputJsonValue,
+          },
+          update: {
+            payload: db as unknown as Prisma.InputJsonValue,
+          },
+        }),
+      );
       if (!process.env.VERCEL) {
         try {
           writeLocalFile(db);
