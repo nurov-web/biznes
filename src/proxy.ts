@@ -1,6 +1,6 @@
 import createIntlMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE } from "@/constants";
+import { ACCOUNT_COOKIE, SESSION_COOKIE } from "@/constants";
 import { routing } from "@/i18n/routing";
 import { localeFromPathname, stripLocalePrefix } from "@/lib/locale-path";
 
@@ -47,7 +47,9 @@ function isProtected(bare: string): boolean {
 }
 
 function hasSession(request: NextRequest): boolean {
-  return Boolean(request.cookies.get(SESSION_COOKIE)?.value);
+  return Boolean(
+    request.cookies.get(SESSION_COOKIE)?.value || request.cookies.get(ACCOUNT_COOKIE)?.value,
+  );
 }
 
 export default function proxy(request: NextRequest) {

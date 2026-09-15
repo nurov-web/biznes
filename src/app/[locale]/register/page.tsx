@@ -33,7 +33,20 @@ export default function RegisterPage() {
 
   useEffect(() => {
     setNextPath(safeNextPath(new URLSearchParams(window.location.search).get("next")));
-  }, []);
+    let cancelled = false;
+    fetch("/api/auth/me", { credentials: "include", cache: "no-store" })
+      .then(async (r) => {
+        if (cancelled || !r.ok) return;
+        const data = (await r.json()) as { hasPilotProfile?: boolean };
+        window.location.assign(
+          destination(locale, data.hasPilotProfile ? "/dashboard" : "/has-business"),
+        );
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
 
   function validate(): boolean {
     const next: Record<string, string> = {};

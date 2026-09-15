@@ -84,7 +84,31 @@ export async function POST(request: Request) {
     const db = await readDb();
     const existing = findUserByLogin(db.users, email, phone);
     if (existing) {
-      if (await verifyPassword(data.password, existing.passwordHash)) {
+      const samePassword = existing.passwordHash
+        ? await verifyPassword(data.password, existing.passwordHash)
+        : false;
+      if (samePassword || !existing.passwordHash) {
+        if (!existing.passwordHash) {
+          const passwordHash = await hashPassword(data.password);
+          existing.passwordHash = passwordHash;
+          existing.phoneVerified = true;
+          try {
+            await withDb((state) => {
+              const row = state.users.find((u) => u.id === existing.id);
+              if (!row) return;
+              row.passwordHash = passwordHash;
+              row.firstName = data.firstName || row.firstName;
+              row.lastName = data.lastName || row.lastName;
+              row.phone = phone || row.phone;
+              row.offerAccepted = true;
+              row.phoneVerified = true;
+              row.updatedAt = nowIso();
+            });
+          } catch (error) {
+            if (!(error instanceof StoreWriteError)) throw error;
+            console.error("[register] store", error);
+          }
+        }
         return signedIn(existing);
       }
       return jsonError("user_exists", 409);
@@ -98,7 +122,7 @@ export async function POST(request: Request) {
       email,
       phone,
       passwordHash: await hashPassword(data.password),
-      phoneVerified: false,
+      phoneVerified: true,
       offerAccepted: true,
       role: "owner",
       aiCallsDate: "",
@@ -106,13 +130,21 @@ export async function POST(request: Request) {
       createdAt: now,
       updatedAt: now,
     };
-    await withDb((state) => {
-      const again = findUserByLogin(state.users, email, phone);
-      if (again) {
-        throw new Error("USER_EXISTS");
+    try {
+      await withDb((state) => {
+        const again = findUserByLogin(state.users, email, phone);
+        if (again) {
+          throw new Error("USER_EXISTS");
+        }
+        state.users.push(user);
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === "USER_EXISTS") {
+        throw error;
       }
-      state.users.push(user);
-    });
+      if (!(error instanceof StoreWriteError)) throw error;
+      console.error("[register] store", error);
+    }
     return signedIn(user);
   } catch (error) {
     if (error instanceof Error && error.message === "USER_EXISTS") {

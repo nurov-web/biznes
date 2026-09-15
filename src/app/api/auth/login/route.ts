@@ -7,6 +7,7 @@ import {
   assertAuthConfigured,
   findUserByLogin,
   JWT_NOT_CONFIGURED,
+  loginFromSavedAccount,
   stampAuthCookies,
   verifyPassword,
 } from "@/lib/auth";
@@ -62,11 +63,14 @@ export async function POST(request: Request) {
     assertAuthConfigured();
     const db = await readDb();
     const user = findUserByLogin(db.users, email, phone);
-
-    if (!user) return jsonError("invalid_credentials", 401);
-    const ok = await verifyPassword(parsed.data.password, user.passwordHash);
-    if (!ok) return jsonError("invalid_credentials", 401);
-    return signedIn(user);
+    if (user?.passwordHash) {
+      const ok = await verifyPassword(parsed.data.password, user.passwordHash);
+      if (!ok) return jsonError("invalid_credentials", 401);
+      return signedIn(user);
+    }
+    const restored = await loginFromSavedAccount(email, phone, parsed.data.password);
+    if (restored) return signedIn(restored);
+    return jsonError("invalid_credentials", 401);
   } catch (error) {
     console.error("[login]", error);
     if (error instanceof Error && error.message === JWT_NOT_CONFIGURED) {

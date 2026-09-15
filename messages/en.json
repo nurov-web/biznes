@@ -257,7 +257,7 @@
   },
   "auth": {
     "registerTitle": "Create an account",
-    "registerLead": "One account — and the platform works for you.",
+    "registerLead": "Register once — the account stays on this phone.",
     "loginTitle": "Welcome back",
     "loginLead": "Welcome. Sign in to your account.",
     "firstName": "First name",
@@ -280,7 +280,7 @@
     "code": "Code",
     "verify": "Verify",
     "errorSummary": "Please fix the errors",
-    "userExists": "This email or phone is already registered.",
+    "userExists": "This account already exists. Sign in — you do not need to register again.",
     "badCreds": "Email or password is incorrect. Check the details and try again.",
     "emailInvalid": "Enter a valid email address.",
     "emailRequired": "Enter email or phone.",

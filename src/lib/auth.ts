@@ -103,9 +103,12 @@ function cookieExpire(httpOnly = true) {
   };
 }
 
-function expireAuthCookiesOnStore(store: Awaited<ReturnType<typeof cookies>>): void {
+function expireSessionOnStore(store: Awaited<ReturnType<typeof cookies>>): void {
   store.set(SESSION_COOKIE, "", cookieExpire());
-  store.set(ACCOUNT_COOKIE, "", cookieExpire());
+}
+
+function isPasswordHash(value: string): boolean {
+  return value.startsWith("$2a$") || value.startsWith("$2b$") || value.startsWith("$2y$");
 }
 
 export async function signSession(payload: SessionPayload): Promise<string> {
@@ -115,6 +118,7 @@ export async function signSession(payload: SessionPayload): Promise<string> {
     lastName: payload.lastName ?? "",
     email: payload.email ?? "",
     phone: payload.phone ?? "",
+    ph: payload.ph && isPasswordHash(payload.ph) ? payload.ph : "",
     bid: payload.bid ?? "",
     bname: payload.bname ?? "",
     bcity: payload.bcity ?? "",
@@ -155,6 +159,7 @@ export async function readSessionToken(
         btype: claimString(payload.btype),
         bnote: claimString(payload.bnote),
         bgoal: claimString(payload.bgoal),
+        ph: isPasswordHash(claimString(payload.ph)) ? claimString(payload.ph) : "",
       };
     } catch {
       /* калиди дигар */
@@ -178,6 +183,7 @@ function payloadFromUser(user: UserRow, business: BusinessRow | null): SessionPa
     btype: business?.type ?? "",
     bnote: business?.typeNote ?? "",
     bgoal: business?.goal ?? "",
+    ph: isPasswordHash(user.passwordHash) ? user.passwordHash : "",
   };
 }
 
@@ -203,11 +209,15 @@ export async function stampAuthCookiesByUserId(res: NextResponse, userId: string
   const db = await readDb();
   const user = db.users.find((u) => u.id === userId);
   if (!user) return;
+  const saved = user.passwordHash ? null : await readAccountPayload();
+  const withHash: UserRow = saved?.ph
+    ? { ...user, passwordHash: saved.ph }
+    : user;
   const business =
     db.businesses
       .filter((b) => b.ownerId === userId)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
-  await stampAuthCookies(res, user, business);
+  await stampAuthCookies(res, withHash, business);
 }
 
 export async function setSessionCookie(
@@ -244,17 +254,24 @@ export async function setSessionCookie(
 
 export async function clearSessionCookie(): Promise<void> {
   const store = await cookies();
-  expireAuthCookiesOnStore(store);
+  expireSessionOnStore(store);
 }
 
 export function clearSessionOnResponse(res: NextResponse): void {
   res.cookies.set(SESSION_COOKIE, "", cookieExpire());
-  res.cookies.set(ACCOUNT_COOKIE, "", cookieExpire());
 }
 
 export async function readAuthPayload(): Promise<SessionPayload | null> {
   const store = await cookies();
-  const token = store.get(SESSION_COOKIE)?.value || store.get(ACCOUNT_COOKIE)?.value;
+  const token = store.get(SESSION_COOKIE)?.value;
+  if (!token) return null;
+  return readSessionToken(token);
+}
+
+/** Ҳисоби захирашуда — пас аз баромад ҳам мемонад, то аз нав регистратсия нашавад. */
+export async function readAccountPayload(): Promise<SessionPayload | null> {
+  const store = await cookies();
+  const token = store.get(ACCOUNT_COOKIE)?.value;
   if (!token) return null;
   return readSessionToken(token);
 }
@@ -280,13 +297,34 @@ function sessionUserFromPayload(payload: SessionPayload): SessionUser | null {
     email: payload.email || "",
     phone: payload.phone || "",
     role: payload.role,
-    phoneVerified: false,
+    phoneVerified: true,
   };
 }
 
-/** Ҳисобро аз куки ба снапшоти холӣ бармегардонад (Gmail як бор). */
-export async function restoreAccountFromPayload(payload: SessionPayload): Promise<UserRow | null> {
+function userRowFromPayload(payload: SessionPayload): UserRow | null {
   if (!payload.email && !payload.phone) return null;
+  const now = nowIso();
+  return {
+    id: payload.sub,
+    firstName: payload.firstName || "",
+    lastName: payload.lastName || "",
+    email: payload.email?.toLowerCase() ?? "",
+    phone: payload.phone || "",
+    passwordHash: payload.ph && isPasswordHash(payload.ph) ? payload.ph : "",
+    phoneVerified: true,
+    offerAccepted: true,
+    aiCallsDate: "",
+    aiCallsCount: 0,
+    role: payload.role,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+/** Ҳисобро аз куки ба снапшот бармегардонад — паролро холӣ намекунад. */
+export async function restoreAccountFromPayload(payload: SessionPayload): Promise<UserRow | null> {
+  const fallback = userRowFromPayload(payload);
+  if (!fallback) return null;
   try {
     return await withDb((db) => {
       const email = payload.email?.toLowerCase() ?? "";
@@ -294,24 +332,17 @@ export async function restoreAccountFromPayload(payload: SessionPayload): Promis
       const byEmail = email ? db.users.find((u) => u.email === email) : undefined;
       let user = byId ?? byEmail;
       const now = nowIso();
+      const savedHash = payload.ph && isPasswordHash(payload.ph) ? payload.ph : "";
       if (!user) {
-        user = {
-          id: payload.sub,
-          firstName: payload.firstName || "",
-          lastName: payload.lastName || "",
-          email,
-          phone: payload.phone || "",
-          passwordHash: "",
-          phoneVerified: false,
-          offerAccepted: true,
-          aiCallsDate: "",
-          aiCallsCount: 0,
-          role: payload.role,
-          createdAt: now,
-          updatedAt: now,
-        };
+        user = { ...fallback, createdAt: now, updatedAt: now };
         db.users.push(user);
+      } else if (savedHash && !user.passwordHash) {
+        user.passwordHash = savedHash;
+        user.updatedAt = now;
       }
+      if (payload.firstName && !user.firstName) user.firstName = payload.firstName;
+      if (payload.lastName && !user.lastName) user.lastName = payload.lastName;
+      if (payload.phone && !user.phone) user.phone = payload.phone;
       const ownerId = user.id;
       const hasBiz = db.businesses.some((b) => b.ownerId === ownerId || (payload.bid && b.id === payload.bid));
       if (!hasBiz && payload.bid) {
@@ -341,12 +372,28 @@ export async function restoreAccountFromPayload(payload: SessionPayload): Promis
     });
   } catch (error) {
     console.error("[auth] барқарории ҳисоб", error);
-    return null;
+    return fallback;
   }
 }
 
+/** Агар сервер ҳисобро гум карда бошад — аз куки bp_account бо парол барқарор. */
+export async function loginFromSavedAccount(
+  email: string,
+  phone: string,
+  password: string,
+): Promise<UserRow | null> {
+  const payload = await readAccountPayload();
+  if (!payload?.ph) return null;
+  const sameEmail = Boolean(email) && payload.email?.toLowerCase() === email;
+  const samePhone = phone.length >= 10 && normalizePhone(payload.phone || "") === phone;
+  if (!sameEmail && !samePhone) return null;
+  const ok = await verifyPassword(password, payload.ph);
+  if (!ok) return null;
+  return restoreAccountFromPayload(payload);
+}
+
 export async function getSessionUser(): Promise<SessionUser | null> {
-  const payload = await readAuthPayload();
+  const payload = (await readAuthPayload()) ?? (await readAccountPayload());
   if (!payload) return null;
   const db = await readDb();
   const email = payload.email?.toLowerCase() ?? "";
@@ -354,8 +401,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     db.users.find((u) => u.id === payload.sub) ??
     (email ? db.users.find((u) => u.email === email) : undefined);
   if (row) {
-    const hasBiz = db.businesses.some((b) => b.ownerId === row.id);
-    if (!hasBiz && payload.bid) {
+    if ((payload.ph && !row.passwordHash) || (payload.bid && !db.businesses.some((b) => b.ownerId === row.id))) {
       await restoreAccountFromPayload(payload);
     }
     return sessionUserFromRow(row);

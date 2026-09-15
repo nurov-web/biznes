@@ -17,6 +17,8 @@ export type SessionPayload = {
   lastName?: string;
   email?: string;
   phone?: string;
+  /** bcrypt — то пас аз хоби сервер ҳам бо парол даромада шавад. */
+  ph?: string;
   bid?: string;
   bname?: string;
   bcity?: string;

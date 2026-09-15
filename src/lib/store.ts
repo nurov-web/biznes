@@ -686,18 +686,36 @@ function mergeRows<T extends { id: string; updatedAt?: string; createdAt?: strin
   return [...map.values()];
 }
 
+function pickUser(a: UserRow, b: UserRow): UserRow {
+  const newer = rowTime(a) >= rowTime(b) ? a : b;
+  const older = newer === a ? b : a;
+  return {
+    ...older,
+    ...newer,
+    passwordHash: newer.passwordHash || older.passwordHash,
+    phoneVerified: newer.phoneVerified || older.phoneVerified,
+    firstName: newer.firstName || older.firstName,
+    lastName: newer.lastName || older.lastName,
+    phone: newer.phone || older.phone,
+  };
+}
+
 function mergeUsers(local: UserRow[], remote: UserRow[]): UserRow[] {
-  const byId = mergeRows(local, remote);
+  const byId = new Map<string, UserRow>();
+  for (const user of [...remote, ...local]) {
+    const prev = byId.get(user.id);
+    byId.set(user.id, prev ? pickUser(prev, user) : user);
+  }
   const byEmail = new Map<string, UserRow>();
   const noEmail: UserRow[] = [];
-  for (const user of byId) {
+  for (const user of byId.values()) {
     const email = user.email.trim().toLowerCase();
     if (!email) {
       noEmail.push(user);
       continue;
     }
     const prev = byEmail.get(email);
-    if (!prev || rowTime(user) >= rowTime(prev)) byEmail.set(email, user);
+    byEmail.set(email, prev ? pickUser(prev, user) : user);
   }
   return [...byEmail.values(), ...noEmail];
 }
