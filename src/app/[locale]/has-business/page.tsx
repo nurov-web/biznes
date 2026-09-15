@@ -6,7 +6,6 @@ import { useRouter } from "@/i18n/navigation";
 import { PilotFormShell, StepBar } from "@/components/pilot/PilotFormShell";
 import { Select } from "@/components/ui/Select";
 import { ShopPulsePanel, type ShopLinkForm } from "@/components/pilot/ShopPulsePanel";
-import { BusinessReadout } from "@/components/pilot/BusinessReadout";
 import {
   defaultUnitFor,
   PILOT_AGRI_SUB,
@@ -14,7 +13,6 @@ import {
   PILOT_CHANNELS,
   PILOT_UNITS,
 } from "@/constants/pilot";
-import { namedGoods } from "@/lib/owner-goods";
 import type { ShopPulse } from "@/types/shop-pulse";
 
 type FormState = {
@@ -51,15 +49,7 @@ export default function HasBusinessPage() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [pulse, setPulse] = useState<ShopPulse | null>(null);
   const [busy, setBusy] = useState(false);
-  const [reading, setReading] = useState(false);
   const [error, setError] = useState("");
-  const [read, setRead] = useState<{
-    understood: string;
-    usedAi: boolean;
-    note: string;
-    volumeHint: string;
-    priceHint: string;
-  } | null>(null);
 
   useEffect(() => {
     try {
@@ -78,79 +68,10 @@ export default function HasBusinessPage() {
     }
   }, []);
 
-  async function goStep2() {
+  function goStep2() {
     if (!form.category || !form.product.trim() || !form.region.trim()) return;
-    setReading(true);
-    setError("");
-    const goods = namedGoods(form.product);
-    const region = form.region.trim();
-    const local = {
-      understood: goods
-        ? t("readFallback", { product: goods, region })
-        : t("readCityOnly", { region }),
-      usedAi: false,
-      note: goods ? t("readNeed") : t("readAskProduct"),
-      volumeHint: "",
-      priceHint: "",
-    };
-    try {
-      const response = await fetch("/api/pilot/read-business", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          locale,
-          category: form.category,
-          subcategory: form.subcategory,
-          product: form.product.trim(),
-          region: form.region.trim(),
-        }),
-      });
-      if (response.status === 401) {
-        setRead(local);
-        setForm((prev) => ({ ...prev, volumeUnit: defaultUnitFor(prev.category) }));
-        setStep(2);
-        return;
-      }
-      if (response.status === 429) {
-        setRead(local);
-        setForm((prev) => ({ ...prev, volumeUnit: defaultUnitFor(prev.category) }));
-        setStep(2);
-        return;
-      }
-      if (response.ok) {
-        const data = (await response.json()) as {
-          understood?: string;
-          usedAi?: boolean;
-          note?: string;
-          volumeHint?: string;
-          priceHint?: string;
-          unit?: (typeof PILOT_UNITS)[number];
-        };
-        setRead({
-          understood: goods
-            ? data.understood?.trim() || local.understood
-            : local.understood,
-          usedAi: Boolean(data.usedAi),
-          note: goods ? data.note?.trim() || local.note : local.note,
-          volumeHint: data.volumeHint?.trim() || "",
-          priceHint: data.priceHint?.trim() || "",
-        });
-        if (data.unit && (PILOT_UNITS as readonly string[]).includes(data.unit)) {
-          setForm((prev) => ({ ...prev, volumeUnit: data.unit as FormState["volumeUnit"] }));
-        }
-      } else {
-        setRead(local);
-        setForm((prev) => ({ ...prev, volumeUnit: defaultUnitFor(prev.category) }));
-      }
-      setStep(2);
-    } catch {
-      setRead(local);
-      setForm((prev) => ({ ...prev, volumeUnit: defaultUnitFor(prev.category) }));
-      setStep(2);
-    } finally {
-      setReading(false);
-    }
+    setForm((prev) => ({ ...prev, volumeUnit: defaultUnitFor(prev.category) }));
+    setStep(2);
   }
 
   function toggleChannel(ch: string) {
@@ -283,10 +204,10 @@ export default function HasBusinessPage() {
           <button
             type="button"
             className="btn btn-primary min-h-12"
-            disabled={reading || !form.category || !form.product.trim() || !form.region.trim()}
-            onClick={() => void goStep2()}
+            disabled={!form.category || !form.product.trim() || !form.region.trim()}
+            onClick={() => goStep2()}
           >
-            {reading ? t("reading") : t("next")}
+            {t("next")}
           </button>
         </div>
       ) : null}
@@ -294,7 +215,6 @@ export default function HasBusinessPage() {
       {step === 2 ? (
         <div className="grid gap-4">
           <h1 className="display-2">{t("stepOf", { current: 2, total: 3 })} — {t("bizNow")}</h1>
-          {read ? <BusinessReadout read={read} /> : null}
           <label className="grid gap-1.5 text-sm font-medium">
             {t("volume")}
             <div className="flex gap-2">
@@ -303,7 +223,7 @@ export default function HasBusinessPage() {
                 type="number"
                 min={0}
                 value={form.volume}
-                placeholder={read?.volumeHint || t("volumePh")}
+                placeholder={t("volumePh")}
                 onChange={(e) => setForm({ ...form, volume: e.target.value })}
               />
               <div className="w-32 shrink-0 sm:w-36">
@@ -324,7 +244,7 @@ export default function HasBusinessPage() {
               type="number"
               min={0}
               value={form.price}
-              placeholder={read?.priceHint || t("pricePh")}
+                placeholder={t("pricePh")}
               onChange={(e) => setForm({ ...form, price: e.target.value })}
             />
           </label>
@@ -367,7 +287,6 @@ export default function HasBusinessPage() {
       {step === 3 ? (
         <div className="grid gap-4">
           <h1 className="display-2">{t("stepOf", { current: 3, total: 3 })} — {t("bizProblem")}</h1>
-          {read ? <BusinessReadout read={read} /> : null}
           <label className="grid gap-1.5 text-sm font-medium">
             {t("problem")}
             <textarea
