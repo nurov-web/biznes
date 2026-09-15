@@ -1,7 +1,7 @@
 /**
- * Константы Business — без хардкода строк в UI.
+ * Константаҳои BusinessPilot — бе hardcoded strings дар UI.
  */
-export const APP_NAME = "Business";
+export const APP_NAME = "BusinessPilot";
 
 export const SESSION_COOKIE = "bp_session";
 /** Почта/ҳисоб дар браузер мемонад — logout сессияро мебандад, ҳисобро не. */

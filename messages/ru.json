@@ -1,12 +1,12 @@
 {
   "meta": {
-    "title": "Business — платформа бизнеса для Таджикистана",
-    "siteName": "Business",
+    "title": "BusinessPilot — платформа бизнеса для Таджикистана",
+    "siteName": "BusinessPilot",
     "description": "Курс, советы и план продаж для предпринимателей Таджикистана"
   },
   "nav": {
-    "brand": "Business",
-    "brandLead": "Business",
+    "brand": "BusinessPilot",
+    "brandLead": "BusinessPilot",
     "brandTail": "",
     "home": "Главная",
     "login": "Вход",
@@ -73,7 +73,7 @@
     "logout": "Выходите из аккаунта. Чтобы войти снова, нужен пароль."
   },
   "splash": {
-    "aria": "Business",
+    "aria": "BusinessPilot",
     "skip": "Пропустить",
     "beat1": "Цифра. Цена. Решение.",
     "beat2": "Прогноз — не гарантия прибыли.",

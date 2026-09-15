@@ -1,12 +1,12 @@
 {
   "meta": {
-    "title": "Business — business platform for Tajikistan",
-    "siteName": "Business",
+    "title": "BusinessPilot — business platform for Tajikistan",
+    "siteName": "BusinessPilot",
     "description": "Course, advice and a sales plan for entrepreneurs in Tajikistan"
   },
   "nav": {
-    "brand": "Business",
-    "brandLead": "Business",
+    "brand": "BusinessPilot",
+    "brandLead": "BusinessPilot",
     "brandTail": "",
     "home": "Home",
     "login": "Log in",
@@ -73,7 +73,7 @@
     "logout": "Leave the account. Coming back needs the password."
   },
   "splash": {
-    "aria": "Business",
+    "aria": "BusinessPilot",
     "skip": "Skip",
     "beat1": "Numbers. Price. Decision.",
     "beat2": "Forecast — not a profit guarantee.",

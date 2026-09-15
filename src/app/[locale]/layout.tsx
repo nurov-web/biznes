@@ -54,6 +54,11 @@ export async function generateMetadata({
       statusBarStyle: "default",
       title: messages.meta.siteName,
     },
+    icons: {
+      icon: [{ url: "/icon", type: "image/png", sizes: "32x32" }],
+      shortcut: "/icon",
+      apple: "/apple-icon",
+    },
     other: {
       "apple-mobile-web-app-capable": "yes",
     },

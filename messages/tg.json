@@ -1,12 +1,12 @@
 {
   "meta": {
-    "title": "Business — Платформаи бизнес барои Тоҷикистон",
-    "siteName": "Business",
+    "title": "BusinessPilot — Платформаи бизнес барои Тоҷикистон",
+    "siteName": "BusinessPilot",
     "description": "Курс, маслиҳат ва нақшаи фурӯш барои соҳибкорони Тоҷикистон"
   },
   "nav": {
-    "brand": "Business",
-    "brandLead": "Business",
+    "brand": "BusinessPilot",
+    "brandLead": "BusinessPilot",
     "brandTail": "",
     "home": "Асосӣ",
     "login": "Вуруд",
@@ -73,7 +73,7 @@
     "logout": "Аз ҳисоб мебароед. Боз даромадан парол мехоҳад."
   },
   "splash": {
-    "aria": "Business",
+    "aria": "BusinessPilot",
     "skip": "Гузаштан",
     "beat1": "Рақам. Нарх. Қарор.",
     "beat2": "Пешгӯӣ — на кафолати фоида.",

@@ -4,10 +4,10 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Business",
-    short_name: "Business",
+    name: "BusinessPilot",
+    short_name: "BusinessPilot",
     description: "Курс, маслиҳат ва нақшаи фурӯш барои соҳибкорони Тоҷикистон",
-    start_url: "/?source=pwa",
+    start_url: "/tg?source=pwa",
     scope: "/",
     display: "standalone",
     orientation: "any",
