@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { siteOrigin } from "@/lib/site-url";
 
 /** Web app manifest — насб дар телефон ва компютер. */
 export default function manifest(): MetadataRoute.Manifest {
@@ -16,6 +17,13 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "tg",
     dir: "ltr",
     categories: ["business", "productivity"],
+    prefer_related_applications: false,
+    related_applications: [
+      {
+        platform: "webapp",
+        url: `${siteOrigin()}/manifest.webmanifest`,
+      },
+    ],
     icons: [
       {
         src: "/pwa/mark-192.png",

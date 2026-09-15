@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Icon } from "@/components/ui/Icon";
-import { isStandaloneApp, requestPwaInstall } from "@/lib/pwa";
+import {
+  detectInstalledPwa,
+  isPwaInstalled,
+  markPwaInstalled,
+  PWA_INSTALLED_EVENT,
+  requestPwaInstall,
+} from "@/lib/pwa";
 
 type Props = {
   className?: string;
@@ -13,16 +19,39 @@ type Props = {
   onPick?: () => void;
 };
 
-/** Тугмаи «Насб» дар сарлавҳа — пинҳон пас аз насб. */
+/** Тугмаи «Насб» — пас аз скачат пинҳон. */
 export function InstallTrigger({ className, menu, compact, onPick }: Props) {
   const t = useTranslations("pwa");
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const sync = () => setShow(!isStandaloneApp());
+    const hide = () => {
+      markPwaInstalled();
+      setShow(false);
+    };
+    const sync = () => {
+      if (isPwaInstalled()) {
+        setShow(false);
+        return;
+      }
+      setShow(true);
+    };
     sync();
-    window.addEventListener("appinstalled", sync);
-    return () => window.removeEventListener("appinstalled", sync);
+    void detectInstalledPwa().then((yes) => {
+      if (yes) hide();
+    });
+    window.addEventListener("appinstalled", hide);
+    window.addEventListener(PWA_INSTALLED_EVENT, hide);
+    const media = window.matchMedia("(display-mode: standalone)");
+    const onMode = () => {
+      if (media.matches) hide();
+    };
+    media.addEventListener("change", onMode);
+    return () => {
+      window.removeEventListener("appinstalled", hide);
+      window.removeEventListener(PWA_INSTALLED_EVENT, hide);
+      media.removeEventListener("change", onMode);
+    };
   }, []);
 
   if (!show) return null;
@@ -45,7 +74,10 @@ export function InstallTrigger({ className, menu, compact, onPick }: Props) {
     return (
       <button
         type="button"
-        className={className ?? "grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-white/15 bg-white/10 text-white"}
+        className={
+          className ??
+          "grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-white/15 bg-white/10 text-white"
+        }
         aria-label={t("install")}
         onClick={pick}
       >

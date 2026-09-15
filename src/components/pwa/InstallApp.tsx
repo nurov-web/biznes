@@ -4,7 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { Download, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Icon } from "@/components/ui/Icon";
-import { isStandaloneApp, PWA_OPEN_EVENT } from "@/lib/pwa";
+import {
+  isIosSafari,
+  isPwaInstalled,
+  isStandaloneApp,
+  markPwaInstalled,
+  PWA_AVAILABLE_EVENT,
+  PWA_OPEN_EVENT,
+} from "@/lib/pwa";
 
 type InstallEvent = Event & {
   prompt: () => Promise<void>;
@@ -14,7 +21,7 @@ type InstallEvent = Event & {
 const DISMISS_KEY = "bp-pwa-dismiss";
 
 function isIos(): boolean {
-  return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  return isIosSafari();
 }
 
 /** Насби барнома дар телефон ва компютер. */
@@ -26,7 +33,7 @@ export function InstallApp() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (isStandaloneApp()) return;
+    if (isStandaloneApp() || isPwaInstalled()) return;
     const dismissed = () => {
       try {
         return sessionStorage.getItem(DISMISS_KEY) === "1";
@@ -44,10 +51,11 @@ export function InstallApp() {
       raw.preventDefault();
       eventRef.current = raw as InstallEvent;
       setCanPrompt(true);
+      window.dispatchEvent(new Event(PWA_AVAILABLE_EVENT));
       if (!dismissed()) setOpen(true);
     };
     const onOpen = () => {
-      if (isStandaloneApp()) return;
+      if (isStandaloneApp() || isPwaInstalled()) return;
       if (eventRef.current) {
         void runInstall();
         return;
@@ -58,6 +66,7 @@ export function InstallApp() {
       eventRef.current = null;
       setCanPrompt(false);
       setOpen(false);
+      markPwaInstalled();
     };
 
     window.addEventListener("beforeinstallprompt", onPrompt);
@@ -86,7 +95,10 @@ export function InstallApp() {
     const choice = await event.userChoice;
     eventRef.current = null;
     setCanPrompt(false);
-    if (choice.outcome === "accepted") hide();
+    if (choice.outcome === "accepted") {
+      markPwaInstalled();
+      hide();
+    }
   }
 
   if (!open) return null;
