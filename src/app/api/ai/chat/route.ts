@@ -31,12 +31,12 @@ const schema = z.object({
 
 function fallback(locale: AppLocale): string {
   if (locale === "en") {
-    return "AI did not answer this time. Send the question again. I do not invent Somon/OLX prices.";
+    return "AI did not answer this time. Send the question again.";
   }
   if (locale === "ru") {
-    return "ИИ сейчас не ответил. Напишите вопрос ещё раз. Цены Somon/OLX не выдумываю.";
+    return "ИИ сейчас не ответил. Напишите вопрос ещё раз.";
   }
-  return "ИИ ҳоло ҷавоб надод. Саволро бори дигар фиристед. Нархи Somon/OLX-ро дурӯғ намегӯям.";
+  return "ИИ ҳоло ҷавоб надод. Саволро бори дигар фиристед.";
 }
 
 export async function POST(request: Request) {
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
           shopFacts: shopLine || undefined,
         }),
         history,
-        { timeoutMs: 28000, maxTokens: 4096, temperature: 0.5 },
+        { timeoutMs: 20000, maxTokens: 1536, temperature: 0.5 },
       );
       return NextResponse.json({ answer, usedAi: true });
     } catch (error) {

@@ -57,83 +57,90 @@ export async function completeGemini(options: {
     throw new Error("GEMINI_BAD_TURN");
   }
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? GEMINI_TIMEOUT_MS);
-  try {
-    const models = Array.from(
-      new Set([
-        geminiModel(),
-        "gemini-3.6-flash",
-        "gemini-3.5-flash",
-        "gemini-3.1-flash-lite",
-        "gemini-3-flash-preview",
-        "gemini-flash-latest",
-        "gemini-2.5-flash",
-      ]),
-    );
-    let lastError: Error | null = null;
-    for (const model of models) {
-      for (let attempt = 0; attempt < 2; attempt += 1) {
-        const endpoint = new URL(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-        );
-        endpoint.searchParams.set("key", key);
+  const models = Array.from(
+    new Set([
+      geminiModel(),
+      "gemini-3.6-flash",
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-flash-latest",
+      "gemini-2.5-flash-lite",
+    ]),
+  );
+  let lastError: Error | null = null;
+  const deadline = Date.now() + (options.timeoutMs ?? GEMINI_TIMEOUT_MS);
+
+  for (const model of models) {
+    if (Date.now() >= deadline) break;
+    const remain = Math.max(4000, Math.min(10000, deadline - Date.now()));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), remain);
+    try {
+      const endpoint = new URL(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      );
+      endpoint.searchParams.set("key", key);
         const response = await fetch(endpoint, {
           method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: options.system }] },
-            contents,
-            generationConfig: {
-              temperature: options.temperature ?? 0.2,
-              maxOutputTokens: options.maxOutputTokens ?? 2048,
-              ...(options.json ? { responseMimeType: "application/json" } : {}),
-            },
-          }),
-          signal: controller.signal,
-        });
-        const data = (await response.json()) as GeminiResponse;
-        if (!response.ok) {
-          console.error("[gemini]", model, response.status, data.error?.status ?? "");
-        }
-        if (response.status === 404) {
-          lastError = new Error(`GEMINI_HTTP_404:${model}`);
-          break;
-        }
-        if (response.status === 429 || response.status === 503) {
-          lastError = new Error(`GEMINI_HTTP_${response.status}:${model}`);
-          await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
-          continue;
-        }
-        if (!response.ok) {
-          const status = data.error?.status ?? "";
-          const code = data.error?.code ?? response.status;
-          if (code === 401 || code === 403 || status === "UNAUTHENTICATED" || status === "PERMISSION_DENIED") {
-            throw new Error("GEMINI_UNAUTHORIZED");
-          }
-          lastError = new Error(`GEMINI_HTTP_${response.status}:${model}`);
-          break;
-        }
-        const text = data.candidates?.[0]?.content?.parts
-          ?.map((part) => part.text ?? "")
-          .join("\n")
-          .trim();
-        if (!text) {
-          lastError = new Error(`Empty Gemini response:${data.candidates?.[0]?.finishReason ?? "?"}:${model}`);
-          continue;
-        }
-        return text;
+          headers: {
+            "content-type": "application/json",
+            "x-goog-api-key": key,
+          },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: options.system }] },
+          contents,
+          generationConfig: {
+            temperature: options.temperature ?? 0.2,
+            maxOutputTokens: options.maxOutputTokens ?? 2048,
+            ...(options.json ? { responseMimeType: "application/json" } : {}),
+          },
+        }),
+        signal: controller.signal,
+      });
+      const data = (await response.json()) as GeminiResponse;
+      if (!response.ok) {
+        console.error("[gemini]", model, response.status, data.error?.status ?? "");
       }
+      if (response.status === 404) {
+        lastError = new Error(`GEMINI_HTTP_404:${model}`);
+        continue;
+      }
+      if (response.status === 429 || response.status === 503) {
+        lastError = new Error(`GEMINI_HTTP_${response.status}:${model}`);
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        continue;
+      }
+      if (!response.ok) {
+        const status = data.error?.status ?? "";
+        const code = data.error?.code ?? response.status;
+        lastError = new Error(
+          code === 401 || code === 403 || status === "UNAUTHENTICATED" || status === "PERMISSION_DENIED"
+            ? "GEMINI_UNAUTHORIZED"
+            : `GEMINI_HTTP_${response.status}:${model}`,
+        );
+        if (lastError.message === "GEMINI_UNAUTHORIZED") break;
+        continue;
+      }
+      const text = data.candidates?.[0]?.content?.parts
+        ?.map((part) => part.text ?? "")
+        .join("\n")
+        .trim();
+      if (!text) {
+        lastError = new Error(`Empty Gemini response:${data.candidates?.[0]?.finishReason ?? "?"}:${model}`);
+        continue;
+      }
+      return text;
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        lastError = new Error(`GEMINI_TIMEOUT:${model}`);
+        continue;
+      }
+      lastError = error instanceof Error ? error : new Error("GEMINI_FAIL");
+    } finally {
+      clearTimeout(timer);
     }
-    throw lastError ?? new Error("GEMINI_HTTP_404");
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("GEMINI_TIMEOUT");
-    }
-    throw error;
-  } finally {
-    clearTimeout(timer);
   }
+  throw lastError ?? new Error("GEMINI_HTTP_404");
 }
 
 export type GeminiFail = "no_key" | "bad_key" | "timeout" | "fail";
