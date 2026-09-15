@@ -3,7 +3,7 @@ export function BrandMark({ size = 28 }: { size?: number }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element -- нишонаи хурд аз /public, бе оптимизатор
     <img
-      src="/icon-192.png"
+      src="/brand-mark.png"
       alt=""
       width={size}
       height={size}
