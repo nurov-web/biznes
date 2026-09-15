@@ -81,6 +81,7 @@ const LATIN_TAJIK_STEMS = [
   "anglisi",
   "tavre",
   "fahmad",
+  "fahm",
   "hama",
   "furush",
   "xarid",
@@ -104,6 +105,45 @@ const LATIN_TAJIK_STEMS = [
   "xujand",
   "bokhtar",
   "kulob",
+  "sait",
+  "saitro",
+  "knopka",
+  "navis",
+  "naviset",
+  "mebar",
+  "shavad",
+  "kuned",
+  "kardan",
+  "doram",
+  "dored",
+  "hast",
+  "nest",
+  "lotin",
+  "kirill",
+  "vale",
+  "ammo",
+  "chunki",
+  "baroi",
+  "bisyor",
+  "kam",
+  "pul",
+  "somoni",
+  "tjs",
+  "non",
+  "telefon",
+  "dukon",
+  "dokon",
+  "kor",
+  "koram",
+  "biznes",
+  "mahsulot",
+  "narxro",
+  "foida",
+  "zarar",
+  "anbor",
+  "mijoz",
+  "xaridor",
+  "haridor",
 ];
 
 /** Матнро ба шакли муқоиса (лотинӣ) меорад: «тоҷикӣ» = «tojiki». */
@@ -160,12 +200,10 @@ export function looksLikeLatinTajik(text: string): boolean {
   const { cyr, lat } = letterCounts(text);
   if (lat === 0 || cyr > lat) return false;
   const folded = foldTajik(text);
-  let hits = 0;
   for (const stem of LATIN_TAJIK_STEMS) {
-    if (folded.includes(foldTajik(stem))) hits += 1;
-    if (hits >= 2) return true;
+    if (folded.includes(foldTajik(stem))) return true;
   }
-  return hits >= 1 && lat >= 8;
+  return false;
 }
 
 /**
@@ -177,20 +215,20 @@ export function ownerReplyScript(text: string, locale: Locale): TajikReplyScript
   if (raw === "cyrillic") return "cyrillic";
   if (looksLikeLatinTajik(text)) return "latin";
   if (locale === "tg" && raw === "latin") return "latin";
-  return raw;
+  return "neutral";
 }
 
 const LATIN_TAJIK_GLOSS =
-  "agar/agur=if, yo=or, yagon=some, chizi=thing, digar=other, injo=here, meguyad=says, mefahmad=understands, anbor=warehouse, moshin=car, narx=price, faida=profit, magoza=shop, mizoqon=customers, kassa=till, savol=question, ham=also, tavre kun=make it so, shrift=script, anglisi=English, tojiki=Tajik, kuned=do, furush=sale, xarid=buy";
+  "agar/agur=if, yo=or, yagon=some, chizi=thing, digar=other, injo=here, meguyad=says, mefahmad=understands, anbor=warehouse, moshin=car, narx=price, faida/foida=profit, magoza=shop, dukon=shop, mizoqon=customers, kassa=till, savol=question, ham=also, tavre kun=make it so, shrift=script, anglisi=English letters, tojiki=Tajik, kuned/kun=do, furush=sale, xarid=buy, saitro=the site, knopka=button, naviset=write, shavad=should become, vale/ammo=but, baroi=for, bisyor=many, kam=little, pul=money, non=bread, mahsulot=product, xaridor=buyer, kor=work, nest=there is not, hast=there is, lotfan=please";
 
-/** Матни соҳибро барои Claude қайд мекунад, ки ин тоҷикӣ аст, на англисӣ. */
-export function wrapOwnerMessage(raw: string | undefined): string {
+/** Матни соҳибро барои ИИ қайд мекунад, ки ин тоҷикӣ аст, на англисӣ. */
+export function wrapOwnerMessage(raw: string | undefined, locale: Locale = "tg"): string {
   const text = raw?.trim() ?? "";
   if (!text) return "Owner message: (empty).";
-  const script = tajikReplyScript(text);
-  if (script === "latin" || looksLikeLatinTajik(text)) {
+  const script = ownerReplyScript(text, locale);
+  if (script === "latin") {
     return [
-      "OWNER TEXT — spoken Tajik typed with English keyboard letters. This is NOT English. Do not read it as English words or English typos.",
+      "OWNER TEXT — spoken Tajik typed with an English keyboard (Latin letters). This is NOT English. Do not read it as English words or English typos.",
       `Phonetics: ${LATIN_TAJIK_GLOSS}.`,
       `«${text}»`,
     ].join("\n");
@@ -202,8 +240,9 @@ export function wrapOwnerMessage(raw: string | undefined): string {
 }
 
 export const LATIN_TAJIK_LLM_RULE = [
-  "Tajik owners type Tajik with an English keyboard (tojiki, agur, chizi, anbor). That is Tajik, never English.",
+  "Tajik owners type Tajik with an English keyboard (tojiki, narx, non, kulob, saitro tavre kun). That is Tajik, never English.",
+  "On locale tg, ANY message written with a–z is Latin Tajik unless it is clearly a foreign brand or URL.",
   "Do not map those words to English lookalikes. Answer the Tajik meaning.",
   `Glossary: ${LATIN_TAJIK_GLOSS}.`,
-  "If the owner used Latin letters, write the whole answer in Latin Tajik — no Cyrillic letters.",
+  "If the owner used Latin letters, write the whole answer in Latin Tajik — no Cyrillic, no English prose.",
 ].join(" ");

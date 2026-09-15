@@ -53,7 +53,7 @@ export async function POST(request: Request) {
           format:
             "Use tools. Run at least one simulation before you recommend. Four short labeled paragraphs: Analyze → Explain → Simulate → Recommend.",
         }),
-        user: `${wrapOwnerMessage(parsed.data.question || "In hafta chi kunam?")}\nBusiness: ${snap.businessName}, ${snap.city}, stage ${business.stage}, budget ${business.budget} TJS. Direction: ${business.goal || business.typeNote || "—"}.`,
+        user: `${wrapOwnerMessage(parsed.data.question || "In hafta chi kunam?", locale)}\nBusiness: ${snap.businessName}, ${snap.city}, stage ${business.stage}, budget ${business.budget} TJS. Direction: ${business.goal || business.typeNote || "—"}.`,
         tools: BUSINESS_TOOLS,
         runTool: makeToolRunner(business, locale),
       });

@@ -87,7 +87,7 @@ export async function POST(request: Request) {
           format:
             "Call tools before any figure. Format: 1) fact from the data 2) risk or opportunity in TJS 3) one action.",
         }),
-        user: `${wrapOwnerMessage(parsed.data.question)}\nBusiness: ${snap.businessName}, ${snap.city}, stage ${business.stage}. Direction: ${business.goal || business.typeNote || "—"}.`,
+        user: `${wrapOwnerMessage(parsed.data.question, locale)}\nBusiness: ${snap.businessName}, ${snap.city}, stage ${business.stage}. Direction: ${business.goal || business.typeNote || "—"}.`,
         tools: BUSINESS_TOOLS,
         runTool: makeToolRunner(business, locale),
       });

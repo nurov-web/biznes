@@ -48,7 +48,7 @@ export async function POST(request: Request) {
           role: "You are the owner’s advisor for this week’s cash, price and stock.",
           format: "Format: one short fact → example with TJS → 3 numbered actions. No fluff.",
         }),
-        `${wrapOwnerMessage(parsed.data.question)}\nBusiness: ${business.name}, ${business.city}, ${business.type}\nDirection: ${business.goal || business.typeNote || "—"}\nProducts: ${JSON.stringify(products).slice(0, 4000)}`,
+        `${wrapOwnerMessage(parsed.data.question, locale)}\nBusiness: ${business.name}, ${business.city}, ${business.type}\nDirection: ${business.goal || business.typeNote || "—"}\nProducts: ${JSON.stringify(products).slice(0, 4000)}`,
       );
       return NextResponse.json({ answer, usedAi: true });
     } catch {
