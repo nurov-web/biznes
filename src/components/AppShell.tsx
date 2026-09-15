@@ -6,7 +6,6 @@ import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { ProfileMenu } from "@/components/shell/ProfileMenu";
 import { BrandLockup } from "@/components/ui/BrandLockup";
 import { EntryVeil } from "@/components/motion/EntryVeil";
-import { EphemeralStoreBanner } from "@/components/dashboard/EphemeralStoreBanner";
 import { useRouter } from "@/i18n/navigation";
 import { clearEntrySplash, markLoggedOut } from "@/lib/splash";
 import { saveRememberedLogin } from "@/lib/remember-login";
@@ -16,7 +15,6 @@ type Me = {
   user: { firstName: string; lastName: string; email: string; phoneVerified: boolean };
   business: { onboardingDone: boolean; name: string; city: string } | null;
   hasPilotProfile?: boolean;
-  ephemeralStore?: boolean;
   pilot?: { product: string; region: string } | null;
 };
 
@@ -124,14 +122,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </header>
-      <div className="min-w-0 flex-1 pb-[max(2rem,env(safe-area-inset-bottom))]">
-        {me.ephemeralStore ? (
-          <div className="gutter-x pt-4">
-            <EphemeralStoreBanner show />
-          </div>
-        ) : null}
-        {children}
-      </div>
+      <div className="min-w-0 flex-1 pb-[max(2rem,env(safe-area-inset-bottom))]">{children}</div>
     </div>
   );
 }
