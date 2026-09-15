@@ -306,7 +306,7 @@ export default function HasBusinessPage() {
                 placeholder={read?.volumeHint || t("volumePh")}
                 onChange={(e) => setForm({ ...form, volume: e.target.value })}
               />
-              <div className="w-28 shrink-0">
+              <div className="w-32 shrink-0 sm:w-36">
                 <Select
                   value={form.volumeUnit}
                   onChange={(next) =>

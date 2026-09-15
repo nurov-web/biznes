@@ -39,7 +39,13 @@ export function Select({
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [active, setActive] = useState(0);
-  const [pos, setPos] = useState({ top: 0, left: 0, width: 0, maxH: 280 });
+  const [pos, setPos] = useState({
+    top: 0 as number | undefined,
+    bottom: undefined as number | undefined,
+    left: 0,
+    width: 0,
+    maxH: 280,
+  });
 
   const selected = options.find((row) => row.value === value);
   const label = selected?.label ?? placeholder ?? "";
@@ -52,16 +58,34 @@ export function Select({
     const node = btn.current;
     if (!node) return;
     const box = node.getBoundingClientRect();
-    const width = Math.min(Math.max(box.width, 196), window.innerWidth - 24);
-    const spaceBelow = window.innerHeight - box.bottom - 12;
-    const spaceAbove = box.top - 12;
-    const openUp = spaceBelow < 220 && spaceAbove > spaceBelow;
-    const maxH = Math.min(520, Math.max(160, openUp ? spaceAbove : spaceBelow));
-    const top = openUp ? Math.max(12, box.top - maxH - 6) : box.bottom + 6;
+    const viewH = window.visualViewport?.height ?? window.innerHeight;
+    const viewTop = window.visualViewport?.offsetTop ?? 0;
+    const width = Math.min(Math.max(box.width, 168), window.innerWidth - 24);
+    const contentH = Math.min(options.length * 48 + 14, 320);
+    const spaceBelow = viewTop + viewH - box.bottom - 12;
+    const spaceAbove = box.top - viewTop - 12;
+    const openUp = spaceBelow < contentH && spaceAbove > spaceBelow;
+    const maxH = Math.min(contentH, Math.max(96, openUp ? spaceAbove : spaceBelow));
     let left = box.left;
     if (left + width > window.innerWidth - 12) left = window.innerWidth - width - 12;
     if (left < 12) left = 12;
-    setPos({ top, left, width, maxH });
+    if (openUp) {
+      setPos({
+        top: undefined,
+        bottom: window.innerHeight - box.top + 6,
+        left,
+        width,
+        maxH,
+      });
+      return;
+    }
+    setPos({
+      top: box.bottom + 6,
+      bottom: undefined,
+      left,
+      width,
+      maxH,
+    });
   }
 
   useEffect(() => {
@@ -84,14 +108,21 @@ export function Select({
         btn.current?.focus();
       }
     };
-    requestAnimationFrame(() => panel.current?.focus());
+    requestAnimationFrame(() => {
+      place();
+      panel.current?.focus();
+    });
     window.addEventListener("resize", place);
     window.addEventListener("scroll", place, true);
+    window.visualViewport?.addEventListener("resize", place);
+    window.visualViewport?.addEventListener("scroll", place);
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
     return () => {
       window.removeEventListener("resize", place);
       window.removeEventListener("scroll", place, true);
+      window.visualViewport?.removeEventListener("resize", place);
+      window.visualViewport?.removeEventListener("scroll", place);
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
     };
@@ -161,7 +192,13 @@ export function Select({
       tabIndex={-1}
       aria-activedescendant={`${listId}-${active}`}
       className="app-select-panel fixed z-[80]"
-      style={{ top: pos.top, left: pos.left, width: pos.width, maxHeight: pos.maxH }}
+      style={{
+        top: pos.top,
+        bottom: pos.bottom,
+        left: pos.left,
+        width: pos.width,
+        maxHeight: pos.maxH,
+      }}
       onKeyDown={onListKey}
     >
       {options.map((row, index) => {
