@@ -15,9 +15,18 @@ import { chatSystemPrompt } from "@/services/ai/business-system";
 import { completeAi } from "@/services/ai/complete";
 import { latestShopPulse, pulseFacts } from "@/services/shop-pulse";
 import type { AppLocale } from "@/i18n/routing";
-import type { ChatTurn } from "@/services/ai/gemini";
+import { geminiConfigured, geminiModelName, type ChatTurn } from "@/services/ai/gemini";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+export const maxDuration = 20;
+
+export async function GET() {
+  return NextResponse.json({
+    gemini: geminiConfigured(),
+    model: geminiConfigured() ? geminiModelName() : "",
+  });
+}
 
 const turnSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -104,7 +113,7 @@ export async function POST(request: Request) {
           shopFacts: shopLine || undefined,
         }),
         history,
-        { timeoutMs: 20000, maxTokens: 1536, temperature: 0.5 },
+        { timeoutMs: 16000, maxTokens: 2048 },
       );
       return NextResponse.json({ answer, usedAi: true });
     } catch (error) {

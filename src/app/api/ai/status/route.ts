@@ -1,16 +1,45 @@
 /**
- * GET /api/ai/status — оё калиди Claude воқеан кор мекунад?
+ * GET /api/ai/status — оё калиди Gemini/Claude кор мекунад?
  * Худи калид ҳеҷ гоҳ бармегардад — танҳо ҳолат ва хатои сервер.
- * Проверяет работоспособность ключа Claude. Сам ключ никогда не возвращается.
  */
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { classifyClaudeError, completeClaude, getAiKeyStatus } from "@/services/ai/claude";
+import {
+  classifyGeminiError,
+  completeGemini,
+  geminiConfigured,
+  geminiModelName,
+} from "@/services/ai/gemini";
 
 export async function GET() {
   try {
     await requireUser();
+
+    if (geminiConfigured()) {
+      try {
+        await completeGemini({
+          system: "Reply with the single word OK.",
+          messages: [{ role: "user", content: "ping" }],
+          timeoutMs: 12000,
+          maxOutputTokens: 64,
+        });
+        return NextResponse.json({
+          state: "live",
+          model: geminiModelName(),
+          detail: "gemini",
+        });
+      } catch (error) {
+        const kind = classifyGeminiError(error);
+        return NextResponse.json({
+          state: "failed",
+          model: geminiModelName(),
+          detail: kind === "bad_key" ? "invalid_api_key" : kind === "timeout" ? "timeout" : "failed",
+        });
+      }
+    }
+
     const keyStatus = getAiKeyStatus();
 
     if (keyStatus === "missing") {
