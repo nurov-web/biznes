@@ -14,6 +14,7 @@ import {
   PILOT_CHANNELS,
   PILOT_UNITS,
 } from "@/constants/pilot";
+import { namedGoods } from "@/lib/owner-goods";
 import type { ShopPulse } from "@/types/shop-pulse";
 
 type FormState = {
@@ -81,10 +82,14 @@ export default function HasBusinessPage() {
     if (!form.category || !form.product.trim() || !form.region.trim()) return;
     setReading(true);
     setError("");
+    const goods = namedGoods(form.product);
+    const region = form.region.trim();
     const local = {
-      understood: t("readFallback", { product: form.product.trim(), region: form.region.trim() }),
+      understood: goods
+        ? t("readFallback", { product: goods, region })
+        : t("readCityOnly", { region }),
       usedAi: false,
-      note: "",
+      note: goods ? t("readNeed") : t("readAskProduct"),
       volumeHint: "",
       priceHint: "",
     };
@@ -123,9 +128,11 @@ export default function HasBusinessPage() {
           unit?: (typeof PILOT_UNITS)[number];
         };
         setRead({
-          understood: data.understood?.trim() || local.understood,
+          understood: goods
+            ? data.understood?.trim() || local.understood
+            : local.understood,
           usedAi: Boolean(data.usedAi),
-          note: data.note?.trim() || "",
+          note: goods ? data.note?.trim() || local.note : local.note,
           volumeHint: data.volumeHint?.trim() || "",
           priceHint: data.priceHint?.trim() || "",
         });

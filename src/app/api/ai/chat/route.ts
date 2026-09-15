@@ -13,6 +13,7 @@ import { consumeAiQuota } from "@/lib/ai-quota";
 import { readDb } from "@/lib/store";
 import { chatSystemPrompt } from "@/services/ai/business-system";
 import { completeAi } from "@/services/ai/complete";
+import { namedGoods } from "@/lib/owner-goods";
 import { latestShopPulse, pulseFacts } from "@/services/shop-pulse";
 import type { AppLocale } from "@/i18n/routing";
 import { geminiConfigured, geminiModelName, type ChatTurn } from "@/services/ai/gemini";
@@ -91,7 +92,19 @@ export async function POST(request: Request) {
         business?.goal || business?.typeNote || "",
         products ? `Catalog: ${products}` : "",
         pilot
-          ? `Product: ${pilot.product}; region: ${pilot.region}; volume: ${pilot.volume}; price: ${pilot.price} TJS; category: ${pilot.category}; channels: ${pilot.channels.join(", ") || "—"}; problem: ${pilot.problem}`
+          ? [
+              namedGoods(pilot.product)
+                ? `Product: ${namedGoods(pilot.product)}`
+                : "Product: not named (owner wrote a refusal word, not a SKU)",
+              `region: ${pilot.region}`,
+              namedGoods(pilot.volume) ? `volume: ${pilot.volume}` : "",
+              namedGoods(pilot.price) ? `price: ${pilot.price} TJS` : "",
+              `category: ${pilot.category}`,
+              `channels: ${pilot.channels.join(", ") || "—"}`,
+              namedGoods(pilot.problem) ? `problem: ${pilot.problem}` : "",
+            ]
+              .filter(Boolean)
+              .join("; ")
           : "",
         pulse ? pulseFacts(pulse) : "",
       ]

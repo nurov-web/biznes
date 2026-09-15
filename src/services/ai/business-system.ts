@@ -56,8 +56,8 @@ export function chatSystemPrompt(options: {
     scriptRule(options.locale, options.ownerMessage),
     LATIN_TAJIK_LLM_RULE,
     shop
-      ? `Shop facts — use ONLY if the question is about this shop. Do not invent Somon/OLX/Amazon prices or fake TJS totals. Forecast, not guaranteed profit.\n${shop}`
-      : "No shop profile in this request. If they did not give volume or price, do not invent bags or turnover.",
+      ? `Shop facts — use ONLY if the question is about this shop. Ignore filler words like надорам, нет, нету, нест as product names — they mean the owner has not named goods yet. Confirm the city and help them name one item. Do not invent Somon/OLX/Amazon prices or fake TJS totals. Forecast, not guaranteed profit. Do not lecture that estimates are useless; give 2–4 concrete next steps anyway.\n${shop}`
+      : "No shop profile in this request. If they did not give volume or price, do not invent bags or turnover. Still answer with useful steps.",
     "Plain text. No markdown tables. Short sentences. If the topic is business, end with 2–4 numbered next steps.",
     wrapOwnerMessage(options.ownerMessage),
   ].join("\n\n");
@@ -77,8 +77,8 @@ export function businessSystemPrompt(options: {
     CANON,
     options.role?.trim() ?? "",
     focus
-      ? `The owner named this goods or shop: «${focus}». Every SKU, example and tip MUST be about that text. Do not switch to another product (cars, oil, phones, fruit, clothes, etc.) unless they wrote it.`
-      : "If the owner named any product, follow those words. Never fill in a default shop (phones, motor oil, apples) just because the app category is «trade».",
+      ? `The owner named this goods or shop: «${focus}». If that text is a city only, do not invent a product. If it is a real product, every SKU and tip MUST be about that text. Do not switch to another product (cars, oil, phones, fruit, clothes, etc.) unless they wrote it.`
+      : "If the owner named any product, follow those words. Never fill in a default shop (phones, motor oil, apples) just because the app category is «trade». Never treat надорам/нет/нету as a product name.",
     scriptRule(options.locale, ownerText || focus || ""),
     options.ownerMessage?.trim() ? wrapOwnerMessage(options.ownerMessage) : "",
     options.format?.trim() ?? "",

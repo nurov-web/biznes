@@ -1,6 +1,7 @@
 import type { PilotDifficulty, PilotProfileRow, PilotSuggestionItem } from "@/lib/store";
 import { parseLocale } from "@/lib/locale-query";
 import { monthlyRevenue } from "@/lib/pilot-volume";
+import { namedGoods } from "@/lib/owner-goods";
 import { defaultUnitFor, PILOT_UNITS } from "@/constants/pilot";
 import { businessSystemPrompt } from "@/services/ai/business-system";
 import { completeAi } from "@/services/ai/complete";
@@ -392,8 +393,10 @@ export async function readBusinessDraft(input: {
   product: string;
   region: string;
 }): Promise<BusinessRead> {
+  const goods = namedGoods(input.product);
+  const city = input.region.trim();
   const fallback: BusinessRead = {
-    understood: `${input.product.trim()} — ${input.region.trim()}`,
+    understood: goods ? `${goods} — ${city}` : city,
     unit: defaultUnitFor(input.category),
     volumeHint: "",
     priceHint: "",
@@ -405,24 +408,27 @@ export async function readBusinessDraft(input: {
       businessSystemPrompt({
         locale: parseLocale(input.locale),
         jsonOnly: true,
-        ownerFocus: input.product,
-        ownerMessage: `${input.product}. ${input.region}`,
+        ownerFocus: goods || city,
+        ownerMessage: `${goods || "маҳсулот номбар нашуд"}. ${city}`,
         role: [
-          "The owner just named their real shop. Confirm you understood THIS product and THIS city.",
-          "Do NOT invent Somon/OLX prices, market size, or volume. Do not use demo goods (apples, phones, oil) unless they wrote them.",
-          "unit must be one of: kg, ton, pcs, tjs — the unit that fits THEIR product.",
-          "volume_hint and price_hint: short questions naming their product, asking THEM for their numbers.",
+          goods
+            ? "The owner named a real product. Confirm THIS product and THIS city in one short sentence."
+            : "The owner did NOT name a product. Words like надорам, нет, нету, нест mean 'I don't have one' — NEVER quote them as a SKU or product title.",
+          "Confirm the city. If no product name, ask them to name one thing they sell (bread, phone, clothes). Do not lecture about missing prices, estimates, or Somon.",
+          "Do NOT invent Somon/OLX prices, market size, or volume. Do not use demo goods unless they wrote them.",
+          "unit must be one of: kg, ton, pcs, tjs.",
+          "volume_hint and price_hint: short questions. note must be empty or one short next step — never a warning about approximate estimates.",
         ].join(" "),
         format: [
           "JSON object only:",
-          '{"understood":"one sentence","unit":"kg|ton|pcs|tjs","volume_hint":"...","price_hint":"...","note":"we still need their volume and price; no market scrape"}',
+          '{"understood":"one helpful sentence","unit":"kg|ton|pcs|tjs","volume_hint":"...","price_hint":"...","note":""}',
         ].join("\n"),
       }),
       [
         `Соҳа: ${input.category}`,
         input.subcategory ? `Зерсоҳа: ${input.subcategory}` : "",
-        `Маҳсулот: ${input.product}`,
-        `Минтақа: ${input.region}`,
+        goods ? `Маҳсулот: ${goods}` : "Маҳсулот: номбар нашуд (калимаи рад — мол нест)",
+        `Минтақа: ${city}`,
       ]
         .filter(Boolean)
         .join("\n"),
@@ -432,12 +438,18 @@ export async function readBusinessDraft(input: {
     if (!row) return fallback;
     const understood = String(row.understood ?? row.summary ?? "").trim();
     if (!understood) return fallback;
+    const quotesEmpty =
+      !goods && /надорам|не дорам|«нет»|"нет"|нету/i.test(understood);
+    const rawNote = String(row.note ?? "").trim();
+    const lecture = /тахмин|приблизит|оценк|Somon|бидуни рақам|generic|каталог/i.test(
+      `${understood} ${rawNote}`,
+    );
     return {
-      understood: understood.slice(0, 240),
+      understood: quotesEmpty ? fallback.understood : understood.slice(0, 240),
       unit: asUnit(row.unit, input.category),
       volumeHint: String(row.volume_hint ?? row.volumeHint ?? "").trim().slice(0, 160),
       priceHint: String(row.price_hint ?? row.priceHint ?? "").trim().slice(0, 160),
-      note: String(row.note ?? "").trim().slice(0, 200),
+      note: lecture ? "" : rawNote.slice(0, 200),
       usedAi: true,
     };
   } catch (error) {
