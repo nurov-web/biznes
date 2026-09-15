@@ -10,7 +10,9 @@ import { SalesPlanBoard } from "@/components/pilot/SalesPlanBoard";
 import { ProgressBoard, type CourseMark, type DaySold } from "@/components/pilot/ProgressBoard";
 import { PILOT_MODULES } from "@/constants/pilot-course";
 import { isModuleOpen, PILOT_MODULE_COUNT } from "@/constants/pilot";
-import type { PilotProfileRow } from "@/lib/store";
+import { SuggestionPath } from "@/components/pilot/SuggestionPath";
+import { shortLine, suggestionSteps } from "@/lib/pilot-suggestions";
+import type { PilotProfileRow, PilotSuggestionItem } from "@/lib/store";
 import type { ShopPulse } from "@/types/shop-pulse";
 
 type Tab = "overview" | "course" | "sales";
@@ -26,6 +28,7 @@ export default function DashboardPage() {
   const [planDate, setPlanDate] = useState("");
   const [planLoading, setPlanLoading] = useState(false);
   const [chosen, setChosen] = useState(false);
+  const [chosenItem, setChosenItem] = useState<PilotSuggestionItem | null>(null);
   const [logs, setLogs] = useState<DaySold[]>([]);
   const [weekDone, setWeekDone] = useState<string[]>([]);
   const [course, setCourse] = useState<CourseMark[]>([]);
@@ -42,6 +45,7 @@ export default function DashboardPage() {
             progress?: number[];
             plan?: string;
             planDate?: string;
+            suggestions?: PilotSuggestionItem[];
             chosenIndex?: number | null;
             logs?: DaySold[];
             weekDone?: string[];
@@ -53,7 +57,10 @@ export default function DashboardPage() {
           setProgress(d?.progress ?? []);
           setPlan(d?.plan ?? "");
           setPlanDate(d?.planDate ?? "");
-          setChosen(typeof d?.chosenIndex === "number");
+          const index = d?.chosenIndex;
+          const list = d?.suggestions ?? [];
+          setChosen(typeof index === "number");
+          setChosenItem(typeof index === "number" ? (list[index] ?? null) : null);
           setLogs(d?.logs ?? []);
           setWeekDone(d?.weekDone ?? []);
           setCourse(d?.course ?? []);
@@ -130,18 +137,30 @@ export default function DashboardPage() {
         </div>
 
         {tab === "overview" && profile ? (
-          <ProgressBoard
-            profile={profile}
-            progress={progress}
-            hasPlan={Boolean(plan)}
-            chosen={chosen}
-            logs={logs}
-            weekDone={weekDone}
-            course={course}
-            onLogged={setLogs}
-            pulse={pulse}
-            onPulse={setPulse}
-          />
+          <div className="grid gap-4">
+            {chosenItem ? (
+              <article className="card-raised p-5 sm:p-6">
+                <p className="text-xs font-medium text-muted-foreground">{t("sugChosen")}</p>
+                <h2 className="mt-1 text-base font-semibold">{chosenItem.title}</h2>
+                <SuggestionPath
+                  steps={suggestionSteps(chosenItem).map((row) => shortLine(row, 88))}
+                  heading={t("sugDoThis")}
+                />
+              </article>
+            ) : null}
+            <ProgressBoard
+              profile={profile}
+              progress={progress}
+              hasPlan={Boolean(plan)}
+              chosen={chosen}
+              logs={logs}
+              weekDone={weekDone}
+              course={course}
+              onLogged={setLogs}
+              pulse={pulse}
+              onPulse={setPulse}
+            />
+          </div>
         ) : null}
 
         {tab === "course" ? (

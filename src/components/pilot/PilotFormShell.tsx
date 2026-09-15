@@ -4,13 +4,17 @@ import type { ReactNode } from "react";
 import { MarketingHeader } from "@/components/MarketingHeader";
 import { MarketingFooter } from "@/components/MarketingFooter";
 
-export function PilotFormShell({ children }: { children: ReactNode }) {
+export function PilotFormShell({ children, wide }: { children: ReactNode; wide?: boolean }) {
   return (
     <div className="flex min-h-screen w-full min-w-0 flex-col bg-background">
       <div className="hero-ink w-full">
         <MarketingHeader tone="dark" />
       </div>
-      <main className="gutter-x mx-auto w-full min-w-0 max-w-lg flex-1 py-8 sm:py-10">{children}</main>
+      <main
+        className={`gutter-x mx-auto w-full min-w-0 flex-1 py-8 sm:py-10 ${wide ? "max-w-xl" : "max-w-lg"}`}
+      >
+        {children}
+      </main>
       <MarketingFooter />
     </div>
   );

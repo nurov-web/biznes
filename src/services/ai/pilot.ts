@@ -1,13 +1,15 @@
 import type { PilotDifficulty, PilotProfileRow, PilotSuggestionItem } from "@/lib/store";
-import { parseLocale } from "@/lib/locale-query";
+import { parseLocale, type Locale } from "@/lib/locale-query";
 import { monthlyRevenue } from "@/lib/pilot-volume";
 import { namedGoods } from "@/lib/owner-goods";
+import { hasMixedScript, type TajikReplyScript } from "@/lib/tajik-text";
 import { defaultUnitFor, PILOT_UNITS } from "@/constants/pilot";
 import { businessSystemPrompt } from "@/services/ai/business-system";
 import { completeAi } from "@/services/ai/complete";
 import { extractJsonArray } from "@/services/ai/claude";
 import type { ShopPulse } from "@/types/shop-pulse";
 import { pulseFacts } from "@/services/shop-pulse";
+import { splitToSteps } from "@/lib/pilot-suggestions";
 
 export type PilotSuggestionBatch = {
   items: PilotSuggestionItem[];
@@ -46,36 +48,64 @@ function parseJsonList(text: string): unknown[] {
   }
 }
 
+/** Аз 50 сомонӣ камтар маънои амалӣ надорад — «+1 сомонӣ/моҳ» нанависем. */
+const MIN_EXTRA_SOMONI = 50;
+
 /** Рақам танҳо дар доираи ҳисоби соҳиб — бе бозори сохта. */
 function clampAmount(n: number, cap: number): number {
   if (cap <= 0 || n <= 0) return 0;
-  return Math.min(n, cap);
+  const value = Math.min(n, cap);
+  return value >= MIN_EXTRA_SOMONI ? value : 0;
+}
+
+/** Кортҳо бо хати сайт навишта мешаванд, то дар як ҷумла ду алифбо наояд. */
+function cardScript(locale: Locale): TajikReplyScript {
+  return locale === "tg" ? "cyrillic" : "neutral";
+}
+
+/** Корти бо ду алифбо («narxi 1 somoni кам аст») хатои хониш аст — нишон намедиҳем. */
+function mixedScriptItem(item: PilotSuggestionItem, ownWords: string[]): boolean {
+  return hasMixedScript([item.title, item.description, ...(item.steps ?? [])].join(" "), ownWords);
 }
 
 function itemFromUnknown(raw: unknown, fallbackTitle: string, cap: number): PilotSuggestionItem | null {
   if (!raw || typeof raw !== "object") return null;
   const row = raw as Record<string, unknown>;
   const title = String(row.title ?? row.name ?? "").trim() || fallbackTitle;
-  const description = String(row.description ?? "").trim() || title;
+  const description = String(row.description ?? row.why ?? "").trim() || title;
   if (!title) return null;
+  const listed = [row.steps, row.actions, row.kadam]
+    .flatMap((value) => (Array.isArray(value) ? value : []))
+    .map((part) => String(part ?? "").trim())
+    .filter(Boolean)
+    .slice(0, 4);
   return {
-    title: title.slice(0, 80),
-    description: description.slice(0, 360),
+    title: title.slice(0, 90),
+    description: description.slice(0, 420),
+    steps: listed.length > 0 ? listed : splitToSteps(description),
     difficulty: difficultyOf(row.difficulty),
     potentialSomoni: clampAmount(num(row.potential_somoni ?? row.monthly_income ?? row.potentialSomoni, 0), cap),
   };
 }
 
-function parseItems(text: string, fallbackTitle: string, cap: number): PilotSuggestionItem[] {
+function parseItems(
+  text: string,
+  fallbackTitle: string,
+  cap: number,
+  ownWords: string[] = [],
+): PilotSuggestionItem[] {
   return parseJsonList(text)
     .map((row) => itemFromUnknown(row, fallbackTitle, cap))
-    .filter((row): row is PilotSuggestionItem => row !== null)
+    .filter((row): row is PilotSuggestionItem => row !== null && !mixedScriptItem(row, ownWords))
     .slice(0, 4);
 }
 
 function extrasFrom(turnover: number): number[] {
   if (turnover <= 0) return [0, 0, 0, 0];
-  return [0.04, 0.05, 0.06, 0.07].map((part) => Math.max(50, Math.round(turnover * part)));
+  return [0.04, 0.05, 0.06, 0.07].map((part) => {
+    const value = Math.round(turnover * part);
+    return value >= MIN_EXTRA_SOMONI ? value : 0;
+  });
 }
 
 function fallbackFor(product: string, region: string, price = "", volume = ""): PilotSuggestionItem[] {
@@ -85,26 +115,46 @@ function fallbackFor(product: string, region: string, price = "", volume = ""): 
   const extras = extrasFrom(monthlyRevenue(volume, price));
   return [
     {
-      title: `${who} ба яклухт`,
-      description: `3 харидори яклухтро дар ${where} пайдо кунед. Нарх: ${priceText} сомонӣ — ҳамин рақаме, ки шумо навиштед, на нархи бозор.`,
+      title: `3 харидори ${who}`,
+      description: `Яклухт дар ${where}. Нарх ${priceText} сомонӣ.`,
+      steps: [
+        `10 ном дар ${where} нависед.`,
+        `Имрӯз ба 3 нафар занг: нарх ${priceText} сомонӣ.`,
+        "Харидро дар дафтар нависед.",
+      ],
       difficulty: "easy",
       potentialSomoni: extras[0] ?? 0,
     },
     {
-      title: "Нархи баста",
-      description: `${who}-ро дар бастаи 3–5 воҳид бо нархи ${priceText} сомонӣ фурӯшед. Рақами иловагӣ аз ҳаҷми шумо ҳисоб шуд, на аз интернет.`,
+      title: `${who} дар баста`,
+      description: `Як нарх, як баста — то напурсанд «чанд?».`,
+      steps: [
+        `Бастаи 3–5 дона нависед. Нарх ${priceText} сомонӣ.`,
+        `Ба 5 нафар дар ${where} паём кунед.`,
+        "Ҳафтаро ҳисоб кунед: рафт ё не.",
+      ],
       difficulty: "easy",
       potentialSomoni: extras[1] ?? 0,
     },
     {
-      title: "Каналҳои ҳозира",
-      description: `Дар каналҳои ки аллакай кор мекунед, рӯзе як пешниҳоди ${who} бо нарх фиристед. Харидорони ${where}.`,
+      title: "Ҳар рӯз як пешниҳод",
+      description: `Ҳамон канал. ${who} дар ${where}.`,
+      steps: [
+        "Телефон, бозор ё Telegram — якро гиред.",
+        `Рӯзе як бор нарх ${priceText} сомонӣ гӯед.`,
+        "Пас аз 7 рӯз: чанд харид.",
+      ],
       difficulty: "medium",
       potentialSomoni: extras[2] ?? 0,
     },
     {
-      title: "Харидори такрорӣ",
-      description: `5 харидори ${who}-ро бо рақам нависед ва ҳар ҳафта хабар диҳед, ки мол омода аст.`,
+      title: "Харидори кӯҳна",
+      description: `Касе ки ${who} харидааст — бори дигар занг.`,
+      steps: [
+        "5 рақами кӯҳна нависед.",
+        "Ҳар ҳафта: мол ҳаст, нарх ҳамон.",
+        "Харид шуд — сана нависед.",
+      ],
       difficulty: "medium",
       potentialSomoni: extras[3] ?? 0,
     },
@@ -117,26 +167,46 @@ function fallbackStart(interests: string[], region: string, budget: number): Pil
   const extras = extrasFrom(budget);
   return [
     {
-      title: `${who} бо буҷети худ`,
-      description: `Бо ${budget} сомонӣ дар ${where} як хидмати хурди ${who} оғоз кунед. Бе нархи Somon ва бе кафолати фоида.`,
+      title: `${who} бо ${budget} сомонӣ`,
+      description: `Аввал кори хурд дар ${where}.`,
+      steps: [
+        `Нархро нависед. Буҷет ${budget} сомонӣ.`,
+        `Дар ${where} аз 5 нафар пурсед.`,
+        "Ба 3 нафар гӯед.",
+      ],
       difficulty: "easy",
       potentialSomoni: extras[0] ?? 0,
     },
     {
-      title: "Як харидори аввал",
-      description: `10 нафарро дар ${where} нависед ва аз 3 нафар пурсед, ки ба ${who} ниёз доранд.`,
+      title: "Як харидор",
+      description: `Пеш аз хароҷот — як харидор дар ${where}.`,
+      steps: [
+        `10 ном дар ${where} нависед.`,
+        "Имрӯз аз 3 нафар пурсед.",
+        "Гуфт ҳа — рӯз нависед.",
+      ],
       difficulty: "easy",
       potentialSomoni: extras[1] ?? 0,
     },
     {
-      title: "Нархи равшан",
-      description: `Як нарх ва як пешниҳод барои ${who} нависед. Рақам аз буҷети ${budget} сомонӣ аст, на аз бозор.`,
+      title: "Як нарх",
+      description: `Як ҷумла, як нарх. Буҷет ${budget} сомонӣ.`,
+      steps: [
+        `Нависед: «${who} — нарх … сомонӣ».`,
+        `Ба 5 нафар дар ${where} фиристед.`,
+        "Ҳафтаро ҳисоб кунед.",
+      ],
       difficulty: "medium",
       potentialSomoni: extras[2] ?? 0,
     },
     {
-      title: "Такрор дар ҳафта",
-      description: `Ҳар рӯз як амали фурӯш барои ${who} дар ${where}. Пешбинӣ, на кафолат.`,
+      title: "Ҳар рӯз як кор",
+      description: `${who} дар ${where}. Такрор.`,
+      steps: [
+        "Субҳ: занг ё паём.",
+        "Шаб: кардам ё не.",
+        "Пас аз 7 рӯз ҳисоб.",
+      ],
       difficulty: "medium",
       potentialSomoni: extras[3] ?? 0,
     },
@@ -147,9 +217,11 @@ const HONEST_RULES = [
   "Use ONLY the owner's stated product, city, price, volume, channels, budget, problem, and shop-pulse facts.",
   "Do NOT invent Somon/OLX/Amazon prices, rent, tax, or market size.",
   "If sold/refused/complaints are NOT ON PAGE, say so. Never fill demo numbers (325, 70%, fake ranking).",
-  "potential_somoni is a small extra in TJS from owner price × volume (about 4–8% of that turnover). If price or volume is missing, use 0.",
+  "Each item: title = the action (4–8 words); description = WHY in one sentence; steps = exactly 3 actions they can do this week.",
+  "Steps must be in the order they are done: step 1 today, step 2 this week, step 3 after that. Step 2 must only make sense after step 1.",
+  "Every step is ONE sentence under 80 characters, starts with a verb, and names THIS product and THIS city. No vague 'review the price' without how.",
+  "potential_somoni is a small extra in TJS from owner price × volume (about 4–8% of that turnover). If price or volume is missing, or the extra would be under 50 TJS, use 0.",
   "Never promise profit. The number is a model from THEIR numbers, not a live market.",
-  "Each description: this product + this city + one action they can do this week.",
 ].join(" ");
 
 export async function analyzeBusinessSuggestions(input: {
@@ -170,12 +242,13 @@ export async function analyzeBusinessSuggestions(input: {
     const text = await completeAi(
       businessSystemPrompt({
         locale: parseLocale(input.locale),
-        role: `You return exactly 4 practical next moves as a JSON array. ${HONEST_RULES}`,
+        role: `You return exactly 4 next moves as a JSON array, each with 3 doable steps. ${HONEST_RULES}`,
         jsonOnly: true,
         ownerFocus: input.product,
+        replyScript: cardScript(parseLocale(input.locale)),
         format: [
           "JSON array of 4 objects.",
-          '{"title":"max 6 words","description":"one sentence naming this product and city","difficulty":"осон"|"миёна"|"душвор","potential_somoni":number}',
+          '{"title":"4-8 words","description":"why, one sentence","steps":["action 1 with product and city","action 2","action 3"],"difficulty":"осон"|"миёна"|"душвор","potential_somoni":number}',
         ].join("\n"),
       }),
       [
@@ -189,9 +262,9 @@ export async function analyzeBusinessSuggestions(input: {
         `Мушкил: ${input.problem || "зикр нашуд"}`,
         pulseFacts(input.pulse ?? null),
       ].join("\n"),
-      { timeoutMs: 26000, maxTokens: 1400, json: true },
+      { timeoutMs: 28000, maxTokens: 2200, json: true },
     );
-    const items = parseItems(text, input.product, cap);
+    const items = parseItems(text, input.product, cap, [input.product, input.region]);
     if (items.length >= 2) return { items, usedAi: true };
     return { items: fallback, usedAi: false };
   } catch (error) {
@@ -214,12 +287,13 @@ export async function generateStartIdeas(input: {
     const text = await completeAi(
       businessSystemPrompt({
         locale: parseLocale(input.locale),
-        role: `You return exactly 4 realistic start ideas as a JSON array. ${HONEST_RULES}`,
+        role: `You return exactly 4 start ideas as a JSON array, each with 3 doable steps. ${HONEST_RULES}`,
         jsonOnly: true,
         ownerFocus: input.interests.join(", "),
+        replyScript: cardScript(parseLocale(input.locale)),
         format: [
           "JSON array of 4 objects.",
-          '{"name":"...","startup_cost":number,"monthly_income":number,"difficulty":1|2|3,"description":"one sentence"}',
+          '{"name":"...","startup_cost":number,"monthly_income":number,"difficulty":1|2|3,"description":"why","steps":["action 1","action 2","action 3"]}',
           `startup_cost must stay within the owner's budget ${input.budget} TJS. monthly_income is a model from that budget, not a market scrape.`,
         ].join("\n"),
       }),
@@ -230,7 +304,7 @@ export async function generateStartIdeas(input: {
         `Малака: ${input.skills || "зикр нашуд"}`,
         `Минтақа: ${input.region}`,
       ].join("\n"),
-      { timeoutMs: 26000, maxTokens: 1400, json: true },
+      { timeoutMs: 28000, maxTokens: 2200, json: true },
     );
     const items = parseJsonList(text)
       .map((row) => {
@@ -240,6 +314,7 @@ export async function generateStartIdeas(input: {
           {
             title: rec.name ?? rec.title,
             description: rec.description,
+            steps: rec.steps ?? rec.actions,
             difficulty: rec.difficulty,
             potential_somoni: rec.monthly_income ?? rec.potential_somoni,
           },
@@ -247,7 +322,10 @@ export async function generateStartIdeas(input: {
           cap,
         );
       })
-      .filter((row): row is PilotSuggestionItem => row !== null)
+      .filter(
+        (row): row is PilotSuggestionItem =>
+          row !== null && !mixedScriptItem(row, [...input.interests, input.region]),
+      )
       .slice(0, 4);
     if (items.length >= 2) return { items, usedAi: true };
     return { items: fallback, usedAi: false };
@@ -273,11 +351,13 @@ export async function generateSalesPlan(input: {
       businessSystemPrompt({
         locale: parseLocale(input.locale),
         role: [
-          "Write a short sales plan: 3–4 steps. Each step: title + 2–3 concrete actions.",
+          "Write a short sales plan: 3–4 steps, numbered 1., 2., 3. in the order they must be done.",
+          "Each step: title + 2–3 concrete actions. Step 2 starts only after step 1 is done.",
           "Name this owner's product, city and price in the actions — never generic advice.",
           "Use only their numbers and shop-pulse facts. If sold/refused/complaints are NOT ON PAGE, do not invent them. No invented market prices. End with a TJS calculation from volume × price. No markdown.",
         ].join(" "),
         ownerFocus: input.product,
+        replyScript: cardScript(parseLocale(input.locale)),
       }),
       [
         `Соҳа: ${input.category}`,

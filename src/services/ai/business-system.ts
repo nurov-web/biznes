@@ -4,6 +4,7 @@ import {
   looksLikeLatinTajik,
   ownerReplyScript,
   wrapOwnerMessage,
+  type TajikReplyScript,
 } from "@/lib/tajik-text";
 
 /**
@@ -42,6 +43,25 @@ function scriptRule(locale: Locale, ownerText: string): string {
   return `Reply in ${llmLanguage(locale)}.`;
 }
 
+/**
+ * Матни кортҳо дар экран бо тугмаҳои кириллӣ якҷо истодааст.
+ * Барои ҳамин ин ҷо хат аз рӯи забони сайт интихоб мешавад, на аз рӯи хати соҳиб.
+ */
+function fixedScriptRule(script: TajikReplyScript, locale: Locale): string {
+  if (script === "cyrillic") {
+    return [
+      "Your text is printed inside app cards whose own labels are Tajik Cyrillic.",
+      "Write EVERY word in Tajik Cyrillic. Never put Latin and Cyrillic words in one sentence.",
+      "If the owner typed the product or the city with English letters (seb, non, Xihor, Kulob), transliterate it to Cyrillic (себ, нон, Ҳисор, Кӯлоб). Do not keep the Latin spelling.",
+      "Only foreign brand names (Telegram, Instagram, WhatsApp) may stay in Latin letters.",
+    ].join(" ");
+  }
+  if (script === "latin") {
+    return "Write EVERY word in Latin Tajik. No Cyrillic letters anywhere. Do not mix the two alphabets.";
+  }
+  return `Reply in ${llmLanguage(locale)}. Do not mix two alphabets inside one sentence.`;
+}
+
 /** Чат: ҳар савол ҷавоб мегирад — на танҳо мавзӯи дӯкон. */
 export function chatSystemPrompt(options: {
   locale: Locale;
@@ -70,6 +90,7 @@ export function businessSystemPrompt(options: {
   jsonOnly?: boolean;
   ownerFocus?: string;
   ownerMessage?: string;
+  replyScript?: TajikReplyScript;
 }): string {
   const focus = options.ownerFocus?.trim();
   const ownerText = options.ownerMessage?.trim() || "";
@@ -79,7 +100,9 @@ export function businessSystemPrompt(options: {
     focus
       ? `The owner named this goods or shop: «${focus}». If that text is a city only, do not invent a product. If it is a real product, every SKU and tip MUST be about that text. Do not switch to another product (cars, oil, phones, fruit, clothes, etc.) unless they wrote it.`
       : "If the owner named any product, follow those words. Never fill in a default shop (phones, motor oil, apples) just because the app category is «trade». Never treat надорам/нет/нету as a product name.",
-    scriptRule(options.locale, ownerText || focus || ""),
+    options.replyScript
+      ? fixedScriptRule(options.replyScript, options.locale)
+      : scriptRule(options.locale, ownerText || focus || ""),
     options.ownerMessage?.trim() ? wrapOwnerMessage(options.ownerMessage, options.locale) : "",
     options.format?.trim() ?? "",
     options.jsonOnly ? "Return valid JSON only. No markdown fences, no prose outside JSON." : "",

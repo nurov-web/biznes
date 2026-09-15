@@ -363,6 +363,8 @@ export type PilotProfileRow = {
 export type PilotSuggestionItem = {
   title: string;
   description: string;
+  /** Қадамҳои кор — агар нест, аз description ҷудо мешавад. */
+  steps?: string[];
   difficulty: PilotDifficulty;
   potentialSomoni: number;
 };

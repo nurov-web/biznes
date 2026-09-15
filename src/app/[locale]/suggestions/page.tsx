@@ -4,7 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { PilotFormShell } from "@/components/pilot/PilotFormShell";
-import { looksLikeCannedSuggestions } from "@/lib/pilot-suggestions";
+import { SuggestionPath } from "@/components/pilot/SuggestionPath";
+import {
+  looksLikeCannedSuggestions,
+  needsBetterSteps,
+  needsCleanText,
+  shortLine,
+  suggestionSteps,
+} from "@/lib/pilot-suggestions";
 import type { PilotDifficulty, PilotSuggestionItem } from "@/lib/store";
 
 type StatePayload = {
@@ -62,9 +69,14 @@ export default function SuggestionsPage() {
         const data = (await response.json()) as StatePayload;
         if (cancelled) return;
         const next = data.suggestions ?? [];
-        setProduct(data.profile?.product ?? "");
-        setRegion(data.profile?.region ?? "");
-        const stale = looksLikeCannedSuggestions(next);
+        const ownProduct = data.profile?.product ?? "";
+        const ownRegion = data.profile?.region ?? "";
+        setProduct(ownProduct);
+        setRegion(ownRegion);
+        const stale =
+          looksLikeCannedSuggestions(next) ||
+          needsBetterSteps(next) ||
+          needsCleanText(next, [ownProduct, ownRegion]);
         if (stale && !autoTried.current) {
           autoTried.current = true;
           const ok = await refreshFromAi();
@@ -116,7 +128,7 @@ export default function SuggestionsPage() {
 
   if (loading) {
     return (
-      <PilotFormShell>
+      <PilotFormShell wide>
         <div className="flex min-h-[50vh] flex-col justify-center gap-2" role="status">
           <p className="text-sm font-medium">{t("sugLoad")}</p>
           <p className="text-xs text-muted-foreground">{t("sugWait")}</p>
@@ -126,14 +138,26 @@ export default function SuggestionsPage() {
   }
 
   return (
-    <PilotFormShell>
+    <PilotFormShell wide>
       <h1 className="display-2">{t("sugTitle")}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         {t("sugLead", { product: product || "—", region: region || "—" })}
       </p>
-      <p className="mt-1 text-xs text-muted-foreground">{t("sugHonesty")}</p>
-      {usedAi === false ? <p className="mt-2 text-xs text-muted-foreground">{t("sugAiOff")}</p> : null}
-      <div className="mt-4">
+      {usedAi === false ? <p className="mt-1 text-xs text-muted-foreground">{t("sugAiOff")}</p> : null}
+      <ol className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+        {[t("sugFlow1"), t("sugFlow2"), t("sugFlow3")].map((label, index) => (
+          <li key={label} className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span
+              className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-soft text-[11px] font-semibold text-primary"
+              aria-hidden
+            >
+              {index + 1}
+            </span>
+            {label}
+          </li>
+        ))}
+      </ol>
+      <div className="mt-3">
         <button
           type="button"
           className="btn btn-ghost min-h-12"
@@ -146,34 +170,43 @@ export default function SuggestionsPage() {
       {items.length === 0 ? (
         <p className="mt-6 text-sm text-muted-foreground">{t("sugEmpty")}</p>
       ) : (
-        <ul className="mt-6 grid gap-3">
-          {items.map((item, i) => (
-            <li key={`${item.title}-${i}`} className="card-raised p-5">
-              <div className="flex items-start justify-between gap-3">
-                <h2 className="text-base font-semibold">{item.title}</h2>
-                <span className={`chip shrink-0 text-xs ${tone[item.difficulty]}`}>
-                  {t(`diff.${item.difficulty}`)}
-                </span>
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <p className="num text-sm font-medium text-primary">
-                  {item.potentialSomoni > 0
-                    ? t("sugMonth", { n: item.potentialSomoni.toLocaleString("ru-RU") })
-                    : t("sugMonthUnknown")}
-                </p>
-                <button
-                  type="button"
-                  className="btn btn-primary min-h-12"
-                  disabled={busy !== null || refreshing}
-                  onClick={() => void choose(i)}
-                >
-                  {busy === i ? t("saving") : t("sugPick")}
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <ol className="mt-6 grid gap-4">
+          {items.map((item, i) => {
+            const steps = suggestionSteps(item);
+            return (
+              <li key={`${item.title}-${i}`} className="card-raised p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="num text-xs text-muted-foreground">
+                      {t("sugPathN", { n: i + 1, total: items.length })}
+                    </p>
+                    <h2 className="mt-1 text-base font-semibold">{item.title}</h2>
+                  </div>
+                  <span className={`chip shrink-0 text-xs ${tone[item.difficulty]}`}>
+                    {t(`diff.${item.difficulty}`)}
+                  </span>
+                </div>
+                <p className="mt-1.5 text-sm text-muted-foreground">{shortLine(item.description, 100)}</p>
+                <SuggestionPath steps={steps.map((row) => shortLine(row, 88))} heading={t("sugDoThis")} />
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="num text-sm font-medium text-primary">
+                    {item.potentialSomoni > 0
+                      ? t("sugMonth", { n: item.potentialSomoni.toLocaleString("ru-RU") })
+                      : t("sugMonthUnknown")}
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-primary min-h-12 w-full sm:w-auto"
+                    disabled={busy !== null || refreshing}
+                    onClick={() => void choose(i)}
+                  >
+                    {busy === i ? t("saving") : t("sugPick")}
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
       )}
     </PilotFormShell>
   );

@@ -195,6 +195,37 @@ export function tajikReplyScript(text: string): TajikReplyScript {
   return lat > cyr ? "latin" : "cyrillic";
 }
 
+/** Номҳои хориҷӣ ва рақамҳо хатро омехта ҳисоб намекунанд. */
+const FOREIGN_TOKENS =
+  /\b(telegram|instagram|whatsapp|facebook|tiktok|youtube|viber|imo|olx|somon|alif|excel|pdf|sms|wi-?fi|usd|cny|tjs|kg|ton|pcs|ok)\b/gi;
+
+function escapeWord(word: string): string {
+  return word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Калимаҳои худи соҳиб (маҳсулот, шаҳр) хато ҳисоб намешаванд. */
+function stripOwnWords(text: string, allow: string[]): string {
+  const words = allow
+    .flatMap((row) => row.split(/[^\p{L}\p{N}]+/u))
+    .map((row) => row.trim())
+    .filter((row) => row.length >= 2)
+    .map(escapeWord);
+  if (words.length === 0) return text;
+  return text.replace(new RegExp(words.join("|"), "gi"), " ");
+}
+
+/**
+ * Матни ИИ бояд бо як хат бошад: ё кириллӣ, ё лотинӣ.
+ * «narxi 1 somoni кам аст» — хатои хониш, ба соҳиб нишон дода намешавад.
+ */
+export function hasMixedScript(text: string, allow: string[] = []): boolean {
+  const clean = stripOwnWords(text.replace(/https?:\/\/\S+/g, " ").replace(FOREIGN_TOKENS, " "), allow);
+  const { cyr, lat } = letterCounts(clean);
+  const total = cyr + lat;
+  if (total < 12) return false;
+  return Math.min(cyr, lat) / total > 0.08;
+}
+
 /** Оё матн тоҷикии бо ҳарфи англисӣ навишта аст (на забони англисӣ). */
 export function looksLikeLatinTajik(text: string): boolean {
   const { cyr, lat } = letterCounts(text);
