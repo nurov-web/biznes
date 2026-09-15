@@ -1431,12 +1431,14 @@
     "follow3": "Give me 3 jobs this week"
   },
   "pwa": {
-    "title": "Install the app",
-    "lead": "Opens like an app on phone and computer — no browser search.",
-    "install": "Install",
+    "title": "Download the app",
+    "lead": "Opens like an app on your phone — no browser.",
+    "install": "Download",
     "later": "Not now",
     "iosLead": "In Safari tap Share, then Add to Home Screen.",
-    "howTo": "In Chrome: ⋮ menu → Install app. On iPhone: Share → Add to Home Screen. On computer: the install icon in the address bar."
+    "howTo": "In Chrome: ⋮ menu → Install app. On iPhone: Share → Add to Home Screen.",
+    "inApp": "This is Telegram or Instagram. Open Chrome first, then Download.",
+    "openBrowser": "Open in Chrome"
   },
   "legal": {
     "termsTitle": "Terms of use",

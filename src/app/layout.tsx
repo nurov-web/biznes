@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { Viewport } from "next";
 import localFont from "next/font/local";
 import { getLocale } from "next-intl/server";
+import { PWA_BOOT_SCRIPT } from "@/lib/pwa";
 import "./globals.css";
 
 /** Inter Variable (SIL OFL) — маҳаллӣ, бе next/font/google (Turbopack). */
@@ -33,6 +34,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       className={`${inter.variable} h-full w-full max-w-full antialiased`}
     >
       <body className="min-h-full w-full max-w-full bg-background font-sans text-foreground">
+        <script dangerouslySetInnerHTML={{ __html: PWA_BOOT_SCRIPT }} />
         {children}
       </body>
     </html>

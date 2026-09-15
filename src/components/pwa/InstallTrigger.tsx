@@ -4,13 +4,7 @@ import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Icon } from "@/components/ui/Icon";
-import {
-  detectInstalledPwa,
-  isPwaInstalled,
-  markPwaInstalled,
-  PWA_INSTALLED_EVENT,
-  requestPwaInstall,
-} from "@/lib/pwa";
+import { requestPwaInstall, subscribeInstallButton } from "@/lib/pwa";
 
 type Props = {
   className?: string;
@@ -19,46 +13,18 @@ type Props = {
   onPick?: () => void;
 };
 
-/** Тугмаи «Насб» — пас аз скачат пинҳон. */
+/** Тугмаи «Скачат»: пас аз насб нест, пас аз нест кардан боз. */
 export function InstallTrigger({ className, menu, compact, onPick }: Props) {
   const t = useTranslations("pwa");
   const [show, setShow] = useState(false);
 
-  useEffect(() => {
-    const hide = () => {
-      markPwaInstalled();
-      setShow(false);
-    };
-    const sync = () => {
-      if (isPwaInstalled()) {
-        setShow(false);
-        return;
-      }
-      setShow(true);
-    };
-    sync();
-    void detectInstalledPwa().then((yes) => {
-      if (yes) hide();
-    });
-    window.addEventListener("appinstalled", hide);
-    window.addEventListener(PWA_INSTALLED_EVENT, hide);
-    const media = window.matchMedia("(display-mode: standalone)");
-    const onMode = () => {
-      if (media.matches) hide();
-    };
-    media.addEventListener("change", onMode);
-    return () => {
-      window.removeEventListener("appinstalled", hide);
-      window.removeEventListener(PWA_INSTALLED_EVENT, hide);
-      media.removeEventListener("change", onMode);
-    };
-  }, []);
+  useEffect(() => subscribeInstallButton(setShow), []);
 
   if (!show) return null;
 
   function pick() {
-    requestPwaInstall();
     onPick?.();
+    void requestPwaInstall();
   }
 
   if (menu) {

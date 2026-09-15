@@ -1431,12 +1431,14 @@
     "follow3": "Ин ҳафта 3 кор нависед"
   },
   "pwa": {
-    "title": "Барномаро насб кунед",
-    "lead": "Дар телефон ва компютер мисли барнома мекушояд — бе ҷӯстуҷӯи браузер.",
-    "install": "Насб",
+    "title": "Барномаро скачат кунед",
+    "lead": "Дар телефон мисли барнома мекушояд — бе браузер.",
+    "install": "Скачат",
     "later": "Ҳозир не",
     "iosLead": "Дар Safari тугмаи Share, баъд «Add to Home Screen».",
-    "howTo": "Дар Chrome: менюи ⋮ → Насб кардани барнома. Дар iPhone: Share → Add to Home Screen. Дар компютер: нишони насб дар сатри адрес."
+    "howTo": "Дар Chrome: менюи ⋮ → Насб кардани барнома. Дар iPhone: Share → Add to Home Screen.",
+    "inApp": "Ин ҷо Telegram ё Instagram аст. Аввал Chrome-ро кушоед, баъд Скачат.",
+    "openBrowser": "Дар Chrome кушоед"
   },
   "legal": {
     "termsTitle": "Шартҳои истифода",

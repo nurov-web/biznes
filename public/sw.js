@@ -2,7 +2,7 @@
  * Service worker — барномаи насбшуда бе хатогӣ кор кунад.
  * API ва POST кеш намешаванд (ИИ бояд зинда бошад).
  */
-const CACHE = "bp-shell-v4";
+const CACHE = "bp-shell-v5";
 const OFFLINE = "/offline.html";
 
 self.addEventListener("install", (event) => {
