@@ -3,6 +3,7 @@
 import { useFormatter, useTranslations } from "next-intl";
 import { Printer, Send } from "lucide-react";
 import { monthlyRevenue, splitVolume } from "@/lib/pilot-volume";
+import { localDateKey } from "@/lib/local-date";
 import type { PilotProfileRow } from "@/lib/store";
 
 const DAY_KEYS = ["d1", "d2", "d3", "d4", "d5", "d6", "d7"] as const;
@@ -11,10 +12,12 @@ type Props = {
   plan: string;
   planDate: string;
   profile: PilotProfileRow;
+  weekDone: string[];
+  onWeekDone: (dates: string[]) => void;
 };
 
 /** Нақшаи фурӯш: матни AI + ҳафтаи аввал бо сана + фиристодан ва чоп. */
-export function SalesPlanBoard({ plan, planDate, profile }: Props) {
+export function SalesPlanBoard({ plan, planDate, profile, weekDone, onWeekDone }: Props) {
   const t = useTranslations("pilot");
   const format = useFormatter();
   const volume = splitVolume(profile.volume);
@@ -28,6 +31,7 @@ export function SalesPlanBoard({ plan, planDate, profile }: Props) {
     return {
       key,
       date,
+      iso: localDateKey(date),
       label: format.dateTime(date, { day: "numeric", month: "long" }),
       text: t(key, { product: profile.product, region: profile.region, price: profile.price }),
     };
@@ -45,6 +49,17 @@ export function SalesPlanBoard({ plan, planDate, profile }: Props) {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
   }
 
+  async function toggle(iso: string, done: boolean): Promise<void> {
+    const response = await fetch("/api/pilot/week", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: iso, done }),
+    });
+    const json = (await response.json()) as { weekDone?: string[] };
+    if (json.weekDone) onWeekDone(json.weekDone);
+  }
+
   return (
     <div className="grid gap-4">
       <article className="card-raised whitespace-pre-wrap p-5 text-sm leading-relaxed sm:p-6">
@@ -55,17 +70,28 @@ export function SalesPlanBoard({ plan, planDate, profile }: Props) {
         <h2 className="display-3">{t("weekTitle")}</h2>
         <p className="mt-2 text-sm text-muted-foreground">{t("weekLead")}</p>
         <ol className="mt-5 grid list-none gap-2 p-0">
-          {days.map((day) => (
-            <li key={day.key} className="flex min-h-12 gap-3 rounded-xl border border-border px-4 py-3">
-              <time
-                dateTime={day.date.toISOString().slice(0, 10)}
-                className="num w-20 shrink-0 text-sm font-semibold text-primary"
-              >
-                {day.label}
-              </time>
-              <p className="text-sm leading-relaxed">{day.text}</p>
-            </li>
-          ))}
+          {days.map((day) => {
+            const done = weekDone.includes(day.iso);
+            return (
+              <li key={day.key} className="flex min-h-12 items-start gap-3 rounded-xl border border-border px-4 py-3">
+                <label className="flex min-h-12 min-w-0 flex-1 cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-5 w-5 accent-[color:var(--primary)]"
+                    checked={done}
+                    onChange={(e) => void toggle(day.iso, e.target.checked)}
+                  />
+                  <time
+                    dateTime={day.iso}
+                    className="num w-20 shrink-0 text-sm font-semibold text-primary"
+                  >
+                    {day.label}
+                  </time>
+                  <p className="text-sm leading-relaxed">{day.text}</p>
+                </label>
+              </li>
+            );
+          })}
         </ol>
       </article>
 

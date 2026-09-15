@@ -3,6 +3,7 @@ import { MarketingFooter } from "@/components/MarketingFooter";
 import { MarketingHeader } from "@/components/MarketingHeader";
 import { Hero } from "@/components/landing/Hero";
 import { WhatItDoes } from "@/components/landing/WhatItDoes";
+import { UseSlider } from "@/components/landing/UseSlider";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { HonestBit } from "@/components/landing/HonestBit";
 import { LandingFaq } from "@/components/landing/LandingFaq";
@@ -18,6 +19,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
       </div>
       <main className="min-w-0 flex-1">
         <WhatItDoes />
+        <UseSlider />
         <HowItWorks />
         <HonestBit />
         <LandingFaq />

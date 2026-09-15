@@ -1,6 +1,6 @@
 import createIntlMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
-import { ACCOUNT_COOKIE, SESSION_COOKIE } from "@/constants";
+import { SESSION_COOKIE } from "@/constants";
 import { routing } from "@/i18n/routing";
 import { localeFromPathname, stripLocalePrefix } from "@/lib/locale-path";
 
@@ -10,8 +10,6 @@ const intl = createIntlMiddleware(routing);
 const PROTECTED = [
   "/dashboard",
   "/suggestions",
-  "/has-business",
-  "/start-business",
   "/settings",
   "/profile",
 ] as const;
@@ -49,9 +47,7 @@ function isProtected(bare: string): boolean {
 }
 
 function hasSession(request: NextRequest): boolean {
-  return Boolean(
-    request.cookies.get(SESSION_COOKIE)?.value || request.cookies.get(ACCOUNT_COOKIE)?.value,
-  );
+  return Boolean(request.cookies.get(SESSION_COOKIE)?.value);
 }
 
 export default function proxy(request: NextRequest) {
@@ -75,8 +71,7 @@ export default function proxy(request: NextRequest) {
 
   if (isProtected(bare) && !hasSession(request)) {
     const url = request.nextUrl.clone();
-    const gate = bare === "/has-business" || bare === "/start-business" ? "register" : "login";
-    url.pathname = `/${locale}/${gate}`;
+    url.pathname = `/${locale}/login`;
     url.search = "";
     url.searchParams.set("next", bare);
     return NextResponse.redirect(url);

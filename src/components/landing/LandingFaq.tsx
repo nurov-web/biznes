@@ -9,7 +9,7 @@ export function LandingFaq() {
   ];
 
   return (
-    <section className="gutter-x mx-auto w-full max-w-3xl py-12 sm:py-16">
+    <section id="faq" className="gutter-x mx-auto w-full max-w-3xl scroll-mt-24 py-12 sm:py-16">
       <h2 className="display-2">{t("faqTitle")}</h2>
       <div className="mt-6 divide-y divide-border rounded-xl border border-border">
         {items.map((item, index) => (

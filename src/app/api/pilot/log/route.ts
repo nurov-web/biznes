@@ -1,0 +1,31 @@
+/**
+ * POST /api/pilot/log — фурӯши имрӯз (дона).
+ */
+import { z } from "zod";
+import { NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth";
+import { isUnauthorized, jsonError } from "@/lib/api-error";
+import { originForbidden } from "@/lib/origin";
+import { localDateKey } from "@/lib/local-date";
+import { listDayLogs, upsertDayLog } from "@/services/pilot";
+
+const schema = z.object({
+  sold: z.number().int().min(0).max(1_000_000),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+
+export async function POST(request: Request) {
+  try {
+    if (originForbidden(request)) return jsonError("forbidden", 403);
+    const user = await requireUser();
+    const parsed = schema.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) return jsonError("validation", 400);
+    const date = parsed.data.date ?? localDateKey();
+    const row = await upsertDayLog(user.id, date, parsed.data.sold);
+    const logs = await listDayLogs(user.id);
+    return NextResponse.json({ ok: true, row, logs });
+  } catch (error) {
+    if (isUnauthorized(error)) return jsonError("unauthorized", 401);
+    return jsonError("server", 500);
+  }
+}

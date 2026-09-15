@@ -29,7 +29,7 @@ export function geminiConfigured(): boolean {
 }
 
 function geminiModel(): string {
-  return process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
+  return process.env.GEMINI_MODEL?.trim() || "gemini-3.6-flash";
 }
 
 export function geminiModelName(): string {
@@ -40,6 +40,9 @@ export async function completeGemini(options: {
   system: string;
   messages: ChatTurn[];
   timeoutMs?: number;
+  maxOutputTokens?: number;
+  json?: boolean;
+  temperature?: number;
 }): Promise<string> {
   const key = geminiApiKey();
   if (!key) throw new Error("NO_API_KEY");
@@ -48,7 +51,7 @@ export async function completeGemini(options: {
     .filter((row) => row.content.trim())
     .map((row) => ({
       role: row.role === "assistant" ? "model" : "user",
-      parts: [{ text: row.content.slice(0, 2000) }],
+      parts: [{ text: row.content.slice(0, 8000) }],
     }));
   if (contents.length === 0 || contents[contents.length - 1]?.role !== "user") {
     throw new Error("GEMINI_BAD_TURN");
@@ -58,7 +61,15 @@ export async function completeGemini(options: {
   const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? GEMINI_TIMEOUT_MS);
   try {
     const models = Array.from(
-      new Set([geminiModel(), "gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]),
+      new Set([
+        geminiModel(),
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-3-flash-preview",
+        "gemini-flash-latest",
+        "gemini-2.5-flash",
+      ]),
     );
     let lastError: Error | null = null;
     for (const model of models) {
@@ -74,20 +85,24 @@ export async function completeGemini(options: {
             systemInstruction: { parts: [{ text: options.system }] },
             contents,
             generationConfig: {
-              temperature: 0.3,
-              maxOutputTokens: 900,
+              temperature: options.temperature ?? 0.2,
+              maxOutputTokens: options.maxOutputTokens ?? 2048,
+              ...(options.json ? { responseMimeType: "application/json" } : {}),
             },
           }),
           signal: controller.signal,
         });
         const data = (await response.json()) as GeminiResponse;
+        if (!response.ok) {
+          console.error("[gemini]", model, response.status, data.error?.status ?? "");
+        }
         if (response.status === 404) {
           lastError = new Error(`GEMINI_HTTP_404:${model}`);
           break;
         }
         if (response.status === 429 || response.status === 503) {
           lastError = new Error(`GEMINI_HTTP_${response.status}:${model}`);
-          await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
+          await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
           continue;
         }
         if (!response.ok) {
@@ -104,8 +119,8 @@ export async function completeGemini(options: {
           .join("\n")
           .trim();
         if (!text) {
-          lastError = new Error("Empty Gemini response");
-          break;
+          lastError = new Error(`Empty Gemini response:${data.candidates?.[0]?.finishReason ?? "?"}:${model}`);
+          continue;
         }
         return text;
       }

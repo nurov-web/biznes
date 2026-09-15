@@ -8,7 +8,7 @@ export function HowItWorks() {
     { title: t("s3t"), detail: t("s3d") },
   ];
   return (
-    <section className="gutter-x mx-auto w-full max-w-3xl py-12 sm:py-16">
+    <section id="how" className="gutter-x mx-auto w-full max-w-3xl scroll-mt-24 py-12 sm:py-16">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("howEyebrow")}</p>
       <h2 className="display-2 mt-2">{t("howTitle")}</h2>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">{t("howLead")}</p>

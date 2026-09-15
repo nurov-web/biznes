@@ -7,7 +7,9 @@ import { MarketingFooter } from "@/components/MarketingFooter";
 export function PilotFormShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen w-full min-w-0 flex-col bg-background">
-      <MarketingHeader tone="light" />
+      <div className="hero-ink w-full">
+        <MarketingHeader tone="dark" />
+      </div>
       <main className="gutter-x mx-auto w-full min-w-0 max-w-lg flex-1 py-8 sm:py-10">{children}</main>
       <MarketingFooter />
     </div>

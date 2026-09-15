@@ -1,11 +1,13 @@
 import { newId, nowIso, readDb, withDb } from "@/lib/store";
 import type {
   PilotCourseRow,
+  PilotDayLogRow,
   PilotKind,
   PilotPlanRow,
   PilotProfileRow,
   PilotSuggestionItem,
   PilotSuggestionRow,
+  PilotWeekMarkRow,
 } from "@/lib/store";
 import { PILOT_MODULE_COUNT, PILOT_PASS_SCORE } from "@/constants/pilot";
 
@@ -26,6 +28,7 @@ export async function savePilotProfile(
     price: string;
     channels?: string[];
     problem?: string;
+    shopUrl?: string;
   },
 ): Promise<PilotProfileRow> {
   const now = nowIso();
@@ -41,6 +44,7 @@ export async function savePilotProfile(
     price: data.price,
     channels: data.channels ?? [],
     problem: data.problem ?? "",
+    shopUrl: data.shopUrl ?? "",
     createdAt: now,
   };
   await withDb((db) => {
@@ -136,5 +140,69 @@ export async function completeModule(
     };
     db.pilotCourse.push(row);
     return row;
+  });
+}
+
+export async function listCourseRows(userId: string): Promise<PilotCourseRow[]> {
+  return (await readDb()).pilotCourse
+    .filter((c) => c.userId === userId)
+    .sort((a, b) => (a.completedAt ?? "").localeCompare(b.completedAt ?? ""));
+}
+
+export async function listDayLogs(userId: string): Promise<PilotDayLogRow[]> {
+  const db = await readDb();
+  return (db.pilotDayLogs ?? [])
+    .filter((row) => row.userId === userId)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export async function upsertDayLog(userId: string, date: string, sold: number): Promise<PilotDayLogRow> {
+  const now = nowIso();
+  return withDb((db) => {
+    db.pilotDayLogs ??= [];
+    const existing = db.pilotDayLogs.find((row) => row.userId === userId && row.date === date);
+    if (existing) {
+      existing.sold = sold;
+      existing.updatedAt = now;
+      return existing;
+    }
+    const row: PilotDayLogRow = {
+      id: newId(),
+      userId,
+      date,
+      sold,
+      createdAt: now,
+      updatedAt: now,
+    };
+    db.pilotDayLogs.push(row);
+    return row;
+  });
+}
+
+export async function listWeekMarks(userId: string): Promise<string[]> {
+  const db = await readDb();
+  return (db.pilotWeekMarks ?? [])
+    .filter((row) => row.userId === userId)
+    .map((row) => row.date);
+}
+
+export async function setWeekMark(
+  userId: string,
+  date: string,
+  done: boolean,
+): Promise<PilotWeekMarkRow[]> {
+  return withDb((db) => {
+    db.pilotWeekMarks ??= [];
+    const rest = db.pilotWeekMarks.filter((row) => !(row.userId === userId && row.date === date));
+    if (done) {
+      rest.push({
+        id: newId(),
+        userId,
+        date,
+        createdAt: nowIso(),
+      });
+    }
+    db.pilotWeekMarks = rest;
+    return rest.filter((row) => row.userId === userId);
   });
 }

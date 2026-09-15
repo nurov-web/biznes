@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { BrandMark } from "@/components/ui/BrandMark";
-import { APP_NAME } from "@/constants";
 import { EASE, EASE_PREMIUM, gsap, reducedMotion } from "@/lib/gsap";
 
 const SPLASH_SECONDS = 5;
@@ -19,6 +18,7 @@ type Props = {
  */
 export function WelcomeSplash({ onDone }: Props) {
   const t = useTranslations("splash");
+  const tn = useTranslations("nav");
   const overlay = useRef<HTMLDivElement>(null);
   const mark = useRef<HTMLDivElement>(null);
   const brand = useRef<HTMLParagraphElement>(null);
@@ -141,14 +141,16 @@ export function WelcomeSplash({ onDone }: Props) {
 
       <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center px-6 pb-16">
         <div ref={mark}>
-          <BrandMark size={48} />
+          <span className="text-white">
+            <BrandMark size={36} />
+          </span>
         </div>
         <p
           id="splash-title"
           ref={brand}
           className="mt-5 text-lg font-medium tracking-tight text-dark-text"
         >
-          {APP_NAME}
+          {tn("brand")}
         </p>
         <div className="relative mt-8 h-12 w-full max-w-sm">
           {beats.map((line) => (

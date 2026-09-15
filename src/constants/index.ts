@@ -1,7 +1,7 @@
 /**
- * Константы BusinessPilot AI — без хардкода строк в UI.
+ * Константы Business — без хардкода строк в UI.
  */
-export const APP_NAME = "BusinessPilot AI";
+export const APP_NAME = "Business";
 
 export const SESSION_COOKIE = "bp_session";
 /** Почта/ҳисоб дар браузер мемонад — logout сессияро мебандад, ҳисобро не. */

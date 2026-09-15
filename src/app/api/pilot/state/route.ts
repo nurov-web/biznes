@@ -10,16 +10,24 @@ import {
   latestPlan,
   latestSuggestions,
   listCompletedModules,
+  listCourseRows,
+  listDayLogs,
+  listWeekMarks,
 } from "@/services/pilot";
+import { latestShopPulse } from "@/services/shop-pulse";
 
 export async function GET() {
   try {
     const user = await requireUser();
-    const [profile, suggestions, plan, progress] = await Promise.all([
+    const [profile, suggestions, plan, progress, course, logs, weekDone, pulse] = await Promise.all([
       getPilotProfile(user.id),
       latestSuggestions(user.id),
       latestPlan(user.id),
       listCompletedModules(user.id),
+      listCourseRows(user.id),
+      listDayLogs(user.id),
+      listWeekMarks(user.id),
+      latestShopPulse(user.id),
     ]);
     return NextResponse.json({
       profile,
@@ -28,6 +36,14 @@ export async function GET() {
       plan: plan?.content ?? "",
       planDate: plan?.createdAt ?? "",
       progress,
+      course: course.map((row) => ({
+        moduleId: row.moduleId,
+        score: row.score,
+        completedAt: row.completedAt,
+      })),
+      logs: logs.map((row) => ({ date: row.date, sold: row.sold })),
+      weekDone,
+      pulse,
       ephemeralStore: isEphemeralStore(),
     });
   } catch (error) {

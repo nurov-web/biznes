@@ -1,5 +1,5 @@
 /**
- * POST /api/ai/chat — чати мушовири бизнес (Gemini).
+ * POST /api/ai/chat — чати ИИ: ҳар саволи соҳиб ҷавоб мегирад.
  */
 import { z } from "zod";
 import { NextResponse } from "next/server";
@@ -12,30 +12,32 @@ import { clientIp } from "@/lib/client-ip";
 import { consumeAiQuota } from "@/lib/ai-quota";
 import { readDb } from "@/lib/store";
 import { businessSystemPrompt } from "@/services/ai/business-system";
-import { completeGemini, geminiConfigured } from "@/services/ai/gemini";
+import { completeAi } from "@/services/ai/complete";
 import { wrapOwnerMessage } from "@/lib/tajik-text";
+import { latestShopPulse, pulseFacts } from "@/services/shop-pulse";
 import type { AppLocale } from "@/i18n/routing";
+import type { ChatTurn } from "@/services/ai/gemini";
 
 export const dynamic = "force-dynamic";
 
 const turnSchema = z.object({
   role: z.enum(["user", "assistant"]),
-  content: z.string().trim().min(1).max(2000),
+  content: z.string().trim().min(1).max(4000),
 });
 
 const schema = z.object({
   locale: z.enum(["tg", "ru", "en"]).default("tg"),
-  messages: z.array(turnSchema).min(1).max(16),
+  messages: z.array(turnSchema).min(1).max(20),
 });
 
 function fallback(locale: AppLocale): string {
   if (locale === "en") {
-    return "I only help with business: price, stock, sales and cash in TJS. Write one concrete shop question. Forecast, not a guarantee.";
+    return "AI did not answer this time. Send the question again. I do not invent Somon/OLX prices.";
   }
   if (locale === "ru") {
-    return "Я помогаю только по бизнесу: цена, запас, продажи и касса в сомони. Напишите один конкретный вопрос по магазину. Это прогноз, не гарантия.";
+    return "ИИ сейчас не ответил. Напишите вопрос ещё раз. Цены Somon/OLX не выдумываю.";
   }
-  return "Ман танҳо оид ба бизнес кӯмак мекунам: нарх, захира, фурӯш ва пули нақд бо сомонӣ. Як саволи мушаххаси мағоза нависед. Ин пешгӯӣ аст, на кафолат.";
+  return "ИИ ҳоло ҷавоб надод. Саволро бори дигар фиристед. Нархи Somon/OLX-ро дурӯғ намегӯям.";
 }
 
 export async function POST(request: Request) {
@@ -61,10 +63,6 @@ export async function POST(request: Request) {
       if (!(await consumeAiQuota(user.id, 40))) return jsonError("rate", 429);
     }
 
-    if (!geminiConfigured()) {
-      return NextResponse.json({ answer: fallback(locale), usedAi: false });
-    }
-
     let shopLine = "";
     if (user) {
       const db = await readDb();
@@ -72,38 +70,60 @@ export async function POST(request: Request) {
       const pilot = db.pilotProfiles
         .filter((row) => row.userId === user.id)
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+      const products = business
+        ? db.products
+            .filter((row) => row.businessId === business.id && !row.archived)
+            .slice(0, 15)
+            .map((row) => `${row.brand} ${row.model}: ${row.sellPriceMin}–${row.sellPriceMax} TJS × ${row.quantity}`)
+            .join("; ")
+        : "";
+      const pulse = await latestShopPulse(user.id);
       shopLine = [
         business ? `Shop: ${business.name}, ${business.city}, ${business.type}` : "",
         business?.goal || business?.typeNote || "",
+        products ? `Catalog: ${products}` : "",
         pilot
-          ? `Product: ${pilot.product}; region: ${pilot.region}; category: ${pilot.category}; problem: ${pilot.problem}`
+          ? `Product: ${pilot.product}; region: ${pilot.region}; volume: ${pilot.volume}; price: ${pilot.price} TJS; category: ${pilot.category}; channels: ${pilot.channels.join(", ") || "—"}; problem: ${pilot.problem}`
           : "",
+        pulse ? pulseFacts(pulse) : "",
       ]
         .filter(Boolean)
         .join("\n");
     }
 
     const question = last.content;
+    const history: ChatTurn[] = parsed.data.messages.map((row, index) => {
+      if (index !== parsed.data.messages.length - 1 || row.role !== "user") return row;
+      const facts = shopLine
+        ? `\n\nINTERNAL SHOP FACTS (English labels only; do not copy this script — reply in the owner's letters):\n${shopLine}`
+        : "";
+      return { role: "user" as const, content: `${wrapOwnerMessage(row.content)}${facts}`.trim() };
+    });
+
     try {
-      const answer = await completeGemini({
-        system: businessSystemPrompt({
+      const answer = await completeAi(
+        businessSystemPrompt({
           locale,
-          ownerFocus: shopLine,
+          ownerFocus: question,
           ownerMessage: question,
           role: [
-            "You are the in-app business chat of BusinessPilot AI for shop owners in Tajikistan.",
-            "Answer ONLY business questions: price, stock, sales, costs, customers, suppliers, cash, Instagram/WhatsApp trade, market stalls, wholesale.",
-            "If the message is not about business (politics, coding, medicine, homework, jokes), reply in one sentence that you only help with business, then ask one business question.",
-            "Every useful reply: short fact → number in TJS when money is involved → 2 to 4 numbered next steps. No fluff, no guaranteed profit, no fake Somon/OLX prices.",
+            "You are the in-app chat of Business for a shop owner in Tajikistan.",
+            "Answer the question they asked. Do not refuse. Do not say you only help with business.",
+            "Match the owner's script: Cyrillic question → Cyrillic answer; Latin Tajik → Latin Tajik. Never mix.",
+            "If the question is about the shop, use THEIR product, city, price and volume. If they did not give volume or price, do not invent bags or turnover — ask one question or give steps without fake TJS totals. No invented Somon/OLX/Amazon prices. Forecast, not guaranteed profit.",
+            "If the question is not about the shop, still give a clear useful answer in their language, then one optional shop tip only if it fits.",
+            "Short sentences. If money: integer TJS. End with 2–4 numbered next steps when the topic is business.",
           ].join(" "),
-          format: "Plain text. No markdown tables. Numbered actions.",
+          format: [
+            "Plain text. No markdown tables. Answer first, then numbered steps.",
+            shopLine ? `Shop facts:\n${shopLine}` : "",
+          ]
+            .filter(Boolean)
+            .join("\n"),
         }),
-        messages: parsed.data.messages.map((row, index) =>
-          index === parsed.data.messages.length - 1 && row.role === "user"
-            ? { role: "user", content: `${wrapOwnerMessage(row.content)}\n${shopLine}`.trim() }
-            : row,
-        ),
-      });
+        history,
+        { timeoutMs: 28000, maxTokens: 3072, temperature: 0.4 },
+      );
       return NextResponse.json({ answer, usedAi: true });
     } catch (error) {
       console.error("[ai/chat]", error instanceof Error ? error.message : "fail");

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { LogOut, Settings, UserRound } from "lucide-react";
+import { InstallTrigger } from "@/components/pwa/InstallTrigger";
 import { Link } from "@/i18n/navigation";
 import { EASE, gsap, reducedMotion } from "@/lib/gsap";
 
@@ -131,6 +132,7 @@ export function ProfileMenu({
         <Settings className="h-4 w-4 text-dark-muted" strokeWidth={1.75} aria-hidden />
         {t("settings")}
       </Link>
+      <InstallTrigger menu onPick={() => setOpen(false)} />
       <div className="mx-2 my-1 h-px bg-white/10" />
       <button
         type="button"

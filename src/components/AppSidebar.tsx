@@ -27,8 +27,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
-import { BrandMark } from "@/components/ui/BrandMark";
-import { APP_NAME } from "@/constants";
+import { BrandLockup } from "@/components/ui/BrandLockup";
 
 type Item = { href: string; key: string; icon: LucideIcon };
 
@@ -100,10 +99,10 @@ export function AppSidebar() {
     <aside className="app-rail hidden w-60 shrink-0 md:flex md:flex-col">
       <Link
         href="/dashboard"
-        className="flex items-center gap-2.5 px-4 py-5 text-[0.9375rem] font-semibold tracking-tight text-white"
+        className="flex items-center px-4 py-5 text-white"
+        aria-label={t("brand")}
       >
-        <BrandMark size={28} />
-        {APP_NAME}
+        <BrandLockup size={20} dark />
       </Link>
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 pb-3">
         {MAIN.map((item) => (

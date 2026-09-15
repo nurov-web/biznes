@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocale } from "next-intl";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { ProfileMenu } from "@/components/shell/ProfileMenu";
+import { BrandLockup } from "@/components/ui/BrandLockup";
 import { EntryVeil } from "@/components/motion/EntryVeil";
 import { EphemeralStoreBanner } from "@/components/dashboard/EphemeralStoreBanner";
 import { useRouter } from "@/i18n/navigation";
@@ -97,16 +98,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div data-app className="flex min-h-screen w-full min-w-0 flex-col bg-surface">
-      <header className="no-print sticky top-0 z-20 w-full border-b border-white/10 bg-[color:var(--dark-bg)]/90 pt-[max(0.625rem,env(safe-area-inset-top))] text-white backdrop-blur-xl">
+    <div data-app className="flex min-h-screen w-full min-w-0 flex-col bg-background">
+      <header className="hero-ink no-print sticky top-0 z-20 w-full border-b border-white/10 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl">
         <div className="gutter-x flex w-full items-center justify-between gap-2 py-2.5">
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold tracking-tight text-white">
-              {me.pilot?.product || me.business?.name}
-            </p>
-            <p className="truncate text-xs text-dark-muted">
-              {me.pilot?.region || me.business?.city}
-            </p>
+          <div className="flex min-w-0 items-center gap-3">
+            <BrandLockup size={22} dark />
+            {me.pilot?.product ? (
+              <p className="hidden min-w-0 truncate text-sm text-dark-muted sm:block">
+                {me.pilot.product}
+                {me.pilot.region ? ` · ${me.pilot.region}` : ""}
+              </p>
+            ) : null}
           </div>
           <div className="account-cluster">
             <LanguageSwitch className="seg-on-dark seg-bare" />

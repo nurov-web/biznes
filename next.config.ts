@@ -12,6 +12,13 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
+      {
         source: "/:path*",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
@@ -30,6 +37,8 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob:",
               "font-src 'self' data:",
               "connect-src 'self'",
+              "worker-src 'self'",
+              "manifest-src 'self'",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

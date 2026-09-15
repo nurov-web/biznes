@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { FormErrorSummary } from "@/components/FormErrorSummary";
@@ -18,6 +18,7 @@ export default function RegisterPage() {
   const tn = useTranslations("nav");
   const tl = useTranslations("landing");
   const locale = useLocale();
+  const [nextPath, setNextPath] = useState("");
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -29,6 +30,10 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<{ id: string; message: string }[]>([]);
   const [field, setField] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setNextPath(safeNextPath(new URLSearchParams(window.location.search).get("next")));
+  }, []);
 
   function validate(): boolean {
     const next: Record<string, string> = {};
@@ -139,7 +144,10 @@ export default function RegisterPage() {
       footer={
         <p className="mt-6 text-sm text-muted-foreground">
           {t("haveAccount")}{" "}
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link
+            href={nextPath ? `/login?next=${nextPath}` : "/login"}
+            className="font-medium text-primary hover:underline"
+          >
             {tn("login")}
           </Link>
         </p>

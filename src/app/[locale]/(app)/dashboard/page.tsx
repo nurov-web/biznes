@@ -2,27 +2,34 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { BookOpen, Check, Wallet } from "lucide-react";
+import { BookOpen, Check, ChartColumn, Wallet } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { PageBody } from "@/components/PageShell";
 import { PilotHero } from "@/components/pilot/PilotHero";
 import { SalesPlanBoard } from "@/components/pilot/SalesPlanBoard";
+import { ProgressBoard, type CourseMark, type DaySold } from "@/components/pilot/ProgressBoard";
 import { PILOT_MODULES } from "@/constants/pilot-course";
 import { isModuleOpen, PILOT_MODULE_COUNT } from "@/constants/pilot";
 import type { PilotProfileRow } from "@/lib/store";
+import type { ShopPulse } from "@/types/shop-pulse";
 
-type Tab = "course" | "sales";
+type Tab = "overview" | "course" | "sales";
 
 export default function DashboardPage() {
   const t = useTranslations("pilot");
   const tc = useTranslations("pilotCourse");
   const locale = useLocale();
-  const [tab, setTab] = useState<Tab>("course");
+  const [tab, setTab] = useState<Tab>("overview");
   const [profile, setProfile] = useState<PilotProfileRow | null>(null);
   const [progress, setProgress] = useState<number[]>([]);
   const [plan, setPlan] = useState("");
   const [planDate, setPlanDate] = useState("");
   const [planLoading, setPlanLoading] = useState(false);
+  const [chosen, setChosen] = useState(false);
+  const [logs, setLogs] = useState<DaySold[]>([]);
+  const [weekDone, setWeekDone] = useState<string[]>([]);
+  const [course, setCourse] = useState<CourseMark[]>([]);
+  const [pulse, setPulse] = useState<ShopPulse | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -35,12 +42,22 @@ export default function DashboardPage() {
             progress?: number[];
             plan?: string;
             planDate?: string;
+            chosenIndex?: number | null;
+            logs?: DaySold[];
+            weekDone?: string[];
+            course?: CourseMark[];
+            pulse?: ShopPulse | null;
           } | null,
         ) => {
           setProfile(d?.profile ?? null);
           setProgress(d?.progress ?? []);
           setPlan(d?.plan ?? "");
           setPlanDate(d?.planDate ?? "");
+          setChosen(typeof d?.chosenIndex === "number");
+          setLogs(d?.logs ?? []);
+          setWeekDone(d?.weekDone ?? []);
+          setCourse(d?.course ?? []);
+          setPulse(d?.pulse ?? null);
         },
       )
       .catch(() => undefined)
@@ -74,6 +91,12 @@ export default function DashboardPage() {
   const product = profile?.product || "—";
   const region = profile?.region || "—";
 
+  const tabs: { id: Tab; label: string; icon: typeof ChartColumn }[] = [
+    { id: "overview", label: t("tabOverview"), icon: ChartColumn },
+    { id: "course", label: t("tabCourse"), icon: BookOpen },
+    { id: "sales", label: t("tabSales"), icon: Wallet },
+  ];
+
   return (
     <>
       <PilotHero
@@ -86,36 +109,40 @@ export default function DashboardPage() {
       />
 
       <PageBody>
-        <div className="flex border-b border-border" role="tablist" aria-label={t("welcome")}>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "course"}
-            className={`flex min-h-12 flex-1 items-center justify-center gap-2 border-b-2 px-3 text-sm font-medium sm:flex-none sm:px-5 ${
-              tab === "course"
-                ? "border-ink text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setTab("course")}
-          >
-            <BookOpen className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-            {t("tabCourse")}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "sales"}
-            className={`flex min-h-12 flex-1 items-center justify-center gap-2 border-b-2 px-3 text-sm font-medium sm:flex-none sm:px-5 ${
-              tab === "sales"
-                ? "border-ink text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setTab("sales")}
-          >
-            <Wallet className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-            {t("tabSales")}
-          </button>
+        <div className="flex overflow-x-auto border-b border-border" role="tablist" aria-label={t("welcome")}>
+          {tabs.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === item.id}
+              className={`flex min-h-12 min-w-fit flex-1 items-center justify-center gap-2 border-b-2 px-3 text-sm font-medium sm:flex-none sm:px-5 ${
+                tab === item.id
+                  ? "border-ink text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setTab(item.id)}
+            >
+              <item.icon className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+              {item.label}
+            </button>
+          ))}
         </div>
+
+        {tab === "overview" && profile ? (
+          <ProgressBoard
+            profile={profile}
+            progress={progress}
+            hasPlan={Boolean(plan)}
+            chosen={chosen}
+            logs={logs}
+            weekDone={weekDone}
+            course={course}
+            onLogged={setLogs}
+            pulse={pulse}
+            onPulse={setPulse}
+          />
+        ) : null}
 
         {tab === "course" ? (
           <ol className="card-raised divide-y divide-border overflow-hidden">
@@ -149,7 +176,9 @@ export default function DashboardPage() {
               );
             })}
           </ol>
-        ) : (
+        ) : null}
+
+        {tab === "sales" ? (
           <div className="grid gap-4">
             {!plan && !planLoading ? (
               <article className="card-raised p-5 sm:p-6">
@@ -166,7 +195,13 @@ export default function DashboardPage() {
             ) : null}
             {plan && !planLoading && profile ? (
               <>
-                <SalesPlanBoard plan={plan} planDate={planDate} profile={profile} />
+                <SalesPlanBoard
+                  plan={plan}
+                  planDate={planDate}
+                  profile={profile}
+                  weekDone={weekDone}
+                  onWeekDone={setWeekDone}
+                />
                 <button
                   type="button"
                   className="no-print btn btn-ghost min-h-12 w-fit"
@@ -177,7 +212,7 @@ export default function DashboardPage() {
               </>
             ) : null}
           </div>
-        )}
+        ) : null}
       </PageBody>
     </>
   );

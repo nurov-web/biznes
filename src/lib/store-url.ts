@@ -33,7 +33,7 @@ export function isBlockedHost(host: string): boolean {
 /** Силкаи мағоза: танҳо http(s) ва хости ҷамъиятӣ. */
 export function normalizeStoreUrl(raw: string): string | null {
   const trimmed = raw.trim();
-  if (!trimmed || trimmed.length > 300) return null;
+  if (!trimmed || trimmed.length > 400) return null;
   const withProto = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
   try {
     const url = new URL(withProto);

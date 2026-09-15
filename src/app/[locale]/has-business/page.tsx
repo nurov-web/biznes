@@ -1,16 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { PilotFormShell, StepBar } from "@/components/pilot/PilotFormShell";
 import { Select } from "@/components/ui/Select";
+import { ShopPulsePanel, type ShopLinkForm } from "@/components/pilot/ShopPulsePanel";
+import { BusinessReadout } from "@/components/pilot/BusinessReadout";
 import {
+  defaultUnitFor,
   PILOT_AGRI_SUB,
   PILOT_CATEGORIES,
   PILOT_CHANNELS,
   PILOT_UNITS,
 } from "@/constants/pilot";
+import type { ShopPulse } from "@/types/shop-pulse";
 
 type FormState = {
   category: (typeof PILOT_CATEGORIES)[number] | "";
@@ -22,6 +26,7 @@ type FormState = {
   price: string;
   channels: string[];
   problem: string;
+  shop: ShopLinkForm;
 };
 
 const EMPTY: FormState = {
@@ -34,6 +39,7 @@ const EMPTY: FormState = {
   price: "",
   channels: [],
   problem: "",
+  shop: { url: "", sold: "", refused: "", complaints: "" },
 };
 
 export default function HasBusinessPage() {
@@ -42,8 +48,103 @@ export default function HasBusinessPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(EMPTY);
+  const [pulse, setPulse] = useState<ShopPulse | null>(null);
   const [busy, setBusy] = useState(false);
+  const [reading, setReading] = useState(false);
   const [error, setError] = useState("");
+  const [read, setRead] = useState<{
+    understood: string;
+    usedAi: boolean;
+    note: string;
+    volumeHint: string;
+    priceHint: string;
+  } | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("bp_has_draft");
+      if (!raw) return;
+      const parsed: unknown = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return;
+      const next = parsed as Partial<FormState>;
+      setForm((prev) => ({
+        ...prev,
+        ...next,
+        shop: { ...prev.shop, ...(next.shop ?? {}) },
+      }));
+    } catch {
+      /* нопазир */
+    }
+  }, []);
+
+  async function goStep2() {
+    if (!form.category || !form.product.trim() || !form.region.trim()) return;
+    setReading(true);
+    setError("");
+    const local = {
+      understood: t("readFallback", { product: form.product.trim(), region: form.region.trim() }),
+      usedAi: false,
+      note: "",
+      volumeHint: "",
+      priceHint: "",
+    };
+    try {
+      const response = await fetch("/api/pilot/read-business", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          locale,
+          category: form.category,
+          subcategory: form.subcategory,
+          product: form.product.trim(),
+          region: form.region.trim(),
+        }),
+      });
+      if (response.status === 401) {
+        setRead(local);
+        setForm((prev) => ({ ...prev, volumeUnit: defaultUnitFor(prev.category) }));
+        setStep(2);
+        return;
+      }
+      if (response.status === 429) {
+        setRead(local);
+        setForm((prev) => ({ ...prev, volumeUnit: defaultUnitFor(prev.category) }));
+        setStep(2);
+        return;
+      }
+      if (response.ok) {
+        const data = (await response.json()) as {
+          understood?: string;
+          usedAi?: boolean;
+          note?: string;
+          volumeHint?: string;
+          priceHint?: string;
+          unit?: (typeof PILOT_UNITS)[number];
+        };
+        setRead({
+          understood: data.understood?.trim() || local.understood,
+          usedAi: Boolean(data.usedAi),
+          note: data.note?.trim() || "",
+          volumeHint: data.volumeHint?.trim() || "",
+          priceHint: data.priceHint?.trim() || "",
+        });
+        if (data.unit && (PILOT_UNITS as readonly string[]).includes(data.unit)) {
+          setForm((prev) => ({ ...prev, volumeUnit: data.unit as FormState["volumeUnit"] }));
+        }
+      } else {
+        setRead(local);
+        setForm((prev) => ({ ...prev, volumeUnit: defaultUnitFor(prev.category) }));
+      }
+      setStep(2);
+    } catch {
+      setRead(local);
+      setForm((prev) => ({ ...prev, volumeUnit: defaultUnitFor(prev.category) }));
+      setStep(2);
+    } finally {
+      setReading(false);
+    }
+  }
 
   function toggleChannel(ch: string) {
     setForm((prev) => ({
@@ -73,10 +174,23 @@ export default function HasBusinessPage() {
           price: form.price,
           channels: form.channels,
           problem: form.problem,
+          shopUrl: form.shop.url,
+          shopSold: form.shop.sold.trim() ? Number(form.shop.sold.replace(/\s/g, "")) : null,
+          shopRefused: form.shop.refused.trim()
+            ? Number(form.shop.refused.replace(/\s/g, ""))
+            : null,
+          shopComplaints: form.shop.complaints.trim()
+            ? Number(form.shop.complaints.replace(/\s/g, ""))
+            : null,
         }),
       });
       if (response.status === 401) {
-        router.push("/register?next=/has-business");
+        try {
+          sessionStorage.setItem("bp_has_draft", JSON.stringify(form));
+        } catch {
+          /* нопазир */
+        }
+        router.push("/login?next=/has-business");
         return;
       }
       if (response.status === 429) {
@@ -86,6 +200,11 @@ export default function HasBusinessPage() {
       if (!response.ok) {
         setError(t("saveError"));
         return;
+      }
+      try {
+        sessionStorage.removeItem("bp_has_draft");
+      } catch {
+        /* нопазир */
       }
       router.push("/suggestions");
     } catch {
@@ -117,6 +236,7 @@ export default function HasBusinessPage() {
                   ...form,
                   category: next as FormState["category"],
                   subcategory: "",
+                  volumeUnit: defaultUnitFor(next),
                 })
               }
               options={PILOT_CATEGORIES.map((c) => ({ value: c, label: t(`cats.${c}`) }))}
@@ -138,7 +258,9 @@ export default function HasBusinessPage() {
             <input
               className="input-field min-h-12"
               value={form.product}
-              placeholder={t("productPh")}
+              placeholder={
+                form.category ? t(`productPhCat.${form.category}`) : t("productPh")
+              }
               onChange={(e) => setForm({ ...form, product: e.target.value })}
             />
           </label>
@@ -154,10 +276,10 @@ export default function HasBusinessPage() {
           <button
             type="button"
             className="btn btn-primary min-h-12"
-            disabled={!form.category || !form.product.trim() || !form.region.trim()}
-            onClick={() => setStep(2)}
+            disabled={reading || !form.category || !form.product.trim() || !form.region.trim()}
+            onClick={() => void goStep2()}
           >
-            {t("next")}
+            {reading ? t("reading") : t("next")}
           </button>
         </div>
       ) : null}
@@ -165,6 +287,7 @@ export default function HasBusinessPage() {
       {step === 2 ? (
         <div className="grid gap-4">
           <h1 className="display-2">{t("stepOf", { current: 2, total: 3 })} — {t("bizNow")}</h1>
+          {read ? <BusinessReadout read={read} /> : null}
           <label className="grid gap-1.5 text-sm font-medium">
             {t("volume")}
             <div className="flex gap-2">
@@ -173,7 +296,7 @@ export default function HasBusinessPage() {
                 type="number"
                 min={0}
                 value={form.volume}
-                placeholder={t("volumePh")}
+                placeholder={read?.volumeHint || t("volumePh")}
                 onChange={(e) => setForm({ ...form, volume: e.target.value })}
               />
               <div className="w-28 shrink-0">
@@ -194,7 +317,7 @@ export default function HasBusinessPage() {
               type="number"
               min={0}
               value={form.price}
-              placeholder={t("pricePh")}
+              placeholder={read?.priceHint || t("pricePh")}
               onChange={(e) => setForm({ ...form, price: e.target.value })}
             />
           </label>
@@ -212,6 +335,12 @@ export default function HasBusinessPage() {
               </label>
             ))}
           </fieldset>
+          <ShopPulsePanel
+            value={form.shop}
+            onChange={(shop) => setForm({ ...form, shop })}
+            pulse={pulse}
+            onPulse={setPulse}
+          />
           <div className="flex flex-col gap-2 sm:flex-row">
             <button type="button" className="btn btn-ghost min-h-12" onClick={() => setStep(1)}>
               {t("back")}
@@ -231,6 +360,7 @@ export default function HasBusinessPage() {
       {step === 3 ? (
         <div className="grid gap-4">
           <h1 className="display-2">{t("stepOf", { current: 3, total: 3 })} — {t("bizProblem")}</h1>
+          {read ? <BusinessReadout read={read} /> : null}
           <label className="grid gap-1.5 text-sm font-medium">
             {t("problem")}
             <textarea

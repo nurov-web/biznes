@@ -54,42 +54,75 @@ function stripHtml(html: string): string {
 }
 
 async function getPage(url: string): Promise<string> {
+  const row = await fetchPublicResource(url);
+  return row.body;
+}
+
+const BROWSER_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
+export type PublicFetch = {
+  url: string;
+  status: number;
+  body: string;
+  json: unknown | null;
+};
+
+/** HTML ё JSON-и кушода — хости ҷамъиятӣ, бе SSRF. */
+export async function fetchPublicResource(url: string): Promise<PublicFetch> {
+  const empty: PublicFetch = { url, status: 0, body: "", json: null };
   try {
-    if (!(await hostResolvesPublic(new URL(url).hostname))) return "";
+    if (!(await hostResolvesPublic(new URL(url).hostname))) return empty;
   } catch {
-    return "";
+    return empty;
   }
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 7000);
+  const timer = setTimeout(() => controller.abort(), 10000);
   try {
     const response = await fetch(url, {
       method: "GET",
       redirect: "follow",
       signal: controller.signal,
       headers: {
-        Accept: "text/html,application/xhtml+xml",
-        "User-Agent": "BusinessPilotBot/1.0 (+https://biznes-mu.vercel.app)",
+        Accept: "text/html,application/json,application/xhtml+xml,*/*;q=0.8",
+        "User-Agent": BROWSER_UA,
       },
     });
-    if (!response.ok) return "";
+    let finalUrl = url;
     try {
       const finalHost = new URL(response.url).hostname;
-      if (isBlockedHost(finalHost)) return "";
-      if (!(await hostResolvesPublic(finalHost))) return "";
+      if (isBlockedHost(finalHost)) return empty;
+      if (!(await hostResolvesPublic(finalHost))) return empty;
+      finalUrl = response.url;
     } catch {
-      return "";
+      return empty;
     }
     const type = response.headers.get("content-type") ?? "";
-    if (!type.includes("html") && !type.includes("xml") && !type.includes("text")) {
-      return "";
+    const raw = await response.text();
+    const body = raw.slice(0, 400_000);
+    let json: unknown | null = null;
+    if (type.includes("json") || body.trim().startsWith("{") || body.trim().startsWith("[")) {
+      try {
+        json = JSON.parse(body) as unknown;
+      } catch {
+        json = null;
+      }
     }
-    const html = await response.text();
-    return html.slice(0, 80_000);
+    return { url: finalUrl, status: response.status, body, json };
   } catch {
-    return "";
+    return empty;
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** HTML-и кушода (Instagram ҳам — агар ҷавоб диҳад). */
+export async function fetchPublicHtml(url: string): Promise<{ html: string; ok: boolean }> {
+  const normalized = normalizeStoreUrl(url);
+  if (!normalized) return { html: "", ok: false };
+  const row = await fetchPublicResource(normalized);
+  const html = row.body;
+  return { html, ok: html.length > 80 && row.status > 0 && row.status < 400 };
 }
 
 export async function fetchPublicShopText(

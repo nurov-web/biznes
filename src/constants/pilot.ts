@@ -29,6 +29,15 @@ export const PILOT_CHANNELS = ["market", "wholesale", "social", "friends", "expo
 
 export const PILOT_UNITS = ["kg", "ton", "pcs", "tjs"] as const;
 
+export type PilotUnit = (typeof PILOT_UNITS)[number];
+
+/** Воҳиди пешфарз аз соҳа — на аз демо-мева. */
+export function defaultUnitFor(category: string): PilotUnit {
+  if (category === "agriculture" || category === "food" || category === "construction") return "kg";
+  if (category === "services" || category === "transport") return "tjs";
+  return "pcs";
+}
+
 export const PILOT_TIME = ["full", "part", "weekend"] as const;
 
 export const PILOT_MODULE_COUNT = 6;

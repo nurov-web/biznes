@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       price: "",
       problem: `time:${data.time}; skills:${data.skills}`,
     });
-    const items = await generateStartIdeas({
+    const batch = await generateStartIdeas({
       locale: parseLocale(data.locale),
       interests: data.interests,
       budget: data.budget,
@@ -48,8 +48,13 @@ export async function POST(request: Request) {
       skills: data.skills,
       region: data.region,
     });
-    await saveSuggestions(user.id, profile.id, items);
-    return NextResponse.json({ ok: true, profileId: profile.id, suggestions: items });
+    await saveSuggestions(user.id, profile.id, batch.items);
+    return NextResponse.json({
+      ok: true,
+      profileId: profile.id,
+      suggestions: batch.items,
+      usedAi: batch.usedAi,
+    });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
     return jsonError("server", 500);

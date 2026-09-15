@@ -12,6 +12,12 @@ import { parseLocale } from "@/lib/locale-query";
 import { PILOT_CATEGORIES, PILOT_CHANNELS, PILOT_UNITS } from "@/constants/pilot";
 import { analyzeBusinessSuggestions } from "@/services/ai/pilot";
 import { savePilotProfile, saveSuggestions } from "@/services/pilot";
+import { readShopPulse, saveShopPulse } from "@/services/shop-pulse";
+
+const optCount = z.preprocess((value) => {
+  if (value === "" || value === undefined || value === null) return null;
+  return value;
+}, z.number().int().min(0).max(50_000_000).nullable());
 
 const schema = z.object({
   locale: z.string().optional(),
@@ -24,6 +30,10 @@ const schema = z.object({
   price: z.string().trim().min(1).max(40),
   channels: z.array(z.enum(PILOT_CHANNELS)).max(6).default([]),
   problem: z.string().trim().max(500).default(""),
+  shopUrl: z.string().trim().max(400).default(""),
+  shopSold: optCount.optional(),
+  shopRefused: optCount.optional(),
+  shopComplaints: optCount.optional(),
 });
 
 export async function POST(request: Request) {
@@ -45,8 +55,20 @@ export async function POST(request: Request) {
       price: data.price,
       channels: data.channels,
       problem: data.problem,
+      shopUrl: data.shopUrl,
     });
-    const items = await analyzeBusinessSuggestions({
+    const pulse = data.shopUrl
+      ? await readShopPulse(data.shopUrl, {
+          sold: data.shopSold,
+          refused: data.shopRefused,
+          complaints: data.shopComplaints,
+        }).catch((error) => {
+          console.error("[analyze-business/shop]", error instanceof Error ? error.message : "fail");
+          return null;
+        })
+      : null;
+    if (pulse) await saveShopPulse(user.id, pulse);
+    const batch = await analyzeBusinessSuggestions({
       locale: parseLocale(data.locale),
       category: data.category,
       product: data.product,
@@ -55,9 +77,15 @@ export async function POST(request: Request) {
       price: data.price,
       channels: data.channels,
       problem: data.problem,
+      pulse,
     });
-    await saveSuggestions(user.id, profile.id, items);
-    return NextResponse.json({ ok: true, profileId: profile.id, suggestions: items });
+    await saveSuggestions(user.id, profile.id, batch.items);
+    return NextResponse.json({
+      ok: true,
+      profileId: profile.id,
+      suggestions: batch.items,
+      usedAi: batch.usedAi,
+    });
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
     return jsonError("server", 500);

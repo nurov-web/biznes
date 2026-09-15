@@ -1,7 +1,6 @@
 import { useTranslations } from "next-intl";
-import { BrandMark } from "@/components/ui/BrandMark";
+import { BrandLockup } from "@/components/ui/BrandLockup";
 import { Link } from "@/i18n/navigation";
-import { APP_NAME } from "@/constants";
 
 export function MarketingFooter() {
   const t = useTranslations("landing");
@@ -12,9 +11,8 @@ export function MarketingFooter() {
       <div className="gutter-x mx-auto w-full min-w-0 max-w-6xl py-10">
         <div className="flex flex-wrap items-start justify-between gap-8">
           <div>
-            <p className="flex items-center gap-2.5 font-semibold tracking-tight">
-              <BrandMark size={32} />
-              {APP_NAME}
+            <p>
+              <BrandLockup size={22} />
             </p>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
               {t("footerNote")}
@@ -36,7 +34,7 @@ export function MarketingFooter() {
           </nav>
         </div>
         <p className="mt-8 border-t border-border pt-5 text-xs text-muted-foreground">
-          © {new Date().getFullYear()} {APP_NAME}
+          © {new Date().getFullYear()} {tn("brand")}
         </p>
       </div>
     </footer>

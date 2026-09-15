@@ -356,6 +356,7 @@ export type PilotProfileRow = {
   price: string;
   channels: string[];
   problem: string;
+  shopUrl: string;
   createdAt: string;
 };
 
@@ -391,6 +392,49 @@ export type PilotCourseRow = {
   completedAt: string | null;
 };
 
+/** Фурӯши як рӯз — рақами воқеӣ, на пешгӯӣ. */
+export type PilotDayLogRow = {
+  id: string;
+  userId: string;
+  date: string;
+  sold: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** Қадами ҳафтаи нақша иҷро шуд. */
+export type PilotWeekMarkRow = {
+  id: string;
+  userId: string;
+  date: string;
+  createdAt: string;
+};
+
+/** Хониши витринаи соҳиб — рақами саҳифа ё кабинет, на демо. */
+export type PilotShopPulseRow = {
+  id: string;
+  userId: string;
+  url: string;
+  platform: string;
+  title: string;
+  sold: number | null;
+  refused: number | null;
+  complaints: number | null;
+  reviews: number | null;
+  rating: number | null;
+  returnPct: number | null;
+  soldSource: string | null;
+  refusedSource: string | null;
+  complaintsSource: string | null;
+  catalogProducts: number | null;
+  catalogReviews: number | null;
+  catalogShops: number | null;
+  locked: string[];
+  status: string;
+  fetchedAt: string;
+  createdAt: string;
+};
+
 export type Database = {
   users: UserRow[];
   smsCodes: SmsRow[];
@@ -418,6 +462,9 @@ export type Database = {
   pilotSuggestions: PilotSuggestionRow[];
   pilotPlans: PilotPlanRow[];
   pilotCourse: PilotCourseRow[];
+  pilotDayLogs: PilotDayLogRow[];
+  pilotWeekMarks: PilotWeekMarkRow[];
+  pilotShopPulses: PilotShopPulseRow[];
 };
 
 const EMPTY: Database = {
@@ -447,6 +494,9 @@ const EMPTY: Database = {
   pilotSuggestions: [],
   pilotPlans: [],
   pilotCourse: [],
+  pilotDayLogs: [],
+  pilotWeekMarks: [],
+  pilotShopPulses: [],
 };
 
 type StoreMemory = { __bpDb?: Database };
@@ -515,7 +565,6 @@ function hydrate(raw: Partial<Database>): Database {
       aiError: row.aiError ?? null,
     })),
     channelLinks: raw.channelLinks ?? [],
-    pilotProfiles: raw.pilotProfiles ?? [],
     pilotSuggestions: (raw.pilotSuggestions ?? []).map((row) => ({
       ...row,
       profileId: row.profileId ?? null,
@@ -523,6 +572,19 @@ function hydrate(raw: Partial<Database>): Database {
     })),
     pilotPlans: raw.pilotPlans ?? [],
     pilotCourse: raw.pilotCourse ?? [],
+    pilotDayLogs: raw.pilotDayLogs ?? [],
+    pilotWeekMarks: raw.pilotWeekMarks ?? [],
+    pilotShopPulses: (raw.pilotShopPulses ?? []).map((row) => ({
+      ...row,
+      catalogProducts: row.catalogProducts ?? null,
+      catalogReviews: row.catalogReviews ?? null,
+      catalogShops: row.catalogShops ?? null,
+      locked: Array.isArray(row.locked) ? row.locked : [],
+    })),
+    pilotProfiles: (raw.pilotProfiles ?? []).map((row) => ({
+      ...row,
+      shopUrl: row.shopUrl ?? "",
+    })),
     businesses: (raw.businesses ?? []).map((b) => ({
       ...b,
       stage: b.stage === "idea" ? "idea" : "running",
@@ -670,6 +732,9 @@ function mergeSnapshots(local: Database, remote: Database): Database {
     pilotSuggestions: mergeRows(local.pilotSuggestions, remote.pilotSuggestions),
     pilotPlans: mergeRows(local.pilotPlans, remote.pilotPlans),
     pilotCourse: mergeRows(local.pilotCourse, remote.pilotCourse),
+    pilotDayLogs: mergeRows(local.pilotDayLogs, remote.pilotDayLogs),
+    pilotWeekMarks: mergeRows(local.pilotWeekMarks, remote.pilotWeekMarks),
+    pilotShopPulses: mergeRows(local.pilotShopPulses, remote.pilotShopPulses),
   };
 }
 

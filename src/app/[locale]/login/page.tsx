@@ -21,10 +21,13 @@ export default function LoginPage() {
   const [summary, setSummary] = useState("");
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [nextPath, setNextPath] = useState("");
 
   useEffect(() => {
     const saved = readRememberedLogin();
     if (saved) setLogin(saved);
+    const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
+    setNextPath(next);
     if (consumeLoggedOut()) return;
     let cancelled = false;
     fetch("/api/auth/me", { credentials: "include", cache: "no-store" })
@@ -92,7 +95,10 @@ export default function LoginPage() {
         footer={
           <p className="mt-6 text-sm text-muted-foreground">
             {t("noAccount")}{" "}
-            <Link href="/register" className="font-medium text-primary hover:underline">
+            <Link
+              href={nextPath ? `/register?next=${nextPath}` : "/register"}
+              className="font-medium text-primary hover:underline"
+            >
               {tn("register")}
             </Link>
           </p>

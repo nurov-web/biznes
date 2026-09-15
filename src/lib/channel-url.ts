@@ -5,7 +5,7 @@ export { CHANNEL_KINDS, type ChannelKind };
 
 function asHttps(raw: string): string | null {
   const trimmed = raw.trim();
-  if (!trimmed || trimmed.length > 300) return null;
+  if (!trimmed || trimmed.length > 400) return null;
   const withProto = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
   try {
     const url = new URL(withProto);

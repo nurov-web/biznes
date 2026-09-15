@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { PilotFormShell } from "@/components/pilot/PilotFormShell";
@@ -18,6 +18,29 @@ export default function StartBusinessPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("bp_start_draft");
+      if (!raw) return;
+      const parsed: unknown = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return;
+      const next = parsed as {
+        interests?: string[];
+        budget?: number;
+        time?: string;
+        skills?: string;
+        region?: string;
+      };
+      if (Array.isArray(next.interests)) setInterests(next.interests.filter((i) => typeof i === "string"));
+      if (typeof next.budget === "number") setBudget(next.budget);
+      if (typeof next.time === "string") setTime(next.time);
+      if (typeof next.skills === "string") setSkills(next.skills);
+      if (typeof next.region === "string") setRegion(next.region);
+    } catch {
+      /* нопазир */
+    }
+  }, []);
+
   function toggle(item: string) {
     setInterests((prev) => (prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]));
   }
@@ -33,7 +56,15 @@ export default function StartBusinessPage() {
         body: JSON.stringify({ locale, interests, budget, time, skills, region }),
       });
       if (response.status === 401) {
-        router.push("/register?next=/start-business");
+        try {
+          sessionStorage.setItem(
+            "bp_start_draft",
+            JSON.stringify({ interests, budget, time, skills, region }),
+          );
+        } catch {
+          /* нопазир */
+        }
+        router.push("/login?next=/start-business");
         return;
       }
       if (response.status === 429) {
@@ -43,6 +74,11 @@ export default function StartBusinessPage() {
       if (!response.ok) {
         setError(t("saveError"));
         return;
+      }
+      try {
+        sessionStorage.removeItem("bp_start_draft");
+      } catch {
+        /* нопазир */
       }
       router.push("/suggestions");
     } catch {

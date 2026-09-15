@@ -4,9 +4,8 @@ import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
-import { BrandMark } from "@/components/ui/BrandMark";
+import { BrandLockup } from "@/components/ui/BrandLockup";
 import { EASE, gsap, restoreVisible, shouldSkipIntro } from "@/lib/gsap";
-import { APP_NAME } from "@/constants";
 
 type Props = {
   title: string;
@@ -20,6 +19,7 @@ type Props = {
 export function AuthShell({ title, lead, children, footer, points }: Props) {
   const root = useRef<HTMLDivElement>(null);
   const t = useTranslations("landing");
+  const tn = useTranslations("nav");
 
   useLayoutEffect(() => {
     const node = root.current;
@@ -52,9 +52,8 @@ export function AuthShell({ title, lead, children, footer, points }: Props) {
     <div ref={root} className="grid min-h-screen min-w-0 bg-background lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <div className="gutter-x flex min-w-0 flex-col py-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link href="/" className="flex min-w-0 items-center gap-2 text-[0.9375rem] font-semibold tracking-tight">
-            <BrandMark size={32} />
-            <span className="truncate">{APP_NAME}</span>
+          <Link href="/" className="flex min-w-0 items-center" aria-label={tn("brand")}>
+            <BrandLockup size={22} />
           </Link>
           <LanguageSwitch />
         </div>
