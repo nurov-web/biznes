@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { useLocale, useTranslations } from "next-intl";
 import { MessageCircle, SquarePen, X } from "lucide-react";
@@ -61,8 +61,12 @@ export function BusinessChat() {
   useEffect(() => {
     if (!open) return;
     const apply = () => {
-      const h = window.visualViewport?.height ?? window.innerHeight;
-      document.documentElement.style.setProperty("--vvh", `${Math.round(h)}px`);
+      const view = window.visualViewport;
+      const h = view?.height ?? window.innerHeight;
+      const t = view?.offsetTop ?? 0;
+      const root = document.documentElement.style;
+      root.setProperty("--vvh", `${Math.round(h)}px`);
+      root.setProperty("--vvt", `${Math.round(t)}px`);
     };
     apply();
     window.visualViewport?.addEventListener("resize", apply);
@@ -73,6 +77,7 @@ export function BusinessChat() {
       window.visualViewport?.removeEventListener("scroll", apply);
       window.removeEventListener("resize", apply);
       document.documentElement.style.removeProperty("--vvh");
+      document.documentElement.style.removeProperty("--vvt");
     };
   }, [open]);
 
@@ -176,12 +181,21 @@ export function BusinessChat() {
     window.setTimeout(() => opener.current?.focus(), 40);
   }
 
+  function openChat() {
+    setOpen(true);
+  }
+
+  function onOverlayClick(event: MouseEvent<HTMLDivElement>) {
+    if (event.target !== event.currentTarget) return;
+    close();
+  }
+
   const hints = [t("hintPrice"), t("hintStock"), t("hintCash")];
   const follows = [t("follow1"), t("follow2"), t("follow3")];
   const lastAssistant = turns.length > 0 && turns[turns.length - 1]?.role === "assistant";
 
   const sheet = open ? (
-    <div className="bp-chat-overlay" onClick={close}>
+    <div className="bp-chat-overlay" onClick={onOverlayClick}>
       <div
         ref={panel}
         className="bp-chat-panel"
@@ -190,8 +204,9 @@ export function BusinessChat() {
         aria-label={t("title")}
         onClick={(event) => event.stopPropagation()}
       >
+        <span className="bp-chat-handle" aria-hidden />
         <header className="bp-chat-head">
-          <IconWell icon={MessageCircle} />
+          <IconWell icon={MessageCircle} className="h-9 w-9 sm:h-11 sm:w-11" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-ink">{t("title")}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">{busy ? t("thinking") : t("online")}</p>
@@ -209,11 +224,13 @@ export function BusinessChat() {
               <div className="bp-chat-bubble-ai">
                 <p>{t("hello")}</p>
               </div>
-              {hints.map((hint) => (
-                <button key={hint} type="button" className="bp-chat-hint" disabled={busy} onClick={() => void send(hint)}>
-                  {hint}
-                </button>
-              ))}
+              <div className="bp-chat-hints">
+                {hints.map((hint) => (
+                  <button key={hint} type="button" className="bp-chat-hint" disabled={busy} onClick={() => void send(hint)}>
+                    {hint}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             turns.map((turn, index) => (
@@ -241,7 +258,7 @@ export function BusinessChat() {
             </div>
           ) : null}
           {!busy && lastAssistant ? (
-            <div className="flex flex-wrap gap-2 pt-1">
+            <div className="bp-chat-hints pt-1">
               {follows.map((hint) => (
                 <button key={hint} type="button" className="bp-chat-hint bp-chat-hint-sm" onClick={() => void send(hint)}>
                   {hint}
@@ -277,7 +294,10 @@ export function BusinessChat() {
       className="bp-chat-fab no-print"
       aria-label={t("open")}
       aria-expanded={false}
-      onClick={() => setOpen(true)}
+      onClick={(event) => {
+        event.stopPropagation();
+        openChat();
+      }}
     >
       <Icon icon={MessageCircle} className="pointer-events-none h-5 w-5" />
       <span className="sr-only">{t("badge")}</span>
