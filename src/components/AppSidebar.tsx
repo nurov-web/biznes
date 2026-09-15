@@ -102,7 +102,7 @@ export function AppSidebar() {
         className="flex items-center px-4 py-5 text-white"
         aria-label={t("brand")}
       >
-        <BrandLockup size={20} dark />
+        <BrandLockup size={28} dark />
       </Link>
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 pb-3">
         {MAIN.map((item) => (

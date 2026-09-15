@@ -102,7 +102,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="hero-ink no-print sticky top-0 z-20 w-full border-b border-white/10 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl">
         <div className="gutter-x flex w-full items-center justify-between gap-2 py-2.5">
           <div className="flex min-w-0 items-center gap-3">
-            <BrandLockup size={22} dark />
+            <BrandLockup size={28} dark />
             {me.pilot?.product ? (
               <p className="hidden min-w-0 truncate text-sm text-dark-muted sm:block">
                 {me.pilot.product}

@@ -7,14 +7,12 @@ type Props = {
   className?: string;
 };
 
-/** Нишона + ном: як ранг, бе ороиши кӯдакона. */
-export function BrandLockup({ size = 22, dark = false, className = "" }: Props) {
+/** Нишона + ном: акс + калимаи Business. */
+export function BrandLockup({ size = 28, dark = false, className = "" }: Props) {
   const t = useTranslations("nav");
   return (
     <span className={`flex min-w-0 items-center gap-2.5 ${className}`}>
-      <span className={dark ? "text-white" : "text-primary"}>
-        <BrandMark size={size} />
-      </span>
+      <BrandMark size={size} />
       <span
         className={`truncate text-[15px] font-medium tracking-tight ${
           dark ? "text-white" : "text-foreground"

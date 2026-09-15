@@ -49,7 +49,7 @@ export function MarketingHeader({ tone = "light" }: Props) {
           }`}
           aria-label={t("brand")}
         >
-          <BrandLockup size={22} dark={dark} />
+          <BrandLockup size={28} dark={dark} />
         </MotionLink>
 
         <nav

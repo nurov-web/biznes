@@ -53,7 +53,7 @@ export function AuthShell({ title, lead, children, footer, points }: Props) {
       <div className="gutter-x flex min-w-0 flex-col py-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/" className="flex min-w-0 items-center" aria-label={tn("brand")}>
-            <BrandLockup size={22} />
+            <BrandLockup size={28} />
           </Link>
           <LanguageSwitch />
         </div>
