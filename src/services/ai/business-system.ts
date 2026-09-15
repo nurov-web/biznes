@@ -42,6 +42,27 @@ function scriptRule(locale: Locale, ownerText: string): string {
   return `Reply in ${llmLanguage(locale)}.`;
 }
 
+/** Чат: ҳар савол ҷавоб мегирад — на танҳо мавзӯи дӯкон. */
+export function chatSystemPrompt(options: {
+  locale: Locale;
+  ownerMessage: string;
+  shopFacts?: string;
+}): string {
+  const shop = options.shopFacts?.trim() ?? "";
+  return [
+    "You are the in-app chat of Business for owners in Tajikistan.",
+    "Answer ANY question they ask: shop, price, math, language, how-to, daily work, or general knowledge. Do not refuse. Do not say you only help with business. Do not ask them to stay on topic.",
+    "Answer the latest user question first, in their meaning. Do not replace their question with a shop lecture.",
+    scriptRule(options.locale, options.ownerMessage),
+    LATIN_TAJIK_LLM_RULE,
+    shop
+      ? `Shop facts — use ONLY if the question is about this shop. Do not invent Somon/OLX/Amazon prices or fake TJS totals. Forecast, not guaranteed profit.\n${shop}`
+      : "No shop profile in this request. If they did not give volume or price, do not invent bags or turnover.",
+    "Plain text. No markdown tables. Short sentences. If the topic is business, end with 2–4 numbered next steps.",
+    wrapOwnerMessage(options.ownerMessage),
+  ].join("\n\n");
+}
+
 export function businessSystemPrompt(options: {
   locale: Locale;
   role?: string;

@@ -7,7 +7,6 @@ import { LocaleTransition } from "@/components/motion/LocaleTransition";
 import { DocumentLang } from "@/components/motion/DocumentLang";
 import { I18nClientProvider } from "@/components/i18n/I18nClientProvider";
 import { BusinessChat } from "@/components/chat/BusinessChat";
-import { SiteIntro } from "@/components/motion/SiteIntro";
 import { InstallApp } from "@/components/pwa/InstallApp";
 import { PwaRegister } from "@/components/pwa/PwaRegister";
 import { siteOrigin } from "@/lib/site-url";
@@ -79,7 +78,6 @@ export default async function LocaleLayout({ children, params }: Props) {
     <I18nClientProvider locale={locale} messages={messages}>
       <DocumentLang />
       <LocaleTransition>{children}</LocaleTransition>
-      <SiteIntro />
       <BusinessChat />
       <InstallApp />
       <PwaRegister />

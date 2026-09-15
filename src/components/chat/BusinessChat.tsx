@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocale, useTranslations } from "next-intl";
-import { usePathname } from "next/navigation";
 import { MessageCircle, SquarePen, X } from "lucide-react";
 import { Icon, IconWell } from "@/components/ui/Icon";
 import { ChatComposer } from "@/components/chat/ChatComposer";
@@ -33,8 +32,6 @@ function loadTurns(): Turn[] {
 export function BusinessChat() {
   const t = useTranslations("chat");
   const locale = useLocale();
-  const pathname = usePathname();
-  const hideFab = /\/(login|register|begin)\/?$/.test(pathname);
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [text, setText] = useState("");
@@ -60,6 +57,24 @@ export function BusinessChat() {
       return;
     }
   }, [turns, mounted]);
+
+  useEffect(() => {
+    if (!open) return;
+    const apply = () => {
+      const h = window.visualViewport?.height ?? window.innerHeight;
+      document.documentElement.style.setProperty("--vvh", `${Math.round(h)}px`);
+    };
+    apply();
+    window.visualViewport?.addEventListener("resize", apply);
+    window.visualViewport?.addEventListener("scroll", apply);
+    window.addEventListener("resize", apply);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", apply);
+      window.visualViewport?.removeEventListener("scroll", apply);
+      window.removeEventListener("resize", apply);
+      document.documentElement.style.removeProperty("--vvh");
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -248,30 +263,25 @@ export function BusinessChat() {
     </div>
   ) : null;
 
-  if (hideFab && !open) return null;
+  if (open && sheet) {
+    if (mounted && typeof document !== "undefined") {
+      return createPortal(sheet, document.body);
+    }
+    return sheet;
+  }
 
   return (
-    <>
-      {open ? null : (
-        <button
-          ref={opener}
-          type="button"
-          className="bp-chat-fab no-print"
-          aria-label={t("open")}
-          aria-expanded={open}
-          onPointerDown={(event) => {
-            if (event.button !== 0) return;
-            event.preventDefault();
-            setOpen(true);
-          }}
-          onClick={() => setOpen(true)}
-        >
-          <Icon icon={MessageCircle} className="pointer-events-none h-5 w-5" />
-          <span className="sr-only">{t("badge")}</span>
-          {seen ? null : <span className="bp-chat-dot" aria-hidden />}
-        </button>
-      )}
-      {open && sheet ? (mounted ? createPortal(sheet, document.body) : sheet) : null}
-    </>
+    <button
+      ref={opener}
+      type="button"
+      className="bp-chat-fab no-print"
+      aria-label={t("open")}
+      aria-expanded={false}
+      onClick={() => setOpen(true)}
+    >
+      <Icon icon={MessageCircle} className="pointer-events-none h-5 w-5" />
+      <span className="sr-only">{t("badge")}</span>
+      {seen ? null : <span className="bp-chat-dot" aria-hidden />}
+    </button>
   );
 }

@@ -72,6 +72,7 @@
 
 html {
   overscroll-behavior-x: none;
+  overflow-x: clip;
 }
 
 html,
@@ -107,6 +108,7 @@ body {
 }
 
 @supports not (overflow: clip) {
+  html,
   body {
     overflow-x: hidden;
   }
@@ -1163,38 +1165,54 @@ summary {
   inset: 0;
   z-index: 250;
   display: grid;
-  align-items: end;
+  align-items: stretch;
   justify-items: stretch;
-  padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
-    max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+  padding: 0;
+  height: var(--vvh, 100dvh);
   background: rgb(11 16 24 / 0.48);
   backdrop-filter: blur(6px);
 }
 
 @media (min-width: 640px) {
   .bp-chat-overlay {
+    align-items: end;
     justify-items: end;
+    height: auto;
+    padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
+      max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
   }
 }
 
 .bp-chat-panel {
   display: flex;
-  width: min(26.5rem, 100%);
-  max-height: min(40rem, calc(100dvh - 1.5rem));
+  width: 100%;
+  height: var(--vvh, 100dvh);
+  max-height: var(--vvh, 100dvh);
+  min-height: 0;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--border-strong);
-  border-radius: 1.35rem;
+  border: none;
+  border-radius: 0;
   background: var(--card);
   box-shadow: var(--shadow-xl);
-  animation: bp-chat-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (min-width: 640px) {
+  .bp-chat-panel {
+    width: min(26.5rem, 100%);
+    height: auto;
+    max-height: min(40rem, calc(var(--vvh, 100dvh) - 1.5rem));
+    border: 1px solid var(--border-strong);
+    border-radius: 1.35rem;
+    animation: bp-chat-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
 }
 
 .bp-chat-head {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  padding: 0.85rem 0.85rem 0.75rem 1rem;
+  padding: max(0.75rem, env(safe-area-inset-top)) 0.75rem 0.75rem 1rem;
   border-bottom: 1px solid var(--border);
 }
 
@@ -1202,24 +1220,25 @@ summary {
   display: grid;
   gap: 0.85rem;
   flex: 1;
-  min-height: 14rem;
+  min-height: 0;
   overflow: auto;
   padding: 1rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .bp-chat-hint {
-  min-height: 2.5rem;
-  padding: 0.45rem 0.75rem;
+  min-height: 3rem;
+  padding: 0.55rem 0.85rem;
   border: 1px solid var(--border);
   border-radius: 0.65rem;
   background: var(--surface);
   color: var(--ink);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   text-align: left;
 }
 
 .bp-chat-hint-sm {
-  min-height: 44px;
+  min-height: 3rem;
   padding: 0.45rem 0.75rem;
   font-size: 0.8125rem;
 }
@@ -1241,12 +1260,14 @@ summary {
 
 .bp-chat-bubble-user,
 .bp-chat-bubble-ai {
-  max-width: 92%;
+  max-width: min(92%, 100%);
   margin: 0;
   padding: 0.8rem 0.95rem;
   border-radius: 1rem;
   font-size: 0.9375rem;
   line-height: 1.55;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .bp-chat-bubble-user {
@@ -1287,8 +1308,8 @@ summary {
 
 .bp-chat-iconbtn {
   display: inline-flex;
-  min-height: 2.5rem;
-  min-width: 2.5rem;
+  min-height: 3rem;
+  min-width: 3rem;
   align-items: center;
   justify-content: center;
   border-radius: 0.65rem;
@@ -1305,7 +1326,7 @@ summary {
   align-items: end;
   gap: 0.55rem;
   border-top: 1px solid var(--border);
-  padding: 0.75rem;
+  padding: 0.75rem 0.75rem max(0.75rem, env(safe-area-inset-bottom));
   background: #fffcf7;
 }
 
@@ -1330,8 +1351,10 @@ summary {
 
 .bp-chat-send {
   display: grid;
-  height: 2.5rem;
-  width: 2.5rem;
+  height: 3rem;
+  width: 3rem;
+  min-height: 3rem;
+  min-width: 3rem;
   flex-shrink: 0;
   place-items: center;
   border-radius: 0.7rem;

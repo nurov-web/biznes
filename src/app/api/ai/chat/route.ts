@@ -11,9 +11,8 @@ import { rateLimit } from "@/lib/rate-limit";
 import { clientIp } from "@/lib/client-ip";
 import { consumeAiQuota } from "@/lib/ai-quota";
 import { readDb } from "@/lib/store";
-import { businessSystemPrompt } from "@/services/ai/business-system";
+import { chatSystemPrompt } from "@/services/ai/business-system";
 import { completeAi } from "@/services/ai/complete";
-import { wrapOwnerMessage } from "@/lib/tajik-text";
 import { latestShopPulse, pulseFacts } from "@/services/shop-pulse";
 import type { AppLocale } from "@/i18n/routing";
 import type { ChatTurn } from "@/services/ai/gemini";
@@ -92,37 +91,20 @@ export async function POST(request: Request) {
     }
 
     const question = last.content;
-    const history: ChatTurn[] = parsed.data.messages.map((row, index) => {
-      if (index !== parsed.data.messages.length - 1 || row.role !== "user") return row;
-      const facts = shopLine
-        ? `\n\nINTERNAL SHOP FACTS (English labels only; do not copy this script — reply in the owner's letters):\n${shopLine}`
-        : "";
-      return { role: "user" as const, content: `${wrapOwnerMessage(row.content)}${facts}`.trim() };
-    });
+    const history: ChatTurn[] = parsed.data.messages.map((row) => ({
+      role: row.role,
+      content: row.content,
+    }));
 
     try {
       const answer = await completeAi(
-        businessSystemPrompt({
+        chatSystemPrompt({
           locale,
-          ownerFocus: question,
           ownerMessage: question,
-          role: [
-            "You are the in-app chat of Business for a shop owner in Tajikistan.",
-            "Answer the question they asked. Do not refuse. Do not say you only help with business.",
-            "Match the owner's script: Cyrillic question → Cyrillic answer; Latin Tajik → Latin Tajik. Never mix.",
-            "If the question is about the shop, use THEIR product, city, price and volume. If they did not give volume or price, do not invent bags or turnover — ask one question or give steps without fake TJS totals. No invented Somon/OLX/Amazon prices. Forecast, not guaranteed profit.",
-            "If the question is not about the shop, still give a clear useful answer in their language, then one optional shop tip only if it fits.",
-            "Short sentences. If money: integer TJS. End with 2–4 numbered next steps when the topic is business.",
-          ].join(" "),
-          format: [
-            "Plain text. No markdown tables. Answer first, then numbered steps.",
-            shopLine ? `Shop facts:\n${shopLine}` : "",
-          ]
-            .filter(Boolean)
-            .join("\n"),
+          shopFacts: shopLine || undefined,
         }),
         history,
-        { timeoutMs: 28000, maxTokens: 3072, temperature: 0.4 },
+        { timeoutMs: 28000, maxTokens: 4096, temperature: 0.5 },
       );
       return NextResponse.json({ answer, usedAi: true });
     } catch (error) {
