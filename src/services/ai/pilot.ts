@@ -10,6 +10,7 @@ import { extractJsonArray } from "@/services/ai/claude";
 import type { ShopPulse } from "@/types/shop-pulse";
 import { pulseFacts } from "@/services/shop-pulse";
 import { splitToSteps } from "@/lib/pilot-suggestions";
+import { playbookFallback, playbookKeyFor, playbookPromptRules } from "@/constants/playbooks";
 
 export type PilotSuggestionBatch = {
   items: PilotSuggestionItem[];
@@ -108,57 +109,15 @@ function extrasFrom(turnover: number): number[] {
   });
 }
 
-function fallbackFor(product: string, region: string, price = "", volume = ""): PilotSuggestionItem[] {
-  const who = product.trim() || "маҳсулот";
-  const where = region.trim() || "шаҳри шумо";
-  const priceText = price.trim() || "нархе, ки шумо навиштед";
-  const extras = extrasFrom(monthlyRevenue(volume, price));
-  return [
-    {
-      title: `3 харидори ${who}`,
-      description: `Яклухт дар ${where}. Нарх ${priceText} сомонӣ.`,
-      steps: [
-        `10 ном дар ${where} нависед.`,
-        `Имрӯз ба 3 нафар занг: нарх ${priceText} сомонӣ.`,
-        "Харидро дар дафтар нависед.",
-      ],
-      difficulty: "easy",
-      potentialSomoni: extras[0] ?? 0,
-    },
-    {
-      title: `${who} дар баста`,
-      description: `Як нарх, як баста — то напурсанд «чанд?».`,
-      steps: [
-        `Бастаи 3–5 дона нависед. Нарх ${priceText} сомонӣ.`,
-        `Ба 5 нафар дар ${where} паём кунед.`,
-        "Ҳафтаро ҳисоб кунед: рафт ё не.",
-      ],
-      difficulty: "easy",
-      potentialSomoni: extras[1] ?? 0,
-    },
-    {
-      title: "Ҳар рӯз як пешниҳод",
-      description: `Ҳамон канал. ${who} дар ${where}.`,
-      steps: [
-        "Телефон, бозор ё Telegram — якро гиред.",
-        `Рӯзе як бор нарх ${priceText} сомонӣ гӯед.`,
-        "Пас аз 7 рӯз: чанд харид.",
-      ],
-      difficulty: "medium",
-      potentialSomoni: extras[2] ?? 0,
-    },
-    {
-      title: "Харидори кӯҳна",
-      description: `Касе ки ${who} харидааст — бори дигар занг.`,
-      steps: [
-        "5 рақами кӯҳна нависед.",
-        "Ҳар ҳафта: мол ҳаст, нарх ҳамон.",
-        "Харид шуд — сана нависед.",
-      ],
-      difficulty: "medium",
-      potentialSomoni: extras[3] ?? 0,
-    },
-  ];
+function fallbackFor(
+  category: string,
+  product: string,
+  region: string,
+  price = "",
+  volume = "",
+): PilotSuggestionItem[] {
+  const key = playbookKeyFor({ category, product });
+  return playbookFallback(key, product, region, price, volume);
 }
 
 function fallbackStart(interests: string[], region: string, budget: number): PilotSuggestionItem[] {
@@ -237,12 +196,14 @@ export async function analyzeBusinessSuggestions(input: {
 }): Promise<PilotSuggestionBatch> {
   const turnover = monthlyRevenue(input.volume, input.price);
   const cap = Math.round(turnover * 0.12);
-  const fallback = fallbackFor(input.product, input.region, input.price, input.volume);
+  const playbookKey = playbookKeyFor({ category: input.category, product: input.product });
+  const nicheRules = playbookPromptRules(playbookKey);
+  const fallback = fallbackFor(input.category, input.product, input.region, input.price, input.volume);
   try {
     const text = await completeAi(
       businessSystemPrompt({
         locale: parseLocale(input.locale),
-        role: `You return exactly 4 next moves as a JSON array, each with 3 doable steps. ${HONEST_RULES}`,
+        role: `You return exactly 4 next moves as a JSON array, each with 3 doable steps. ${HONEST_RULES}${nicheRules ? ` ${nicheRules}` : ""}`,
         jsonOnly: true,
         ownerFocus: input.product,
         replyScript: cardScript(parseLocale(input.locale)),
@@ -346,6 +307,8 @@ export async function generateSalesPlan(input: {
   problem: string;
   pulse?: ShopPulse | null;
 }): Promise<string> {
+  const playbookKey = playbookKeyFor({ category: input.category, product: input.product });
+  const nicheRules = playbookPromptRules(playbookKey);
   try {
     return await completeAi(
       businessSystemPrompt({
@@ -355,7 +318,10 @@ export async function generateSalesPlan(input: {
           "Each step: title + 2–3 concrete actions. Step 2 starts only after step 1 is done.",
           "Name this owner's product, city and price in the actions — never generic advice.",
           "Use only their numbers and shop-pulse facts. If sold/refused/complaints are NOT ON PAGE, do not invent them. No invented market prices. End with a TJS calculation from volume × price. No markdown.",
-        ].join(" "),
+          nicheRules,
+        ]
+          .filter(Boolean)
+          .join(" "),
         ownerFocus: input.product,
         replyScript: cardScript(parseLocale(input.locale)),
       }),

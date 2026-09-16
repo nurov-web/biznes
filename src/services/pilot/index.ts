@@ -10,10 +10,22 @@ import type {
   PilotWeekMarkRow,
 } from "@/lib/store";
 import { PILOT_MODULE_COUNT, PILOT_PASS_SCORE } from "@/constants/pilot";
+import { readAuthPayload } from "@/lib/auth";
+import { pilotDraftFromSession } from "@/lib/pilot-session";
 
 export async function getPilotProfile(userId: string): Promise<PilotProfileRow | null> {
   const rows = (await readDb()).pilotProfiles.filter((p) => p.userId === userId);
-  return rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
+  const found = rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
+  if (found) return found;
+  try {
+    const payload = await readAuthPayload();
+    if (!payload || payload.sub !== userId) return null;
+    const draft = pilotDraftFromSession(payload);
+    if (!draft) return null;
+    return savePilotProfile(userId, draft);
+  } catch {
+    return null;
+  }
 }
 
 export async function savePilotProfile(

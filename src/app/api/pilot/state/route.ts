@@ -15,10 +15,17 @@ import {
   listWeekMarks,
 } from "@/services/pilot";
 import { latestShopPulse } from "@/services/shop-pulse";
+import { ensurePilotBusiness } from "@/services/pilot/ensure-business";
 
 export async function GET() {
   try {
     const user = await requireUser();
+    const profileEarly = await getPilotProfile(user.id);
+    if (profileEarly) {
+      await ensurePilotBusiness(user.id, profileEarly).catch((error) => {
+        console.error("[pilot/state/business]", error instanceof Error ? error.message : "fail");
+      });
+    }
     const [profile, suggestions, plan, progress, course, logs, weekDone, pulse] = await Promise.all([
       getPilotProfile(user.id),
       latestSuggestions(user.id),

@@ -197,7 +197,7 @@ export function tajikReplyScript(text: string): TajikReplyScript {
 
 /** Номҳои хориҷӣ ва рақамҳо хатро омехта ҳисоб намекунанд. */
 const FOREIGN_TOKENS =
-  /\b(telegram|instagram|whatsapp|facebook|tiktok|youtube|viber|imo|olx|somon|alif|excel|pdf|sms|wi-?fi|usd|cny|tjs|kg|ton|pcs|ok)\b/gi;
+  /\b(telegram|instagram|whatsapp|facebook|tiktok|youtube|viber|imo|olx|somon|alif|excel|pdf|sms|wi-?fi|usd|cny|tjs|kg|ton|pcs|ok|ssd|hdd|cpu|gpu|ram|usb|hdmi|nvme|sata|macbook|iphone|ipad)\b/gi;
 
 function escapeWord(word: string): string {
   return word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

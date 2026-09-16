@@ -3,9 +3,6 @@ import type { PilotSuggestionItem } from "@/lib/store";
 
 const OLD_FAKE = [400, 500, 600, 800];
 
-/** Аз 50 сомонӣ камтар — «+1 сомонӣ/моҳ», ин рақам ба соҳиб чизе намегӯяд. */
-const MIN_EXTRA_SOMONI = 50;
-
 /** Қолаби кӯҳна (+400/500/600/800) — на аз нархи соҳиб. */
 export function looksLikeCannedSuggestions(items: PilotSuggestionItem[]): boolean {
   if (items.length === 0) return true;
@@ -59,11 +56,10 @@ export function needsBetterSteps(items: PilotSuggestionItem[]): boolean {
   return items.some((row) => suggestionSteps(row).length < 2);
 }
 
-/** Кортҳои захирашуда бо ду алифбо ё бо рақами хурд — аз нав ҳисоб мешаванд. */
+/** Кортҳои бо ду алифбо (бе SSD/HDD ва калимаҳои худи соҳиб) — танҳо дастӣ «Аз нав». */
 export function needsCleanText(items: PilotSuggestionItem[], ownWords: string[] = []): boolean {
   return items.some((row) => {
-    const tiny = row.potentialSomoni > 0 && row.potentialSomoni < MIN_EXTRA_SOMONI;
     const mixed = hasMixedScript([row.title, row.description, ...(row.steps ?? [])].join(" "), ownWords);
-    return tiny || mixed;
+    return mixed;
   });
 }

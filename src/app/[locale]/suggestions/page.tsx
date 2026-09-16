@@ -3,16 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
+import { AiRecommendationCard } from "@/components/ai/AiRecommendationCard";
 import { PilotFormShell } from "@/components/pilot/PilotFormShell";
-import { SuggestionPath } from "@/components/pilot/SuggestionPath";
-import {
-  looksLikeCannedSuggestions,
-  needsBetterSteps,
-  needsCleanText,
-  shortLine,
-  suggestionSteps,
-} from "@/lib/pilot-suggestions";
-import type { PilotDifficulty, PilotSuggestionItem } from "@/lib/store";
+import { looksLikeCannedSuggestions, needsBetterSteps, needsCleanText } from "@/lib/pilot-suggestions";
+import { suggestionToRecommendation } from "@/lib/pilot-recommendation";
+import type { PilotSuggestionItem } from "@/lib/store";
 
 type StatePayload = {
   suggestions?: PilotSuggestionItem[];
@@ -21,6 +16,7 @@ type StatePayload = {
 
 export default function SuggestionsPage() {
   const t = useTranslations("pilot");
+  const ta = useTranslations("aiRec");
   const locale = useLocale();
   const router = useRouter();
   const [items, setItems] = useState<PilotSuggestionItem[]>([]);
@@ -30,6 +26,7 @@ export default function SuggestionsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [busy, setBusy] = useState<number | null>(null);
+  const [chooseError, setChooseError] = useState("");
   const autoTried = useRef(false);
 
   const refreshFromAi = useCallback(async () => {
@@ -97,34 +94,40 @@ export default function SuggestionsPage() {
   }, [router, refreshFromAi]);
 
   async function choose(index: number) {
+    setChooseError("");
     setBusy(index);
-    const response = await fetch("/api/pilot/choose", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ index }),
-    });
-    if (response.ok) {
-      router.push("/dashboard");
-      return;
+    try {
+      const response = await fetch("/api/pilot/choose", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ index }),
+      });
+      if (response.ok) {
+        router.push("/dashboard");
+        return;
+      }
+      if (response.status === 401) {
+        router.replace("/login");
+        return;
+      }
+      setChooseError(t("sugChooseFailed"));
+    } catch {
+      setChooseError(t("sugChooseFailed"));
+    } finally {
+      setBusy(null);
     }
-    setBusy(null);
   }
 
   async function onRefresh() {
     setRefreshing(true);
+    setChooseError("");
     try {
       await refreshFromAi();
     } finally {
       setRefreshing(false);
     }
   }
-
-  const tone: Record<PilotDifficulty, string> = {
-    easy: "text-muted-foreground",
-    medium: "text-muted-foreground",
-    hard: "text-foreground",
-  };
 
   if (loading) {
     return (
@@ -157,6 +160,11 @@ export default function SuggestionsPage() {
           </li>
         ))}
       </ol>
+      {chooseError ? (
+        <p className="mt-3 text-sm text-destructive" role="alert">
+          {chooseError}
+        </p>
+      ) : null}
       <div className="mt-3">
         <button
           type="button"
@@ -172,37 +180,34 @@ export default function SuggestionsPage() {
       ) : (
         <ol className="mt-6 grid gap-4">
           {items.map((item, i) => {
-            const steps = suggestionSteps(item);
+            const model = suggestionToRecommendation(item);
             return (
-              <li key={`${item.title}-${i}`} className="card-raised p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="num text-xs text-muted-foreground">
-                      {t("sugPathN", { n: i + 1, total: items.length })}
-                    </p>
-                    <h2 className="mt-1 text-base font-semibold">{item.title}</h2>
-                  </div>
-                  <span className={`chip shrink-0 text-xs ${tone[item.difficulty]}`}>
-                    {t(`diff.${item.difficulty}`)}
-                  </span>
-                </div>
-                <p className="mt-1.5 text-sm text-muted-foreground">{shortLine(item.description, 100)}</p>
-                <SuggestionPath steps={steps.map((row) => shortLine(row, 88))} heading={t("sugDoThis")} />
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="num text-sm font-medium text-primary">
-                    {item.potentialSomoni > 0
-                      ? t("sugMonth", { n: item.potentialSomoni.toLocaleString("ru-RU") })
-                      : t("sugMonthUnknown")}
-                  </p>
-                  <button
-                    type="button"
-                    className="btn btn-primary min-h-12 w-full sm:w-auto"
-                    disabled={busy !== null || refreshing}
-                    onClick={() => void choose(i)}
-                  >
-                    {busy === i ? t("saving") : t("sugPick")}
-                  </button>
-                </div>
+              <li key={`${item.title}-${i}`}>
+                <AiRecommendationCard
+                  model={model}
+                  pathLabel={t("sugPathN", { n: i + 1, total: items.length })}
+                  difficulty={item.difficulty}
+                  difficultyLabel={t(`diff.${item.difficulty}`)}
+                  sectionWhat={ta("what")}
+                  sectionWhy={ta("why")}
+                  sectionData={ta("data")}
+                  sectionRisk={ta("risk")}
+                  sectionNext={ta("next")}
+                  sectionResult={ta("result")}
+                  metricKnown={t("sugMonth", {
+                    n: (model.forecastSomoni ?? 0).toLocaleString("ru-RU"),
+                  })}
+                  metricUnknown={t("sugMonthUnknown")}
+                  doLabel={busy === i ? t("saving") : ta("do")}
+                  seeWhyLabel={ta("seeWhy")}
+                  changeLabel={ta("change")}
+                  dismissLabel={ta("dismiss")}
+                  busy={busy === i}
+                  disabled={busy !== null || refreshing}
+                  onDo={() => void choose(i)}
+                  onChange={() => void onRefresh()}
+                  onDismiss={() => setItems((rows) => rows.filter((_, index) => index !== i))}
+                />
               </li>
             );
           })}

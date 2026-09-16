@@ -12,10 +12,13 @@ export function SetupChecklist({
   hasProducts,
   hasSales,
   hasCompetitors,
+  variant = "full",
 }: {
   hasProducts: boolean;
   hasSales: boolean;
   hasCompetitors: boolean;
+  /** Танҳо анбор, CRM, POS, молия — барои экрани «Имрӯз». */
+  variant?: "full" | "core";
 }) {
   const t = useTranslations("intel");
   const [hasStore, setHasStore] = useState(false);
@@ -45,7 +48,7 @@ export function SetupChecklist({
       .catch(() => undefined);
   }, []);
 
-  const steps: Step[] = [
+  const all: Step[] = [
     { done: hasProducts, label: t("setup1"), href: "/inventory", cta: t("setup1cta") },
     { done: hasClients, label: t("setupCrm"), href: "/crm/clients", cta: t("setupCrmCta") },
     { done: hasSales, label: t("setupPos"), href: "/pos", cta: t("setupPosCta") },
@@ -54,6 +57,7 @@ export function SetupChecklist({
     { done: hasCompetitors, label: t("setup3"), href: "/competitors", cta: t("setup3cta") },
     { done: hasLearn, label: t("setupLearn"), href: "/learn", cta: t("setupLearnCta") },
   ];
+  const steps = variant === "core" ? all.slice(0, 4) : all;
   const left = steps.filter((s) => !s.done).length;
   if (left === 0) return null;
 

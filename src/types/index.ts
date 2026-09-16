@@ -26,6 +26,17 @@ export type SessionPayload = {
   btype?: string;
   bnote?: string;
   bgoal?: string;
+  /** Профили пилот — то пас аз хоби Vercel ҳам панел кушода монад. */
+  pkind?: string;
+  pproduct?: string;
+  pregion?: string;
+  pcat?: string;
+  psub?: string;
+  pvol?: string;
+  pprice?: string;
+  pch?: string;
+  pprob?: string;
+  pshop?: string;
 };
 
 export type SessionProfile = {

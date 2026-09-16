@@ -38,7 +38,7 @@ async function signedIn(user: UserRow): Promise<NextResponse> {
     phoneVerified: user.phoneVerified,
     hasPilotProfile: Boolean(pilot),
   });
-  await stampAuthCookies(res, user, business);
+  await stampAuthCookies(res, user, business, pilot);
   return res;
 }
 

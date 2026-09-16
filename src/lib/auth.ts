@@ -11,9 +11,11 @@ import {
   readDb,
   withDb,
   type BusinessRow,
+  type PilotProfileRow,
   type UserRow,
 } from "@/lib/store";
 import { isSecureCookie } from "@/lib/site-url";
+import { sessionPilotClaims, pilotDraftFromSession, profileRowFromDraft } from "@/lib/pilot-session";
 import type { SessionPayload, SessionProfile, SessionUser } from "@/types";
 
 const SALT_ROUNDS = 12;
@@ -126,6 +128,16 @@ export async function signSession(payload: SessionPayload): Promise<string> {
     btype: payload.btype ?? "",
     bnote: payload.bnote ?? "",
     bgoal: payload.bgoal ?? "",
+    pkind: payload.pkind ?? "",
+    pproduct: payload.pproduct ?? "",
+    pregion: payload.pregion ?? "",
+    pcat: payload.pcat ?? "",
+    psub: payload.psub ?? "",
+    pvol: payload.pvol ?? "",
+    pprice: payload.pprice ?? "",
+    pch: payload.pch ?? "",
+    pprob: payload.pprob ?? "",
+    pshop: payload.pshop ?? "",
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
@@ -159,6 +171,16 @@ export async function readSessionToken(
         btype: claimString(payload.btype),
         bnote: claimString(payload.bnote),
         bgoal: claimString(payload.bgoal),
+        pkind: claimString(payload.pkind),
+        pproduct: claimString(payload.pproduct),
+        pregion: claimString(payload.pregion),
+        pcat: claimString(payload.pcat),
+        psub: claimString(payload.psub),
+        pvol: claimString(payload.pvol),
+        pprice: claimString(payload.pprice),
+        pch: claimString(payload.pch),
+        pprob: claimString(payload.pprob),
+        pshop: claimString(payload.pshop),
         ph: isPasswordHash(claimString(payload.ph)) ? claimString(payload.ph) : "",
       };
     } catch {
@@ -168,7 +190,11 @@ export async function readSessionToken(
   return null;
 }
 
-function payloadFromUser(user: UserRow, business: BusinessRow | null): SessionPayload {
+function payloadFromUser(
+  user: UserRow,
+  business: BusinessRow | null,
+  pilot: PilotProfileRow | null,
+): SessionPayload {
   return {
     sub: user.id,
     role: user.role as Role,
@@ -184,6 +210,7 @@ function payloadFromUser(user: UserRow, business: BusinessRow | null): SessionPa
     bnote: business?.typeNote ?? "",
     bgoal: business?.goal ?? "",
     ph: isPasswordHash(user.passwordHash) ? user.passwordHash : "",
+    ...sessionPilotClaims(pilot),
   };
 }
 
@@ -200,8 +227,9 @@ export async function stampAuthCookies(
   res: NextResponse,
   user: UserRow,
   business?: BusinessRow | null,
+  pilot?: PilotProfileRow | null,
 ): Promise<void> {
-  const token = await signSession(payloadFromUser(user, business ?? null));
+  const token = await signSession(payloadFromUser(user, business ?? null, pilot ?? null));
   applyCookiesToResponse(res, token, user.email || user.phone);
 }
 
@@ -217,7 +245,17 @@ export async function stampAuthCookiesByUserId(res: NextResponse, userId: string
     db.businesses
       .filter((b) => b.ownerId === userId)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
-  await stampAuthCookies(res, withHash, business);
+  const fromDb =
+    db.pilotProfiles
+      .filter((row) => row.userId === userId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
+  const existing = await readAuthPayload();
+  const draft =
+    existing && existing.sub === userId ? pilotDraftFromSession(existing) : null;
+  const fromCookie = draft
+    ? profileRowFromDraft(userId, draft, fromDb?.id ?? `cookie_${userId}`, fromDb?.createdAt ?? nowIso())
+    : null;
+  await stampAuthCookies(res, withHash, business, fromDb ?? fromCookie);
 }
 
 export async function setSessionCookie(
@@ -233,7 +271,13 @@ export async function setSessionCookie(
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
   const token = await signSession(
     user
-      ? payloadFromUser(user, business)
+      ? payloadFromUser(
+          user,
+          business,
+          db.pilotProfiles
+            .filter((row) => row.userId === userId)
+            .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null,
+        )
       : {
           sub: userId,
           role,

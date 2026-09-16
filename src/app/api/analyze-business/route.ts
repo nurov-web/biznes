@@ -3,7 +3,7 @@
  */
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireUser, stampAuthCookiesByUserId } from "@/lib/auth";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { originForbidden } from "@/lib/origin";
 import { rateLimit } from "@/lib/rate-limit";
@@ -12,6 +12,7 @@ import { parseLocale } from "@/lib/locale-query";
 import { PILOT_CATEGORIES, PILOT_CHANNELS, PILOT_UNITS } from "@/constants/pilot";
 import { analyzeBusinessSuggestions } from "@/services/ai/pilot";
 import { savePilotProfile, saveSuggestions } from "@/services/pilot";
+import { ensurePilotBusiness } from "@/services/pilot/ensure-business";
 import { readShopPulse, saveShopPulse } from "@/services/shop-pulse";
 
 const optCount = z.preprocess((value) => {
@@ -80,12 +81,17 @@ export async function POST(request: Request) {
       pulse,
     });
     await saveSuggestions(user.id, profile.id, batch.items);
-    return NextResponse.json({
+    await ensurePilotBusiness(user.id, profile).catch((error) => {
+      console.error("[analyze-business/business]", error instanceof Error ? error.message : "fail");
+    });
+    const res = NextResponse.json({
       ok: true,
       profileId: profile.id,
       suggestions: batch.items,
       usedAi: batch.usedAi,
     });
+    await stampAuthCookiesByUserId(res, user.id);
+    return res;
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
     return jsonError("server", 500);

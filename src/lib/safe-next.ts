@@ -5,6 +5,22 @@ const ALLOWED = new Set([
   "/start-business",
   "/suggestions",
   "/dashboard",
+  "/crm",
+  "/pos",
+  "/inventory",
+  "/finance",
+  "/tasks",
+  "/plan",
+  "/learn",
+  "/integrations",
+  "/agents",
+  "/business",
+  "/diagnosis",
+  "/strategy",
+  "/architecture",
+  "/analytics",
+  "/settings",
+  "/profile",
 ]);
 
 /**
@@ -19,6 +35,6 @@ export function safeNextPath(raw: string | null | undefined): string {
   const path = trimmed.split("?")[0]?.split("#")[0] ?? "";
   if (path.includes("\\") || path.length > 180) return "";
   const bare = stripLocalePrefix(path);
-  if (!ALLOWED.has(bare) && !bare.startsWith("/dashboard/")) return "";
-  return bare;
+  if (ALLOWED.has(bare) || bare.startsWith("/dashboard/") || bare.startsWith("/crm/")) return bare;
+  return "";
 }

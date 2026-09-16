@@ -3,7 +3,7 @@
  */
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireUser, stampAuthCookiesByUserId } from "@/lib/auth";
 import { isUnauthorized, jsonError } from "@/lib/api-error";
 import { originForbidden } from "@/lib/origin";
 import { rateLimit } from "@/lib/rate-limit";
@@ -49,12 +49,14 @@ export async function POST(request: Request) {
       region: data.region,
     });
     await saveSuggestions(user.id, profile.id, batch.items);
-    return NextResponse.json({
+    const res = NextResponse.json({
       ok: true,
       profileId: profile.id,
       suggestions: batch.items,
       usedAi: batch.usedAi,
     });
+    await stampAuthCookiesByUserId(res, user.id);
+    return res;
   } catch (error) {
     if (isUnauthorized(error)) return jsonError("unauthorized", 401);
     return jsonError("server", 500);

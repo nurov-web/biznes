@@ -1,0 +1,40 @@
+---
+description: Business-MU 2.0 — UX/product principles (benchmark only, no copying)
+alwaysApply: true
+---
+
+# Business-MU 2.0
+
+Reference sites (Strategyzer, EOS, Bitrix24, Odoo, Zoho, myPNL, Plan101, Stratea, Linear, Notion, Stripe, Vercel) are for **patterns only** — never copy design, branding, text, layout, assets, or code.
+
+## Invisible design principle
+
+Every important screen must answer: **What should I do next?**
+
+Sequence everywhere: **WHAT → WHY → DO THIS → WHAT HAPPENS AFTER**.
+
+## Language
+
+- Owner is not a consultant. Prefer plain Tajik/Russian (e.g. «даромад паст аст», not «EBITDA variance»).
+- Progressive disclosure: «Тафсил» for technical terms.
+- AI copy: Situation → Why → Recommendation → Action → Measurement. No wall-of-text paragraphs.
+
+## Universal UI pattern
+
+Use `AiRecommendationCard` (`src/components/ai/AiRecommendationCard.tsx`) for AI advice:
+WHAT (title), WHY, optional DATA/RISK, NEXT steps, RESULT, primary action.
+
+## Modes (roadmap)
+
+- **Simple mode**: Today, Money, Customers, Products, Problem, Plan, AI Advisor.
+- **Pro mode**: KPIs, margins, integrations, scenarios (hidden until opted in).
+
+## Product position
+
+Decision-support and execution layer — not replacing accountant, lawyer, ERP, or CRM. Say «пешбинӣ / сенария» when uncertain; «маълумот намерасад» when data is missing.
+
+## Screen test
+
+If a non-owner cannot answer what is wrong, why, what to do, and what happens next — redesign hierarchy, not more text.
+
+See `docs/BUSINESS-MU-2.0-ROADMAP.md` for phased implementation.

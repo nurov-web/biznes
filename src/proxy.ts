@@ -6,44 +6,38 @@ import { localeFromPathname, stripLocalePrefix } from "@/lib/locale-path";
 
 const intl = createIntlMiddleware(routing);
 
-/** Саҳифаҳое, ки бе cookie намешаванд. */
+/** Саҳифаҳои воқеии кор — бе cookie нест. */
 const PROTECTED = [
   "/dashboard",
   "/suggestions",
   "/settings",
   "/profile",
-] as const;
-
-/**
- * Панелҳои кӯҳна (касса, анбор, CRM…). Маҳсули сайт курс ва нақшаи фурӯш аст —
- * то соҳибкор ду барномаи ҷудогонаро набинад, ҳама ба панел бармегарданд.
- */
-const LEGACY = [
   "/crm",
   "/pos",
   "/inventory",
   "/finance",
   "/tasks",
-  "/simulator",
-  "/pricing",
   "/plan",
-  "/market",
   "/learn",
   "/integrations",
-  "/data",
-  "/competitors",
-  "/ai-analysis",
   "/agents",
-  "/actions",
+  "/business",
+  "/diagnosis",
+  "/strategy",
+  "/architecture",
+  "/analytics",
   "/store",
+  "/data",
+  "/market",
+  "/competitors",
+  "/pricing",
+  "/simulator",
+  "/actions",
+  "/ai-analysis",
 ] as const;
 
 function matches(bare: string, list: readonly string[]): boolean {
   return list.some((prefix) => bare === prefix || bare.startsWith(`${prefix}/`));
-}
-
-function isProtected(bare: string): boolean {
-  return matches(bare, PROTECTED);
 }
 
 function hasSession(request: NextRequest): boolean {
@@ -64,14 +58,7 @@ export default function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (matches(bare, LEGACY)) {
-    const url = request.nextUrl.clone();
-    url.pathname = `/${locale}/dashboard`;
-    url.search = "";
-    return NextResponse.redirect(url);
-  }
-
-  if (isProtected(bare) && !hasSession(request)) {
+  if (matches(bare, PROTECTED) && !hasSession(request)) {
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}/login`;
     url.search = "";

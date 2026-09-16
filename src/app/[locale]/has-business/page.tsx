@@ -6,6 +6,7 @@ import { useRouter } from "@/i18n/navigation";
 import { PilotFormShell, StepBar } from "@/components/pilot/PilotFormShell";
 import { Select } from "@/components/ui/Select";
 import { ShopPulsePanel, type ShopLinkForm } from "@/components/pilot/ShopPulsePanel";
+import { ThinkingStages } from "@/components/workspace/ThinkingStages";
 import {
   defaultUnitFor,
   PILOT_AGRI_SUB,
@@ -41,8 +42,11 @@ const EMPTY: FormState = {
   shop: { url: "", sold: "", refused: "", complaints: "" },
 };
 
+const DRAFT_KEY = "bp_has_draft";
+
 export default function HasBusinessPage() {
   const t = useTranslations("pilot");
+  const tw = useTranslations("workspace");
   const locale = useLocale();
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -50,23 +54,72 @@ export default function HasBusinessPage() {
   const [pulse, setPulse] = useState<ShopPulse | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/auth/me", { credentials: "include", cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { hasPilotProfile?: boolean } | null) => {
+        if (cancelled) return;
+        if (data?.hasPilotProfile) {
+          router.replace("/dashboard");
+          return;
+        }
+        try {
+          const cachedRaw = localStorage.getItem("bp_me_cache") || sessionStorage.getItem("bp_me_cache");
+          if (cachedRaw) {
+            const cached = JSON.parse(cachedRaw) as { hasPilotProfile?: boolean };
+            if (cached.hasPilotProfile) {
+              router.replace("/dashboard");
+              return;
+            }
+          }
+        } catch {
+          /* нопазир */
+        }
+        try {
+          const raw = localStorage.getItem(DRAFT_KEY) || sessionStorage.getItem(DRAFT_KEY);
+          if (!raw) {
+            setReady(true);
+            return;
+          }
+          const parsed: unknown = JSON.parse(raw);
+          if (!parsed || typeof parsed !== "object") {
+            setReady(true);
+            return;
+          }
+          const next = parsed as Partial<FormState> & { step?: number; form?: Partial<FormState> };
+          const body = (next.form ?? next) as Partial<FormState>;
+          setForm((prev) => ({
+            ...prev,
+            ...body,
+            shop: { ...prev.shop, ...(body.shop ?? {}) },
+          }));
+          if (typeof next.step === "number" && next.step >= 1 && next.step <= 3) {
+            setStep(next.step);
+          }
+        } catch {
+          /* нопазир */
+        }
+        setReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) setReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  useEffect(() => {
+    if (!ready) return;
     try {
-      const raw = sessionStorage.getItem("bp_has_draft");
-      if (!raw) return;
-      const parsed: unknown = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object") return;
-      const next = parsed as Partial<FormState>;
-      setForm((prev) => ({
-        ...prev,
-        ...next,
-        shop: { ...prev.shop, ...(next.shop ?? {}) },
-      }));
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ step, form }));
     } catch {
       /* нопазир */
     }
-  }, []);
+  }, [ready, step, form]);
 
   function goStep2() {
     if (!form.category || !form.product.trim() || !form.region.trim()) return;
@@ -114,7 +167,8 @@ export default function HasBusinessPage() {
       });
       if (response.status === 401) {
         try {
-          sessionStorage.setItem("bp_has_draft", JSON.stringify(form));
+          sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ step, form }));
+          localStorage.setItem(DRAFT_KEY, JSON.stringify({ step, form }));
         } catch {
           /* нопазир */
         }
@@ -130,7 +184,8 @@ export default function HasBusinessPage() {
         return;
       }
       try {
-        sessionStorage.removeItem("bp_has_draft");
+        sessionStorage.removeItem(DRAFT_KEY);
+        localStorage.removeItem(DRAFT_KEY);
       } catch {
         /* нопазир */
       }
@@ -142,9 +197,24 @@ export default function HasBusinessPage() {
     }
   }
 
+  if (!ready) {
+    return (
+      <PilotFormShell>
+        <p className="text-sm text-muted-foreground">{t("saving")}</p>
+      </PilotFormShell>
+    );
+  }
+
   return (
     <PilotFormShell>
       <StepBar step={step} total={3} />
+      {busy ? (
+        <ThinkingStages
+          running={busy}
+          title={tw("thinkTitle")}
+          stages={[tw("think1"), tw("think2"), tw("think3"), tw("think4")]}
+        />
+      ) : null}
       {error ? (
         <p className="mb-4 text-sm text-destructive" role="alert">
           {error}
@@ -154,6 +224,7 @@ export default function HasBusinessPage() {
       {step === 1 ? (
         <div className="grid gap-4">
           <h1 className="display-2">{t("stepOf", { current: 1, total: 3 })} — {t("bizTitle")}</h1>
+          <p className="text-sm text-muted-foreground">{tw("startForm")}</p>
           <label className="grid gap-1.5 text-sm font-medium">
             {t("category")}
             <Select

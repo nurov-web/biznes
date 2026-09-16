@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { BookOpen, Check, ChartColumn, Wallet } from "lucide-react";
+import { BookOpen, Check, ChartColumn, Sun, Wallet } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { PageBody } from "@/components/PageShell";
 import { PilotHero } from "@/components/pilot/PilotHero";
@@ -10,18 +10,21 @@ import { SalesPlanBoard } from "@/components/pilot/SalesPlanBoard";
 import { ProgressBoard, type CourseMark, type DaySold } from "@/components/pilot/ProgressBoard";
 import { PILOT_MODULES } from "@/constants/pilot-course";
 import { isModuleOpen, PILOT_MODULE_COUNT } from "@/constants/pilot";
-import { SuggestionPath } from "@/components/pilot/SuggestionPath";
-import { shortLine, suggestionSteps } from "@/lib/pilot-suggestions";
 import type { PilotProfileRow, PilotSuggestionItem } from "@/lib/store";
 import type { ShopPulse } from "@/types/shop-pulse";
+import { TodayBoard } from "@/components/journey/TodayBoard";
+import type { RunGuide } from "@/components/dashboard/RunBusinessGuide";
+import { readWorkspaceMode, WORKSPACE_MODE_EVENT, type WorkspaceMode } from "@/lib/workspace-mode";
 
-type Tab = "overview" | "course" | "sales";
+type Tab = "today" | "overview" | "course" | "sales";
 
 export default function DashboardPage() {
   const t = useTranslations("pilot");
   const tc = useTranslations("pilotCourse");
   const locale = useLocale();
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>("today");
+  const [guide, setGuide] = useState<RunGuide | null>(null);
+  const [todaySales, setTodaySales] = useState(0);
   const [profile, setProfile] = useState<PilotProfileRow | null>(null);
   const [progress, setProgress] = useState<number[]>([]);
   const [plan, setPlan] = useState("");
@@ -34,6 +37,18 @@ export default function DashboardPage() {
   const [course, setCourse] = useState<CourseMark[]>([]);
   const [pulse, setPulse] = useState<ShopPulse | null>(null);
   const [ready, setReady] = useState(false);
+  const [mode, setMode] = useState<WorkspaceMode>("simple");
+
+  useEffect(() => {
+    const sync = () => setMode(readWorkspaceMode());
+    sync();
+    window.addEventListener(WORKSPACE_MODE_EVENT, sync);
+    return () => window.removeEventListener(WORKSPACE_MODE_EVENT, sync);
+  }, []);
+
+  useEffect(() => {
+    if (mode === "simple") setTab("today");
+  }, [mode]);
 
   useEffect(() => {
     fetch("/api/pilot/state", { credentials: "include", cache: "no-store" })
@@ -71,6 +86,24 @@ export default function DashboardPage() {
       .finally(() => setReady(true));
   }, []);
 
+  useEffect(() => {
+    if (!ready) return;
+    fetch("/api/dashboard", { credentials: "include", cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (
+          d: {
+            guide?: RunGuide;
+            stats?: { todaySales?: number };
+          } | null,
+        ) => {
+          if (d?.guide) setGuide(d.guide);
+          if (d?.stats?.todaySales != null) setTodaySales(d.stats.todaySales);
+        },
+      )
+      .catch(() => undefined);
+  }, [ready]);
+
   async function makePlan() {
     setPlanLoading(true);
     try {
@@ -98,11 +131,13 @@ export default function DashboardPage() {
   const product = profile?.product || "—";
   const region = profile?.region || "—";
 
-  const tabs: { id: Tab; label: string; icon: typeof ChartColumn }[] = [
+  const insightTabs: { id: Tab; label: string; icon: typeof ChartColumn }[] = [
+    { id: "today", label: t("tabToday"), icon: Sun },
     { id: "overview", label: t("tabOverview"), icon: ChartColumn },
     { id: "course", label: t("tabCourse"), icon: BookOpen },
     { id: "sales", label: t("tabSales"), icon: Wallet },
   ];
+  const tabs = mode === "simple" ? insightTabs.filter((row) => row.id === "today") : insightTabs;
 
   return (
     <>
@@ -136,18 +171,19 @@ export default function DashboardPage() {
           ))}
         </div>
 
+        {tab === "today" && profile ? (
+          <TodayBoard
+            profile={profile}
+            guide={guide}
+            chosen={chosen}
+            chosenItem={chosenItem}
+            todaySales={todaySales}
+            simple={mode === "simple"}
+          />
+        ) : null}
+
         {tab === "overview" && profile ? (
           <div className="grid gap-4">
-            {chosenItem ? (
-              <article className="card-raised p-5 sm:p-6">
-                <p className="text-xs font-medium text-muted-foreground">{t("sugChosen")}</p>
-                <h2 className="mt-1 text-base font-semibold">{chosenItem.title}</h2>
-                <SuggestionPath
-                  steps={suggestionSteps(chosenItem).map((row) => shortLine(row, 88))}
-                  heading={t("sugDoThis")}
-                />
-              </article>
-            ) : null}
             <ProgressBoard
               profile={profile}
               progress={progress}

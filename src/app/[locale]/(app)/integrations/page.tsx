@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Check, Copy, KeyRound, Plug, Trash2 } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { StoreConnectCard } from "@/components/store/StoreConnectCard";
+import { IntegrationAdviceCard } from "@/components/integrations/IntegrationAdviceCard";
 import { Link } from "@/i18n/navigation";
 
 type ApiKey = { id: string; name: string; prefix: string; createdAt: string; lastUsedAt: string | null };
@@ -93,6 +94,7 @@ curl -X POST ${buyUrl} \\
 
   return (
     <PageShell title={t("title")} lead={t("lead")}>
+      <IntegrationAdviceCard />
       <StoreConnectCard />
 
       <section className="card-raised p-6">
